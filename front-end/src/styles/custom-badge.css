@@ -293,3 +293,11 @@
   background-color: var(--error-100);
   border-color: var(--error-600);
 }
+
+.icon-italy {
+  fill: var(--primary);
+}
+
+.icon-italy-badge {
+  fill: var(--primary-light);
+}

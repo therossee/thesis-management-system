@@ -105,9 +105,7 @@ export default function ThesisProposals() {
               segments={segments}
             />
             <div className="d-flex gap-3 flex-wrap">
-              <FiltersDropdown filters={state.filters} applyFilters={applyFilters} resetFilters={resetFilters} />
-              <SortDropdown sorting={state.sorting} applySorting={applySorting} />
-              <Form style={{ minWidth: '220px', zIndex: '1' }} onSubmit={e => e.preventDefault()}>
+            <Form style={{ minWidth: '220px', zIndex: '1' }} onSubmit={e => e.preventDefault()}>
                 <InputGroup className="flex-nowrap w-100">
                   <Form.Control
                     className="truncated"
@@ -128,6 +126,8 @@ export default function ThesisProposals() {
                   <i className="fa-solid fa-magnifying-glass search-icon" />
                 </InputGroup>
               </Form>
+              <FiltersDropdown filters={state.filters} applyFilters={applyFilters} resetFilters={resetFilters} />
+              <SortDropdown sorting={state.sorting} applySorting={applySorting} />
             </div>
           </div>
           {(state.filters.isAbroad != 0 ||
