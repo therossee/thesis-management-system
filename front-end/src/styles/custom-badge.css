@@ -257,40 +257,64 @@
   cursor: pointer;
 }
 
-.success_light {
+.success_light,
+.success_light:focus,
+.success_light.clickable:hover,
+.success_light.clickable.active {
   color: var(--success-700);
   background-color: var(--success-100);
   border-color: var(--success-600);
+  cursor: pointer;
 }
 
-.success_dark {
+.success_dark,
+.success_dark:focus,
+.success_dark.clickable:hover,
+.success_dark.clickable.active {
   color: var(--success-700);
   background-color: var(--success-100);
   border-color: var(--success-600);
+  cursor: pointer;
 }
 
-.warning_light {
+.warning_light,
+.warning_light:focus,
+.warning_dark.clickable:hover,
+.warning_dark.clickable.active {
   color: var(--warning-700);
   background-color: var(--warning-100);
   border-color: var(--warning-600);
+  cursor: pointer;
 }
 
-.warning_dark {
+.warning_dark,
+.warning_dark:focus,
+.warning_dark.clickable:hover,
+.warning_dark.clickable.active {
   color: var(--warning-700);
   background-color: var(--warning-100);
   border-color: var(--warning-600);
+  cursor: pointer;
 }
 
-.error_light {
+.error_light,
+.error_light:focus,
+.error_light.clickable:hover,
+.error_light.clickable.active {
   color: var(--error-700);
   background-color: var(--error-100);
   border-color: var(--error-600);
+  cursor: pointer;
 }
 
-.error_dark {
+.error_dark,
+.error_dark:focus,
+.error_dark.clickable:hover,
+.error_dark.clickable.active {
   color: var(--error-700);
   background-color: var(--error-100);
   border-color: var(--error-600);
+  cursor: pointer;
 }
 
 .icon-italy {

@@ -50,6 +50,7 @@
             "filtri": "Filters",
             "order": "Sort",
             "expirationDate": "Expiration date",
+            "expires": "Expires",
             "creationDate": "Creation date",
             "topic": "Topic",
             "description": "Description",
