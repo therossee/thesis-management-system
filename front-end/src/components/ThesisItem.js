@@ -32,10 +32,6 @@ function ThesisItem(props) {
               <CustomBadge variant={props.isAbroad ? 'abroad' : 'italy'} />
             </Col>
           </Row>
-            <div className="title-container" style={{ marginTop: '0.5rem', marginLeft: '0.1rem', color: 'var(--text)' }}>
-              <i className="fa-regular fa-calendar-clock" />
-              {t('carriera.proposte_di_tesi.expires')}: <span>{moment(props.expirationDate).format('DD/MM/YYYY')}</span>
-            </div>
         </Card.Header>
         <Card.Body className="pt-2">
           <div className="custom-badge-container mb-2">
@@ -44,6 +40,12 @@ function ThesisItem(props) {
             {props.types.map(type => (
               <CustomBadge key={type.id} variant="type" content={type.type} />
             ))}
+          </div>
+          <div className="info-container mb-2">
+            <div className="title-container">
+              <i className="fa-regular fa-calendar-clock fa-fw" />
+              {t('carriera.proposte_di_tesi.expires')}: {moment(props.expirationDate).format("DD/MM/YYYY")}
+            </div>
           </div>
           <div className="info-container mb-2">
             <div className="title-container">
