@@ -43,6 +43,12 @@ function ThesisItem(props) {
           </div>
           <div className="info-container mb-2">
             <div className="title-container">
+              <i className="fa-regular fa-calendar-clock fa-fw" />
+              {t('carriera.proposte_di_tesi.expires')}: <span>{moment(props.expirationDate).format('DD/MM/YYYY')}</span>
+            </div>
+          </div>
+          <div className="info-container mb-2">
+            <div className="title-container">
               <i className="fa-regular fa-user fa-fw" />
               {t('carriera.proposte_di_tesi.supervisors')}:
             </div>
@@ -66,11 +72,7 @@ function ThesisItem(props) {
           )}
           <Card.Text className="thesis-description">{props.description}</Card.Text>
         </Card.Body>
-        <Card.Footer className="mx-2 px-2 d-flex justify-content-between border-0">
-          <div className="title-container">
-                <i className="fa-regular fa-calendar-clock" />
-                {t('carriera.proposte_di_tesi.expirationDate')}: <span>{moment(props.expirationDate).format('DD/MM/YYYY')}</span>
-              </div>
+        <Card.Footer className="mx-2 px-2 d-flex justify-content-end border-0">
           <Link to={`${props.id}`} style={{ textDecoration: 'none' }}>
             <Button className={`btn-${appliedTheme}`} size="md">
               {t('carriera.proposte_di_tesi.show_more')}

@@ -136,27 +136,6 @@ export default function CustomBadge({ variant, content, type, filters, applyFilt
     );
   };
 
-  const renderStatusBadge = () => {
-    return (
-      <OverlayTrigger
-        key={`${variant}`}
-        delay={{ show: 250, hide: 400 }}
-        overlay={
-          <Tooltip id={`tooltip-${variant}`}>
-            {t('carriera.proposte_di_tesi.expires')}: {moment(content).format('DD/MM/YYYY')}
-          </Tooltip>
-        }
-        placement="bottom"
-      >
-      <div className={`custom-badge badge ${variant}_${appliedTheme} pe-2`}>
-        <div className="custom-badge-icon">{renderIcon()}</div>
-        {renderTranslatedContent()}
-      </div>
-      </OverlayTrigger>
-
-    );
-  };
-
   const renderTruncatedBadge = () => {
     const contentArray = Array.isArray(content) ? content : [content];
     const truncatedContentArray = contentArray.slice(2);
@@ -410,7 +389,7 @@ export default function CustomBadge({ variant, content, type, filters, applyFilt
             return <div className="custom-badge-container">{renderStaticBadge()}</div>;
           case 'status': {
             variant = getStatusBadgeType(content);
-            return <div className="custom-badge-container">{renderStatusBadge()}</div>;
+            return <div className="custom-badge-container">{renderStaticBadge()}</div>;
           }
           default:
             return <div className="custom-badge-container">{renderSimpleBadge()}</div>;
