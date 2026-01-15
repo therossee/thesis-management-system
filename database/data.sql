@@ -6143,23 +6143,38 @@ VALUES
 INSERT INTO
     logged_student (student_id)
 VALUES
-    (320213);
+    (314796);
 
 -- ------------------------------------------------------------
 -- ↓ companies table ↓
 -- ------------------------------------------------------------
 INSERT INTO
-    company (name, address)
+    company (corporate_name)
 VALUES
-    ("Reply S.p.A.", "Via Dante, 14, 10123 Torino TO, Italy"),
-    ("Stellantis N.V.", "Viale Ciro Menotti, 322, 10128 Torino TO, Italy"),
-    ("Comau S.p.A.", "Via Rivalta, 30, 10095 Grugliasco TO, Italy"),
-    ("Leonardo S.p.A.", "Via Giovanni Agnelli, 200, 10135 Torino TO, Italy"),
-    ("Thales Alenia Space Italia S.p.A.", "Via Saccomuro, 24, 10135 Torino TO, Italy"),
-    ("Politecnico di Torino", "Corso Duca degli Abruzzi, 24, 10129 Torino TO, Italy"),
-    ("Pirelli & C. S.p.A.", "Viale Piero e Alberto Pirelli, 25, 20126 Milano MI, Italy"),
-    ("ENI S.p.A.", "Piazza Ezio Vanoni, 1, 20097 San Donato Milanese MI, Italy"),
-    ("IBM Italia S.p.A.", "Via Tolmezzo, 15, 20132 Milano MI, Italy"),
-    ("Accenture S.p.A.", "Via Giovanni Battista Pirelli, 39, 20124 Milano MI, Italy"),
-    ("Istituto Italiano di Tecnologia", "Via Morego, 30, 16163 Genova GE, Italy");
+    ("Reply S.p.A."),
+    ("Stellantis N.V."),
+    ("Comau S.p.A."),
+    ("Leonardo S.p.A."),
+    ("Thales Alenia Space Italia S.p.A."),
+    ("Politecnico di Torino"),
+    ("Pirelli & C. S.p.A."),
+    ("ENI S.p.A."),
+    ("IBM Italia S.p.A."),
+    ("Accenture S.p.A."),
+    ("Istituto Italiano di Tecnologia");
+
+INSERT INTO
+    company_office (company_id, street, city, postal_code, country)
+VALUES
+    (1, "Via Livorno, 60", "Torino", "10144", "Italy"),
+    (2, "Corso G. Agnelli, 200", "Torino", "10135", "Italy"),
+    (3, "Strada delle Cacce, 73", "Torino", "10135", "Italy"),
+    (4, "Via Pier Carlo Boggio, 50", "Torino", "10138", "Italy"),
+    (5, "Via Saccomuro, 24", "Torino", "10135", "Italy"),
+    (6, "Corso Duca degli Abruzzi, 24", "Torino", "10129", "Italy"),
+    (7, "Viale Pirelli, 25", "Milano", "20126", "Italy"),
+    (8, "Piazzale Enrico Mattei, 1", "Roma", "00144", "Italy"),
+    (9, "Via Lorenteggio, 10", "Milano", "20147", "Italy"),
+    (10, "Piazza Gae Aulenti, 5", "Milano", "20154", "Italy"),
+    (11, "Via Morego, 30", "Genoa", "16163", "Italy");
 -- ------------------------------------------------------------
