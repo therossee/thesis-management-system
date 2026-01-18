@@ -189,6 +189,16 @@ const getLastStudentApplication = async (req, res) => {
 
     const app = activeApplication[0];
 
+    // Fetch proposal if exists
+    let proposalData = null;
+    if (app.thesis_proposal_id) {
+      const { ThesisProposal } = require('../models');
+      const proposal = await ThesisProposal.findByPk(app.thesis_proposal_id);
+      if (proposal) {
+        proposalData = proposal.toJSON();
+      }
+    }
+
     // Fetch supervisor and co-supervisors
     const supervisorLinks = await ThesisApplicationSupervisorCoSupervisor.findAll({
       where: { thesis_application_id: app.id },
@@ -214,10 +224,10 @@ const getLastStudentApplication = async (req, res) => {
       id: app.id,
       topic: app.topic,
       supervisor: supervisorData,
-      coSupervisors: coSupervisorsData,
+      co_supervisors: coSupervisorsData, // snake_case!
       company: app.company || null,
-      thesisProposal: app.thesis_proposal || null,
-      submissionDate: app.submission_date.toISOString(),
+      thesis_proposal: proposalData, // snake_case! e usa proposalData
+      submission_date: app.submission_date.toISOString(), // snake_case!
       status: app.status || 'pending',
     };
 

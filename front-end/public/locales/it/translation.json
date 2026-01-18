@@ -132,7 +132,19 @@
             "date_conclusion_confirmation": "Data conferma conclusione",
             "supervisors": "Relatori",
             "your_thesis": "La tua tesi: ",
-            "your_application": "La tua candidatura: "
+            "your_application": "La tua candidatura: ",
+            "progress_application": {
+                "pending": "Inviata",
+                "pending_description": "La tua candidatura è stata inviata e verrà valutata dal docente relatore.",
+                "approved": "Approvata",
+                "approved_description": "La tua candidatura è stata approvata dal docente relatore.",
+                "rejected": "Respinta",
+                "rejected_description": "La tua candidatura è stata respinta dal docente relatore.",
+                "canceled": "Annullata",
+                "canceled_description": "La tua candidatura è stata annullata.",
+                "outcome": "Esito della candidatura",
+                "outcome_description": "Qui visualizzerai l'esito della tua candidatura."
+            }
         }
     },
     "Accedi": "Accedi",

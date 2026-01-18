@@ -41,11 +41,8 @@ moment.locale('it');
  * - "app_status": Renders a badge with the application status icon. Requires a "content". Valid content values are:
  *    - "PENDING"
  *    - "REJECTED"
- *    - "ACCEPTED"
+ *    - "APPROVED"
  *    - "CANCELED"
- *    - "CONCLUSION_REQUESTED"
- *    - "CONCLUSION_ACCEPTED"
- *    - "DONE"
  * @param {object|array<object>!string|array<string>} content - If available, populate the content of the badge. It could be a single object (with 'content' and 'id' attributes) or an array of objects, a single string or an array of strings.
  * If you provide an array, the component will automatically render a tag for every item.
  * @param {type} - Optional. It is used to specify if the badge is a 'reset' badge. If it is, the badge will be rendered as a button with a 'delete' icon at the end and will reset the filter when clicked.
@@ -319,16 +316,10 @@ export default function CustomBadge({ variant, content, type, filters, applyFilt
             return <i className="fa-regular fa-clock fa-lg" />;
           case 'rejected':
             return <i className="fa-regular fa-circle-xmark fa-lg" />;
-          case 'accepted':
+          case 'approved':
             return <i className="fa-regular fa-circle-check fa-lg" />;
           case 'canceled':
             return <i className="fa-regular fa-circle-minus fa-lg" />;
-          case 'conclusion_requested':
-            return <i className="fa-regular fa-file-circle-check fa-lg" />;
-          case 'conclusion_accepted':
-            return <i className="fa-regular fa-thumbs-up fa-lg" />;
-          case 'done':
-            return <i className="fa-regular fa-check-to-slot fa-lg" />;
           default:
             return <i className="fa-regular fa-circle-xmark fa-lg" />;
         }
@@ -357,18 +348,12 @@ export default function CustomBadge({ variant, content, type, filters, applyFilt
         switch (content.toLowerCase()) {
           case 'pending':
             return t('carriera.tesi.pending');
-          case 'accepted':
+          case 'approved':
             return t('carriera.tesi.accepted');
           case 'rejected':
             return t('carriera.tesi.rejected');
           case 'canceled':
             return t('carriera.tesi.canceled');
-          case 'conclusion_requested':
-            return t('carriera.tesi.conclusion_requested');
-          case 'conclusion_accepted':
-            return t('carriera.tesi.conclusion_accepted');
-          case 'done':
-            return t('carriera.tesi.done');
           default:
             return t('carriera.proposta_di_tesi.badge_errato');
         }
@@ -457,17 +442,9 @@ const getApplicationStatusBadgeType = content => {
       return 'warning';
     case 'rejected':
       return 'error';
-    case 'accepted':
+    case 'approved':
       return 'success';
     case 'canceled':
-      return 'error';
-    case 'conclusion_requested':
-      return 'warning';
-    case 'conclusion_accepted':
-      return 'success';
-    case 'done':
-      return 'success';
-    default:
       return 'error';
   }
 };

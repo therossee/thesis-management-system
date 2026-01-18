@@ -1,0 +1,100 @@
+.progress-tracker-container {
+  margin-bottom: 1.5rem;
+  padding: 1rem;
+  background-color: var(--background);
+  border-radius: var(--border-radius);
+  position: relative;
+}
+
+/* Linea tratteggiata verticale */
+.progress-tracker-container::before {
+  content: '';
+  position: absolute;
+  left: 1.675rem;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background-image: linear-gradient(to bottom, var(--gray-500) 50%, transparent 50%);
+  background-size: 2px 8px;
+  background-repeat: repeat-y;
+  z-index: 0;
+}
+
+.progress-step {
+  display: flex;
+  margin-bottom: 1rem;
+  color: var(--primary);
+  position: relative;
+  z-index: 1;
+}
+
+.progress-step.faded {
+  opacity: 0.4;
+}
+
+.progress-step-marker {
+  min-width: 24px;
+  margin-right: 1rem;
+}
+
+.progress-step-circle {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  transition: all 0.3s ease;
+}
+
+.progress-step-circle.pending {
+  border: 2px solid var(--primary-400);
+  background-color: var(--primary-200);
+}
+
+.progress-step-circle.approved {
+  border: 2px solid var(--green-700);
+  background-color: var(--green-200);
+}
+
+.progress-step-circle.rejected {
+  border: 2px solid var(--red-700);
+  background-color: var(--red-200);
+}
+
+.progress-step-circle.canceled {
+  border: 2px solid var(--red-700);
+  background-color: var(--red-200);
+}
+
+.progress-step-circle.inactive {
+  border: 2px solid var(--gray-500);
+  background-color: var(--gray-100);
+}
+
+.progress-step-circle.completed {
+  border: 2px solid var(--primary-200);
+  background-color: var(--background);
+}
+
+.progress-step-content {
+  flex-grow: 1;
+}
+
+.progress-step-title {
+  margin-bottom: 0.4rem;
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-semibold);
+  color: var(--text);
+  transition: all 0.3s ease;
+}
+
+
+
+.progress-step-description {
+  margin-bottom: 0;
+  font-size: var(--font-size-xs);
+  color: var(--text);
+  line-height: 1.4;
+}

@@ -130,7 +130,19 @@
             "date_conclusion_confirmation": "Conclusion confirmation date",
             "supervisors": "Supervisors",
             "your_thesis": "Your thesis: ",
-            "your_application": "Your application: "
+            "your_application": "Your application: ",
+            "progress_application": {
+                "pending": "Submitted",
+                "pending_description": "Your application has been submitted and will be evaluated by the supervising professor.",
+                "approved": "Approved",
+                "approved_description": "Your application has been approved by the supervising professor.",
+                "rejected": "Rejected",
+                "rejected_description": "Your application has been rejected by the supervising professor.",
+                "canceled": "Canceled",
+                "canceled_description": "Your application has been canceled.",
+                "outcome": "Application outcome",
+                "outcome_description": "Here you will see the outcome of your application."
+            }
         }
     },
     "Accedi": "Login",
