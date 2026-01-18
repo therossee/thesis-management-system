@@ -189,7 +189,7 @@ CREATE TABLE IF NOT EXISTS thesis_application (
     student_id VARCHAR(6) NOT NULL,
     thesis_proposal_id INT,
     company_id INT,
-    topic VARCHAR(255) NOT NULL,
+    topic TEXT NOT NULL,
     submission_date DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     status ENUM('pending', 'approved', 'rejected', 'canceled') NOT NULL DEFAULT 'pending',
     FOREIGN KEY (student_id) REFERENCES student(id) ON DELETE RESTRICT, -- RESTRICT policy because why should you delete a student?
@@ -220,7 +220,7 @@ CREATE TABLE IF NOT EXISTS thesis_application_status_history(
 
 CREATE TABLE IF NOT EXISTS thesis(
     id INT AUTO_INCREMENT PRIMARY KEY,
-    topic VARCHAR(255) NOT NULL,
+    topic TEXT NOT NULL,
     company_id INT,
     student_id VARCHAR(6) NOT NULL,
     thesis_application_date DATETIME NOT NULL,

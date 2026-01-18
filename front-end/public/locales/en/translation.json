@@ -133,7 +133,7 @@
             "your_application": "Your application: ",
             "progress_application": {
                 "pending": "Submitted",
-                "pending_description": "Your application has been submitted and will be evaluated by the supervising professor.",
+                "pending_description": "Your application has been submitted and will be evaluated by the supervising professor. You will receive a notification as soon as there are updates.",
                 "approved": "Approved",
                 "approved_description": "Your application has been approved by the supervising professor.",
                 "rejected": "Rejected",

@@ -60,7 +60,7 @@
             "abroad_thesis": "Tesi all'estero",
             "per_page": "Per pagina:",
             "showing": "Risultati da",
-            "to": "a",  
+            "to": "a",
             "of": "di",
             "all_proposals": "Tutte le proposte",
             "course_proposals": "Proposte per il tuo corso di studi",
@@ -106,44 +106,48 @@
         },
         "tesi": {
             "title": "Tesi",
-            "co_supervisors": "Co relatori",
             "section_description": "Sezione dedicata alla gestione della tesi di laurea, con la possibilità di caricare il lavoro finale e monitorare lo stato della valutazione.",
-            "error": "Errore durante il caricamento della tesi attiva",
-            "stato_candidatura": "Stato candidatura",
-            "pending": "In valutazione",
-            "accepted": "Accettata",
-            "rejected": "Respinta",
-            "canceled": "Annullata",
-            "conclusion_requested": "Richiesta conclusione",
-            "conclusion_accepted": "Conclusione accettata",
-            "done": "Completata",
-            "status": "Stato candidatura",
-            "utilities": {
-                "title": "Risorse utili",
-                "copyright": "Informazioni sul diritto d'autore",
-                "template": "Lettera per tesi in azienda/ente: ",
-                "plagiarism": "Come evitare il plagio",
-                "italian_version": "Versione in italiano",
-                "english_version": "Versione in inglese",
-                "plagiarism_link": "https://youtu.be/rFEAPKHMV5U"
-            },
-            "submission_date": "Data richiesta tesi",
-            "date_conclusion_requested": "Data richiesta conclusione",
-            "date_conclusion_confirmation": "Data conferma conclusione",
-            "supervisors": "Relatori",
-            "your_thesis": "La tua tesi: ",
             "your_application": "La tua candidatura: ",
+            "error": "Error while rendering the active thesis",
+            "submission_date": "Data di presentazione",
+            "response_time": "Tempo di risposta",
+            "days": "giorni",
+            "hours": "ore",
+            "status": "Stato corrente",
+            "supervisors": "Relatori",
+            "contacts": {
+                "title": "Contatti",
+                "supervisor": "Relatore",
+                "co_supervisors": "Co-relatori"
+            },
+            "useful_links": {
+                "title": "Link utili",
+                "thesis_regulations": "Regolamento tesi",
+                "faq": "Domande frequenti",
+                "forms": "Modulistica",
+                "guide": "Guide e tutorial"
+            },
             "progress_application": {
-                "pending": "Inviata",
-                "pending_description": "La tua candidatura è stata inviata e verrà valutata dal docente relatore.",
+                "pending": "In fase di valutazione",
+                "pending_description": "La candidatura è stata trasmessa correttamente ed è in fase di revisione da parte del docente relatore. Durante questo periodo, lo studente non ha ancora la possibilità di visualizzare l'esito o il dettaglio del giudizio. Il sistema provvederà a inviare una notifica automatica non appena la procedura di valutazione sarà conclusa.",
+                "outcome": "Esito",
+                "outcome_description": "In questa sezione verrà visualizzato il giudizio definitivo espresso dal docente relatore al termine della fase istruttoria. Lo studente riceverà una comunicazione formale non appena i risultati saranno resi pubblici e disponibili per la consultazione.",
                 "approved": "Approvata",
-                "approved_description": "La tua candidatura è stata approvata dal docente relatore.",
+                "approved_description": "La candidatura è stata valutata positivamente dal docente relatore e risulta approvata. Lo studente è ora abilitato a procedere con gli adempimenti successivi previsti per l'iter di avvio della tesi, seguendo le tempistiche e le modalità indicate dal regolamento.",
                 "rejected": "Respinta",
-                "rejected_description": "La tua candidatura è stata respinta dal docente relatore.",
-                "canceled": "Annullata",
-                "canceled_description": "La tua candidatura è stata annullata.",
-                "outcome": "Esito della candidatura",
-                "outcome_description": "Qui visualizzerai l'esito della tua candidatura."
+                "rejected_description": "Il docente relatore ha espresso parere negativo in merito alla candidatura presentata, che risulta pertanto respinta. Lo studente ha la possibilità di consultare eventuali motivazioni o note integrative inserite dal docente accedendo direttamente alla sezione dello storico delle attività.",
+                "canceled": "Ritirata",
+                "canceled_description": "Hai deciso di ritirare questa candidatura."
+            },
+            "company": {
+                "name": "Azienda",
+                "internship_period": "Periodo di stage",
+                "contact": "Referente aziendale"
+            },
+            "utilities": {
+                "template": "Modulo per tesi in azienda",
+                "italian_version": "Versione italiana",
+                "english_version": "Versione inglese"
             }
         }
     },

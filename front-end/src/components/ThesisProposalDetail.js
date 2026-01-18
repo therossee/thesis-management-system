@@ -59,7 +59,7 @@ function ThesisProposalDetail(props) {
         id: id,
         topic: topic,
       },
-      topic: topic,
+      topic: topic + "\n" + description,
       company: props.thesisProposal.company || null,
       supervisor: props.thesisProposal.supervisor,
       coSupervisors: internalCoSupervisors,
