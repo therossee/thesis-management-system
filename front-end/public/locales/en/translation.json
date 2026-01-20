@@ -104,7 +104,8 @@
             "successo": "Application submitted successfully!",
             "successo_content": "You can check the status of your application on the page related to your thesis.",
             "errore": "Error while submitting the application.",
-            "errore_content": "An error occurred while sending the application. Please try again later."
+            "errore_content": "An error occurred while sending the application. Please try again later.",
+            "modifica_proposta": "Modify this proposal"
         },
         "tesi": {
             "title": "Thesis",

@@ -12,6 +12,7 @@ import CustomBlock from './CustomBlock';
 import { t } from 'i18next';
 import SupervisorSelect from './SupervisorSelect';
 import CompanySelect from './CompanySelect';
+import '../styles/custom-textarea.css';
 
 export default function ThesisApplicationForm({ proposalId }) {
     const { setBodyDataLoading } = useContext(BodyDataLoadingContext);
@@ -179,7 +180,7 @@ export default function ThesisApplicationForm({ proposalId }) {
                                         <CustomBlock icon="book-open" title="carriera.proposte_di_tesi.topic"/>
                                         <textarea
                                             id="topic"
-                                            className={`form-control ${errors.topic ? 'is-invalid' : ''}`}
+                                            className={`form-control textarea-themed ${errors.topic ? 'is-invalid' : ''}`}
                                             placeholder={t('carriera.richiesta_tesi.topic_placeholder')}
                                             value={topic}
                                             onChange={(e) => {
@@ -222,19 +223,18 @@ export default function ThesisApplicationForm({ proposalId }) {
                                         </h3>
                                         <div className="d-flex flex-column gap-2 mb-3">
                                             <div className="d-flex align-items-start">
-                                                <i className="fa-solid fa-1 fa-sm pe-3 pt-1" />
-                                                <span>{t('carriera.richiesta_tesi.step_1')}</span>
+                                                
+                                                <p><i className="fa-solid fa-1 fa-sm pe-3 pt-1" />{t('carriera.richiesta_tesi.step_1')}</p>
                                             </div>
                                             <div className="d-flex align-items-start">
-                                                <i className="fa-solid fa-2 fa-sm pe-3 pt-1" />
-                                                <span>{t('carriera.richiesta_tesi.step_2')}</span>
+                                                
+                                                <p><i className="fa-solid fa-2 fa-sm pe-3 pt-1" />{t('carriera.richiesta_tesi.step_2')}</p>
                                             </div>
                                             <div className="d-flex align-items-start">
-                                                <i className="fa-solid fa-3 fa-sm pe-3 pt-1" />
-                                                <span>{t('carriera.richiesta_tesi.step_3')}</span>
+                                                <p><i className="fa-solid fa-3 fa-sm pe-3 pt-1" />{t('carriera.richiesta_tesi.step_3')}</p>
                                             </div>
                                         </div>
-                                        <hr />
+                                        
                                         <div className="d-flex gap-2 justify-content-end">
                                             <Button 
                                                 className={`btn-outlined-${appliedTheme} mb-3`} size="md"

@@ -104,7 +104,8 @@
             "successo": "Candidatura inviata con successo!",
             "successo_content": "Puoi monitorare lo stato della tua candidatura nella pagina relativa alla tua tesi.",
             "errore": "Errore durante l'invio della candidatura.",
-            "errore_content": "C'è stato un errore nell'invio della candidatura. Riprova più tardi."
+            "errore_content": "C'è stato un errore nell'invio della candidatura. Riprova più tardi.",
+            "modifica_proposta": "Modifica questa proposta"
         },
         "tesi": {
             "title": "Tesi",

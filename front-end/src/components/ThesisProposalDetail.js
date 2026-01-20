@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useContext, useState } from 'react';
-
+import { useNavigate } from 'react-router-dom';
 import { Card, Col, Row, Button, Modal, Toast } from 'react-bootstrap';
 import { useTranslation } from 'react-i18next';
 import Linkify from 'react-linkify';
@@ -206,7 +206,10 @@ function ThesisProposalDetail(props) {
                   </CustomBlock>
                 </div>
               )}
-              <ApplicationButton setShowModal={setShowModal} isEligible={isEligible} />
+              <div className="d-flex gap-2">      
+                <ModifyProposalButton proposalId={id} isEligible={isEligible} />
+                <ApplicationButton setShowModal={setShowModal} isEligible={isEligible} />
+              </div>
             </div>
           </Card.Body>
         </Card>
@@ -231,8 +234,24 @@ function ApplicationButton(props) {
   const setShowModal = props.setShowModal;
   return (
     <Button className={`btn-${appliedTheme} mb-3`} size="md" onClick={() => setShowModal(true)} disabled={!isEligible}>
+      <i className="fa-regular fa-arrow-up-right-from-square"></i>
       {t('carriera.proposta_di_tesi.candidatura')}
     </Button>);
+}
+
+function ModifyProposalButton({ proposalId, isEligible }) {
+  const { theme } = useContext(ThemeContext);
+  const appliedTheme = theme === 'auto' ? getSystemTheme() : theme;
+  const { t } = useTranslation();
+  const navigate = useNavigate();
+  return (
+    <Button className={`btn-${appliedTheme} mb-3`} size="md" disabled={!isEligible}
+      onClick={() => navigate(`/carriera/richiesta_tesi/${proposalId}`)}
+    >
+      <i className="fa-regular fa-pen-to-square"></i>
+      {t('carriera.proposta_di_tesi.modifica_proposta')}
+    </Button>
+  );
 }
 
 function ProposalModal({ show, handleClose, sendApplication }) {
