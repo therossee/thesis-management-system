@@ -37,25 +37,23 @@ export default function Carriera() {
             description={t('carriera.apply.description')}
             servicePath={'/carriera'}
           />
-          <BaseCard
+          {/*<BaseCard
             icon={<i className="fa-solid fa-graduation-cap fa-lg pe-2" />}
             service={t('carriera.laurea_ed_esame_finale.title')}
             description={t('carriera.laurea_ed_esame_finale.description')}
             servicePath={'/carriera/laurea_ed_esame_finale'}
+          />*/}
+          <BaseCard
+            icon={<i className="fa-solid fa-typewriter fa-lg pe-2" />}
+            service={t('carriera.tesi.title')}
+            description={t('carriera.tesi.section_description')}
+            servicePath={'/carriera/tesi'}
           />
           <BaseCard
             icon={<i className="fa-solid fa-lightbulb-exclamation-on fa-lg pe-2" />}
             service={t('carriera.proposte_di_tesi.title')}
             description={t('carriera.proposte_di_tesi.section_description')}
             servicePath={'/carriera/proposte_di_tesi'}
-          />
-        </Row>
-        <Row>
-          <BaseCard
-            icon={<i className="fa-solid fa-typewriter fa-lg pe-2" />}
-            service={t('carriera.tesi.title')}
-            description={t('carriera.tesi.section_description')}
-            servicePath={'/carriera/tesi'}
           />
         </Row>
       </Container>

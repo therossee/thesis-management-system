@@ -179,8 +179,10 @@
                 "supervisor": "Supervisor",
                 "co_supervisors": "Co-supervisors"
             },
-            "success_thesis_started": "Thesis started successfully! You can monitor the status of your thesis on this page.",
+            "success_thesis_started": "Thesis started successfully!",
+            "success_thesis_started_content": "You have successfully started your thesis. You can now proceed with the next steps as indicated by your supervisor.",
             "error_thesis_started": "Error starting thesis.",
+            "error_thesis_started_content": "An error occurred while starting the thesis. Please try again later.",
             "cancel_application": "Cancel application",
             "success_application_canceled": "Application canceled successfully!",
             "error_application_canceled": "Error canceling application.",

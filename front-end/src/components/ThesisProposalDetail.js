@@ -54,17 +54,18 @@ function ThesisProposalDetail(props) {
 
   const sendApplication = () => {
     if (sending) return;
-    setSending(true);
-    API.createThesisApplication({
-      thesisProposal: {
+    const applicationData =       {thesisProposal: {
         id: id,
         topic: topic,
       },
       topic: topic + "\n" + description,
       company: props.thesisProposal.company || null,
       supervisor: props.thesisProposal.supervisor,
-      coSupervisors: internalCoSupervisors,
-    })
+      coSupervisors: internalCoSupervisors
+    };
+    console.log(applicationData);
+    setSending(true);
+    API.createThesisApplication(applicationData)
       .then(() => {
         setIsEligible(false);
         setSuccess(true);

@@ -25,7 +25,7 @@ const startThesis = (setShowToast, setSuccess) => {
     supervisor: thesisApplication.supervisor,
     coSupervisors: thesisApplication.coSupervisors,
   })
-    .then((data) => {
+    .then(() => {
       setSuccess(true);
       setShowToast(true);
       
@@ -68,7 +68,7 @@ useEffect(() => {
     setBodyDataLoading(false);
   });
 
-}, [setBodyDataLoading, loggedStudent]);
+}, [setBodyDataLoading, loggedStudent, refreshTrigger]);
 
     const renderContent = () => {
       if (isLoading) {

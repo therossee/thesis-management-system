@@ -52,8 +52,8 @@ const createThesisApplication = async (req, res) => {
     // Fetch Co-Supervisors Data
 
     const coSupervisorsData = [];
-    if (applicationData.coSupervisors) {
-      for (const coSup of applicationData.coSupervisors) {
+    if (applicationData.co_supervisors) {
+      for (const coSup of applicationData.co_supervisors) {
         const coSupervisor = await Teacher.findByPk(coSup.id, { attributes: selectTeacherAttributes(true) });
         if (coSupervisor) coSupervisorsData.push(coSupervisor);
       }
@@ -90,7 +90,7 @@ const createThesisApplication = async (req, res) => {
     }
 
     // Link Supervisor and Co-Supervisors
-    const supervisors = [applicationData.supervisor, ...(applicationData.coSupervisors || [])];
+    const supervisors = [applicationData.supervisor, ...(applicationData.co_supervisors || [])];
     for (const supervisor of supervisors) {
       await ThesisApplicationSupervisorCoSupervisor.create({
         thesis_application_id: newApplication.id,
