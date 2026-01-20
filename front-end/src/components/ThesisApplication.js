@@ -24,7 +24,7 @@ export default function ThesisApplication({ thesisApplication, startThesis }) {
   const [note, setNote] = useState('');
   const { theme } = useContext(ThemeContext);
   const appliedTheme = theme === 'auto' ? getSystemTheme() : theme;
-
+const visible = thesisApplication.status !== 'canceled' && thesisApplication.status !== 'rejected';
   const { t } = useTranslation();
 
   useEffect(() => {
@@ -155,7 +155,7 @@ export default function ThesisApplication({ thesisApplication, startThesis }) {
                   statusHistory={statusHistory}
                 />
                 <div className="mt-3 d-flex justify-content-end gap-3">
-                  {thesisApplication.status !== 'canceled' && (
+                  {visible && (
                     <Button
                       variant="outline-danger"
                       size="md"
