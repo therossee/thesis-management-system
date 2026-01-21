@@ -177,7 +177,9 @@ export default function ThesisApplicationForm({ proposalId }) {
                                             <i className="fa-solid fa-file-circle-plus fa-lg pe-2" />
                                             {t('carriera.richiesta_tesi.title')}
                                         </h3>
-                                        <CustomBlock icon="book-open" title="carriera.proposte_di_tesi.topic"/>
+                                        <CustomBlock icon="book-open" title="carriera.proposte_di_tesi.topic" >
+                                            <p></p>
+                                        </CustomBlock>
                                         <textarea
                                             id="topic"
                                             className={`form-control textarea-themed ${errors.topic ? 'is-invalid' : ''}`}
@@ -365,10 +367,6 @@ function FormModal({ show, handleClose, sendApplication }) {
 
 ThesisApplicationForm.propTypes = {
     proposalId: PropTypes.number,
-};
-
-ThesisApplicationForm.defaultProps = {
-    proposalId: null,
 };
 
 FormModal.propTypes = {

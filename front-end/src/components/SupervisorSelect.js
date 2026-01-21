@@ -90,11 +90,7 @@ CustomSingleValue.propTypes = {
 };
 
 SupervisorSelect.propTypes = {
-    selected: PropTypes.array.isRequired,
+    selected: PropTypes.array,
     setSelected: PropTypes.func.isRequired,
     isMulti: PropTypes.bool
-};
-
-SupervisorSelect.defaultProps = {
-    isMulti: false
 };

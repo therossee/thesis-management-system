@@ -67,13 +67,8 @@ CustomSingleValue.propTypes = {
 };
 
 CompanySelect.propTypes = {
-    selected: PropTypes.array.isRequired,
+    selected: PropTypes.array,
     setSelected: PropTypes.func.isRequired,
     isMulti: PropTypes.bool,
     placeholder: PropTypes.string,
-};
-
-CompanySelect.defaultProps = {
-    isMulti: false,
-    placeholder: '',
 };
