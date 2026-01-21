@@ -1,7 +1,7 @@
 /**------------------------------------------------------------------------------------------------------------------------------------
  * ?                                             Portale-PoliTO MySQL Schema (MySQL 8.4.3)
  * @createdOn       :   09 November 2024
- * @lastModifiedOn  :   23 January 2025
+ * @lastModifiedOn  :   16 January 2026
  * @thesis_proposaldescription     :   SQL Schema for the Portale-PoliTO Database. Designed for MySQL 8.4.3
  * @note            :   [1681] Integer display width is deprecated and will be removed in a future release.
                         Therefore, we have removed the display width from the INT data type in the provided original schema as well.
@@ -27,7 +27,20 @@ DROP TABLE IF EXISTS student;
 DROP TABLE IF EXISTS degree_programme;
 DROP TABLE IF EXISTS degree_programme_container;
 DROP TABLE IF EXISTS collegio;
+DROP TABLE IF EXISTS thesis_conclusion_supervisor_cosupervisor;
+DROP TABLE IF EXISTS thesis_conclusion_keyword;
+DROP TABLE IF EXISTS thesis_conclusion;
+DROP TABLE IF EXISTS embargo;
+DROP TABLE IF EXISTS embargo_motivation;
+DROP TABLE IF EXISTS license;
+DROP TABLE IF EXISTS thesis_supervisor_cosupervisor;
+DROP TABLE IF EXISTS thesis;
+DROP TABLE IF EXISTS thesis_application_status_history;
+DROP TABLE IF EXISTS thesis_application_supervisor_cosupervisor;
 DROP TABLE IF EXISTS thesis_application;
+DROP TABLE IF EXISTS company_office;
+DROP TABLE IF EXISTS company;
+
 
 -- Table for storing collegi data
 CREATE TABLE IF NOT EXISTS collegio (
