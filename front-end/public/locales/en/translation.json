@@ -220,14 +220,14 @@
             "error": "Error while submitting the request.",
             "error_content": "An error occurred while submitting the request. Please try again later.",
             "chars_left": " characters remaining",
-            "max_chars_exceeded": "You have exceeded the limit of {count} characters",
             "topic_required": "The thesis topic is required",
             "supervisor_required": "The supervisor is required",
             "submit": "Submit",
             "reset": "Reset form",
             "not_eligible": "Not Eligible",
             "not_eligible_message": "You are not eligible to request a thesis at this time. Please verify that you have met all the necessary requirements.",
-            "go_back": "Go Back"
+            "go_back": "Go Back",
+            "too_long": "The thesis topic exceeds the allowed character limit"
         }
     },
     "Accedi": "Login",

@@ -16,7 +16,7 @@ import '../styles/custom-textarea.css';
 
 export default function ThesisApplicationForm({ proposalId }) {
     const { setBodyDataLoading } = useContext(BodyDataLoadingContext);
-    const [ teachers, setTeachers ] = useState([]);
+    const [teachers, setTeachers] = useState([]);
     const [companies, setCompanies] = useState([]);
     const [selectedSupervisor, setSelectedSupervisor] = useState(null);
     const [selectedCoSupervisors, setSelectedCoSupervisors] = useState([]);
@@ -42,7 +42,7 @@ export default function ThesisApplicationForm({ proposalId }) {
     useEffect(() => {
         setBodyDataLoading(true);
         setIsLoading(true);
-        
+
         Promise.all([
             API.getThesisProposalsTeachers()
                 .then((teachers) => {
@@ -61,20 +61,20 @@ export default function ThesisApplicationForm({ proposalId }) {
                 .catch((error) => {
                     console.error('Error fetching companies:', error);
                     return [];
-                })   
+                })
         ]).then(([teachers, companies]) => {
             if (proposalId !== null && proposalId !== undefined) {
                 API.getThesisProposalById(proposalId)
                     .then((proposal) => {
                         console.log(proposal);
                         setTopic(proposal.topic || '');
-                        
+
                         if (proposal.supervisor) {
                             const supervisor = teachers.find(t => t.id === proposal.supervisor.id);
                             if (supervisor) {
-                                setSelectedSupervisor({ 
-                                    value: supervisor.id, 
-                                    label: `${supervisor.lastName} ${supervisor.firstName}` 
+                                setSelectedSupervisor({
+                                    value: supervisor.id,
+                                    label: `${supervisor.lastName} ${supervisor.firstName}`
                                 });
                             }
                         }
@@ -82,22 +82,22 @@ export default function ThesisApplicationForm({ proposalId }) {
                             const coSupOptions = proposal.internalCoSupervisors.map(coSup => {
                                 const teacher = teachers.find(t => t.id === coSup.id);
                                 if (teacher) {
-                                    return { 
-                                        value: teacher.id, 
-                                        label: `${teacher.lastName} ${teacher.firstName}` 
+                                    return {
+                                        value: teacher.id,
+                                        label: `${teacher.lastName} ${teacher.firstName}`
                                     };
                                 }
                                 return null;
                             }).filter(option => option !== null);
                             setSelectedCoSupervisors(coSupOptions);
                         }
-                        
+
                         if (proposal.company) {
                             const company = companies.find(c => c.id === proposal.company.id);
                             if (company) {
-                                setSelectedCompany({ 
-                                    value: company.id, 
-                                    label: company.corporateName 
+                                setSelectedCompany({
+                                    value: company.id,
+                                    label: company.corporateName
                                 });
                             }
                         }
@@ -118,13 +118,13 @@ export default function ThesisApplicationForm({ proposalId }) {
 
     const handleSubmit = () => {
         const newErrors = {
-            topic: !topic || topic.trim() === '',
+            topic: !topic || topic.trim() === '' || charCount > maxCharCount,
             supervisor: !selectedSupervisor
         };
-        
+
         setErrors(newErrors);
         setShowModal(false);
-        
+
         if (!newErrors.topic && !newErrors.supervisor && charCount <= maxCharCount) {
             API.createThesisApplication({
                 topic,
@@ -132,20 +132,20 @@ export default function ThesisApplicationForm({ proposalId }) {
                 coSupervisors: selectedCoSupervisors.map(coSup => teachers.find(teacher => teacher.id === coSup.value)).filter(Boolean),
                 company: selectedCompany ? companies.find(company => company.id === selectedCompany.value) : null
             })
-            .then(() => {
-                setShowToast(true);
-                setSuccess(true);
-                
-                setTimeout(() => {
-                    navigate('/carriera/tesi');
-                }, 5000);
-            })
-            .catch((error) => {
-                console.error('Error submitting thesis application:', error);
-                // Handle submission error (e.g., show an error message)
-                setSuccess(false);
-                setShowToast(true);
-            });
+                .then(() => {
+                    setShowToast(true);
+                    setSuccess(true);
+
+                    setTimeout(() => {
+                        navigate('/carriera/tesi');
+                    }, 5000);
+                })
+                .catch((error) => {
+                    console.error('Error submitting thesis application:', error);
+                    // Handle submission error (e.g., show an error message)
+                    setSuccess(false);
+                    setShowToast(true);
+                });
         }
     };
 
@@ -157,44 +157,44 @@ export default function ThesisApplicationForm({ proposalId }) {
             ) : (
                 <>
 
-      <div className="custom-toast-wrapper">
-        <Toast
-          onClose={() => setShowToast(false)}
-          show={showToast}
-          delay={5000}
-          autohide
-          className={`custom-toast ${success ? 'custom-toast--success' : 'custom-toast--error'}`}
-        >
-          <div className="d-flex align-items-start gap-2 w-100">
-            <span className="custom-toast__icon">
-              <i
-                className={success ? 'fa-regular fa-circle-check' : 'fa-regular fa-circle-xmark'}
-                aria-hidden="true"
-              />
-            </span>
-            <div className="custom-toast__content">
-              <strong className="custom-toast__title">
-                {success
-                  ? t('carriera.richiesta_tesi.success')
-                  : t('carriera.richiesta_tesi.error')}
-              </strong>
-              <p className="custom-toast__message mb-0">
-                {success
-                  ? t('carriera.richiesta_tesi.success_content')
-                  : t('carriera.richiesta_tesi.error_content')}
-              </p>
-            </div>
-            <button
-              type="button"
-              className="custom-toast__close"
-              onClick={() => setShowToast(false)}
-              aria-label="Close"
-            >
-              <i className="fa-solid fa-xmark" />
-            </button>
-          </div>
-        </Toast>
-        </div>
+                    <div className="custom-toast-wrapper">
+                        <Toast
+                            onClose={() => setShowToast(false)}
+                            show={showToast}
+                            delay={5000}
+                            autohide
+                            className={`custom-toast ${success ? 'custom-toast--success' : 'custom-toast--error'}`}
+                        >
+                            <div className="d-flex align-items-start gap-2 w-100">
+                                <span className="custom-toast__icon">
+                                    <i
+                                        className={success ? 'fa-regular fa-circle-check' : 'fa-regular fa-circle-xmark'}
+                                        aria-hidden="true"
+                                    />
+                                </span>
+                                <div className="custom-toast__content">
+                                    <strong className="custom-toast__title">
+                                        {success
+                                            ? t('carriera.richiesta_tesi.success')
+                                            : t('carriera.richiesta_tesi.error')}
+                                    </strong>
+                                    <p className="custom-toast__message mb-0">
+                                        {success
+                                            ? t('carriera.richiesta_tesi.success_content')
+                                            : t('carriera.richiesta_tesi.error_content')}
+                                    </p>
+                                </div>
+                                <button
+                                    type="button"
+                                    className="custom-toast__close"
+                                    onClick={() => setShowToast(false)}
+                                    aria-label="Close"
+                                >
+                                    <i className="fa-solid fa-xmark" />
+                                </button>
+                            </div>
+                        </Toast>
+                    </div>
                     <div className="proposals-container">
                         <Row className="mb-3">
                             <Col md={8} className="mb-3">
@@ -221,17 +221,17 @@ export default function ThesisApplicationForm({ proposalId }) {
                                             rows="4"
                                             style={{ resize: 'none' }}
                                         />
-                                        {errors.topic && (
-                                            <div className="invalid-feedback d-block">
-                                                {t('carriera.richiesta_tesi.topic_required')}
-                                            </div>
-                                        )}
-                                        <div className="text-end">
-                                            <FormText className={(maxCharCount - charCount) < 150 ? 'text-danger' : ''}>
+                                        <div className="d-flex justify-content-between align-items-center mt-2 flex-nowrap">
+                                            {errors.topic && (
+                                                <div className="invalid-feedback d-block">
+                                                    {(maxCharCount < charCount) ? (t('carriera.richiesta_tesi.too_long')) : (t('carriera.richiesta_tesi.topic_required'))}
+                                                </div>
+                                            )}
+                                            <FormText className={`ms-auto text-nowrap ${(maxCharCount - charCount) < 150 ? 'text-danger' : ''}`}>
                                                 {maxCharCount - charCount} {t('carriera.richiesta_tesi.chars_left', { count: charCount, max: maxCharCount })}
                                             </FormText>
                                         </div>
-                                    </Card.Body> 
+                                    </Card.Body>
                                 </Card>
 
                                 <Card className="roundCard py-2" style={{ marginTop: '10px' }}>
@@ -252,20 +252,20 @@ export default function ThesisApplicationForm({ proposalId }) {
                                         </h3>
                                         <div className="d-flex flex-column mb-3">
                                             <div className="d-flex align-items-start mb-2">
-                                                
+
                                                 <p className="mb-0"><i className="fa-solid fa-1 fa-sm pe-3 pt-1" />{t('carriera.richiesta_tesi.step_1')}</p>
                                             </div>
                                             <div className="d-flex align-items-start mb-2">
-                                                
+
                                                 <p className="mb-0"><i className="fa-solid fa-2 fa-sm pe-3 pt-1" />{t('carriera.richiesta_tesi.step_2')}</p>
                                             </div>
                                             <div className="d-flex align-items-start mb-2">
                                                 <p className="mb-0"><i className="fa-solid fa-3 fa-sm pe-3 pt-1" />{t('carriera.richiesta_tesi.step_3')}</p>
                                             </div>
                                         </div>
-                                        
+
                                         <div className="d-flex gap-2 justify-content-end">
-                                            <Button 
+                                            <Button
                                                 className={`btn-outlined-${appliedTheme} mb-3`} size="md"
                                                 onClick={() => {
                                                     setTopic('');
@@ -357,39 +357,39 @@ export default function ThesisApplicationForm({ proposalId }) {
 }
 
 function FormModal({ show, handleClose, sendApplication }) {
-  const { t } = useTranslation();
-  const { theme } = useContext(ThemeContext);
-  const appliedTheme = theme === 'auto' ? getSystemTheme() : theme;
+    const { t } = useTranslation();
+    const { theme } = useContext(ThemeContext);
+    const appliedTheme = theme === 'auto' ? getSystemTheme() : theme;
 
 
-  return (
-    <Modal
-      show={show}
-      onHide={handleClose}
-      contentClassName="modal-content"
-      backdropClassName="modal-overlay"
-      centered
-    >
-      <Modal.Header closeButton={true} className="modal-header">
-        <Modal.Title className="modal-title">
-          <i className="fa-regular fa-circle-exclamation" />
-          {` `}{t('carriera.proposta_di_tesi.candidatura')}
-        </Modal.Title>
-      </Modal.Header>
-      <Modal.Body className="modal-body">
-        {t('carriera.proposta_di_tesi.modal_contenuto')}
-      </Modal.Body>
-      <Modal.Footer className="modal-footer">
-        <Button className="modal-cancel mb-3" size="md" onClick={handleClose}>
-          {t('carriera.proposta_di_tesi.chiudi')}
-        </Button>
-        <Button className="modal-confirm mb-3" size="md" onClick={() => sendApplication()}>
-          <i className="fa-regular fa-arrow-up-right-from-square"></i>
-          {t('carriera.proposta_di_tesi.prosegui')}
-        </Button>
-      </Modal.Footer>
-    </Modal>
-  );
+    return (
+        <Modal
+            show={show}
+            onHide={handleClose}
+            contentClassName="modal-content"
+            backdropClassName="modal-overlay"
+            centered
+        >
+            <Modal.Header closeButton={true} className="modal-header">
+                <Modal.Title className="modal-title">
+                    <i className="fa-regular fa-circle-exclamation" />
+                    {` `}{t('carriera.proposta_di_tesi.candidatura')}
+                </Modal.Title>
+            </Modal.Header>
+            <Modal.Body className="modal-body">
+                {t('carriera.proposta_di_tesi.modal_contenuto')}
+            </Modal.Body>
+            <Modal.Footer className="modal-footer">
+                <Button className="modal-cancel mb-3" size="md" onClick={handleClose}>
+                    {t('carriera.proposta_di_tesi.chiudi')}
+                </Button>
+                <Button className="modal-confirm mb-3" size="md" onClick={() => sendApplication()}>
+                    <i className="fa-regular fa-arrow-up-right-from-square"></i>
+                    {t('carriera.proposta_di_tesi.prosegui')}
+                </Button>
+            </Modal.Footer>
+        </Modal>
+    );
 }
 
 ThesisApplicationForm.propTypes = {

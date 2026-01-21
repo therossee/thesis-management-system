@@ -232,7 +232,8 @@
             "reset": "Resetta il form",
             "not_eligible": "Non idoneo",
             "not_eligible_message": "Non sei idoneo per richiedere una tesi in questo momento. Verifica di aver soddisfatto tutti i requisiti necessari.",
-            "go_back": "Torna indietro"
+            "go_back": "Torna indietro",
+            "too_long": "L'argomento della tesi supera il limite di caratteri consentito"
         }
     },
     "Accedi": "Accedi",
