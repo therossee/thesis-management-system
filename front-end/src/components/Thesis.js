@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 
 import { Card, Col, Row } from 'react-bootstrap';
 import { useTranslation } from 'react-i18next';
@@ -19,9 +19,7 @@ export default function Thesis(props) {
   const [isLoading, setIsLoading] = useState(false);
   const supervisors = [data.supervisor, ...data.coSupervisors];
   const activeStep = thesis ? thesis.thesisStatus : thesisApplication.status;
-  const applicationStatusHistory = thesisApplication
-    ? thesisApplication.statusHistory
-    : thesis.applicationStatusHistory;
+  const [appStatusHistory, setAppStatusHistory] = useState(thesis ? thesis.applicationStatusHistory : []);
   const modalTitle = thesis ? 'carriera.tesi.modal_cancel.title' : 'carriera.tesi.cancel_application';
   const modalBody = thesis ? 'carriera.tesi.modal_cancel.body' : 'carriera.tesi.cancel_application_content';
   const modalConfirmText = thesis ? 'carriera.tesi.modal_cancel.confirm_text' : 'carriera.tesi.confirm_cancel';
@@ -41,6 +39,22 @@ export default function Thesis(props) {
       });
   };
 
+  useEffect(() => {
+    setIsLoading(true);
+    if(thesis) 
+      return;
+    API.getStatusHistoryApplication(data.id)
+      .then(history => {
+        setAppStatusHistory(history);
+      })
+      .catch(error => {
+        console.error('Error fetching thesis application status history:', error);
+      })
+      .finally(() => {
+        setIsLoading(false);
+      });
+  }, [thesis, thesisApplication]);
+
   if (isLoading) {
     return <LoadingModal show={isLoading} onHide={() => setIsLoading(false)} />;
   }
@@ -49,7 +63,7 @@ export default function Thesis(props) {
       <div className="proposals-container">
         <Row className="mb-3">
           <Col md={4} lg={4}>
-            <Timeline activeStep={activeStep} statusHistory={applicationStatusHistory} />
+            <Timeline activeStep={activeStep} statusHistory={appStatusHistory} />
           </Col>
           <Col md={8} lg={8}>
             <Card className="mb-3 roundCard py-2 ">
