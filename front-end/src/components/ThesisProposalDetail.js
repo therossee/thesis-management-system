@@ -219,7 +219,7 @@ function ThesisProposalDetail(props) {
                   </div>
                 )}
                 <div className="d-flex gap-2">
-                  <ApplicationButton setShowModal={setShowModal} isEligible={isEligible} />
+                  <ApplicationButton setShowModal={setShowModal} isEligible={isEligible && props.isAvailable} />
                 </div>
               </div>
             </Card.Body>
@@ -297,6 +297,7 @@ ThesisProposalDetail.propTypes = {
     keywords: PropTypes.array,
     types: PropTypes.array,
   }).isRequired,
+  available: PropTypes.bool.isRequired,
 };
 
 ApplicationButton.propTypes = {

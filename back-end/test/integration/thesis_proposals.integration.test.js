@@ -28,9 +28,9 @@ describe('GET /api/thesis-proposals', () => {
     expect(response.body).toHaveProperty('thesisProposals');
     expect(response.body).toHaveProperty('currentPage');
     expect(response.body).toHaveProperty('totalPages');
-    expect(response.body.count).toEqual(7);
+    expect(response.body.count).toEqual(6);
     expect(response.body.thesisProposals).toBeInstanceOf(Array);
-    expect(response.body.thesisProposals.length).toEqual(7);
+    expect(response.body.thesisProposals.length).toEqual(6);
     expect(response.body.currentPage).toEqual(1);
     expect(response.body.totalPages).toEqual(1);
     let previousId = null;
@@ -49,7 +49,7 @@ describe('GET /api/thesis-proposals', () => {
   test('Should filter thesis proposals by search', async () => {
     const response = await request(app).get('/api/thesis-proposals').query({ search: 'descrizione' });
     expect(response.status).toBe(200);
-    expect(response.body.count).toBe(7);
+    expect(response.body.count).toBe(6);
     response.body.thesisProposals.forEach(proposal => {
       const topic = proposal.topic.toLowerCase();
       const description = proposal.description.toLowerCase();
@@ -60,7 +60,7 @@ describe('GET /api/thesis-proposals', () => {
   test('Should filter thesis proposals by isInternal', async () => {
     const response = await request(app).get('/api/thesis-proposals').query({ isInternal: 'true' });
     expect(response.status).toBe(200);
-    expect(response.body.count).toBe(4);
+    expect(response.body.count).toBe(3);
     response.body.thesisProposals.forEach(proposal => {
       expect(proposal.isInternal).toBe(true);
     });
@@ -172,9 +172,9 @@ describe('GET /api/thesis-proposals/targeted', () => {
     expect(response.body).toHaveProperty('thesisProposals');
     expect(response.body).toHaveProperty('currentPage');
     expect(response.body).toHaveProperty('totalPages');
-    expect(response.body.count).toEqual(5);
+    expect(response.body.count).toEqual(4);
     expect(response.body.thesisProposals).toBeInstanceOf(Array);
-    expect(response.body.thesisProposals.length).toEqual(5);
+    expect(response.body.thesisProposals.length).toEqual(4);
     expect(response.body.currentPage).toEqual(1);
     expect(response.body.totalPages).toEqual(1);
   });
@@ -184,7 +184,7 @@ describe('GET /api/thesis-proposals/targeted', () => {
       .get('/api/thesis-proposals/targeted')
       .query({ lang: 'en', search: 'description' });
     expect(response.status).toBe(200);
-    expect(response.body.count).toBe(5);
+    expect(response.body.count).toBe(4);
     response.body.thesisProposals.forEach(proposal => {
       const topic = proposal.topic.toLowerCase();
       const description = proposal.description.toLowerCase();
@@ -195,7 +195,7 @@ describe('GET /api/thesis-proposals/targeted', () => {
   test('Should filter targeted thesis proposals by isInternal', async () => {
     const response = await request(app).get('/api/thesis-proposals/targeted').query({ isInternal: 'true' });
     expect(response.status).toBe(200);
-    expect(response.body.count).toBe(4);
+    expect(response.body.count).toBe(3);
     response.body.thesisProposals.forEach(proposal => {
       expect(proposal.isInternal).toBe(true);
     });
@@ -451,6 +451,26 @@ describe('GET /api/thesis-proposals/:thesisProposalId', () => {
   test('Should return a 404 error if the thesis proposal does not exist', async () => {
     const thesisProposalId = 100;
     const response = await request(app).get(`/api/thesis-proposals/${thesisProposalId}`);
+    expect(response.status).toBe(404);
+    expect(response.body).toBeInstanceOf(Object);
+    expect(response.body).toHaveProperty('error');
+    expect(response.body.error).toEqual('Thesis proposal not found');
+  });
+});
+
+describe('GET /api/thesis-proposals/:thesisProposalId/availability', () => {
+  test('Should return the availability of the thesis proposal', async () => {
+    const thesisProposalId = 12946;
+    const response = await request(app).get(`/api/thesis-proposals/${thesisProposalId}/availability`);
+    expect(response.status).toBe(200);
+    expect(response.body).toBeInstanceOf(Object);
+    expect(response.body).toHaveProperty('available');
+    expect(typeof response.body.available).toBe('boolean');
+  });
+
+  test('Should return a 404 error if the thesis proposal does not exist', async () => {
+    const thesisProposalId = 100;
+    const response = await request(app).get(`/api/thesis-proposals/${thesisProposalId}/availability`);
     expect(response.status).toBe(404);
     expect(response.body).toBeInstanceOf(Object);
     expect(response.body).toHaveProperty('error');

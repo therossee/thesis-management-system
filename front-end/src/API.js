@@ -108,6 +108,15 @@ async function getThesisProposalById(id, lang) {
   }
 }
 
+async function getProposalAvailability(thesisProposalId) {
+  try {
+    const response = await axios.get(`${URL}/thesis-proposals/${thesisProposalId}/availability`);
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching thesis proposal availability:', error);
+  }
+}
+
 /****** Thesis Application APIs ******/
 
 async function getLastStudentApplication() {
@@ -273,6 +282,7 @@ const API = {
   getThesisProposalsKeywords,
   getThesisProposalsTeachers,
   getThesisProposalById,
+  getProposalAvailability,
   createThesisApplication,
   getLastStudentApplication,
   checkStudentEligibility,

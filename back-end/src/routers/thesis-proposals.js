@@ -7,6 +7,7 @@ const {
   getThesisProposalsKeywords,
   getThesisProposalsTeachers,
   getThesisProposalById,
+  getProposalAvailability
 } = require('../controllers/thesis-proposals');
 
 router.get('/', getThesisProposals);
@@ -15,5 +16,6 @@ router.get('/types', getThesisProposalsTypes);
 router.get('/keywords', getThesisProposalsKeywords);
 router.get('/teachers', getThesisProposalsTeachers);
 router.get('/:thesisProposalId', getThesisProposalById);
+router.get('/:thesisProposalId/availability', getProposalAvailability);
 
 module.exports = router;

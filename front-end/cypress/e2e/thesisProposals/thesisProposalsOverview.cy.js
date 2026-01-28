@@ -4,7 +4,7 @@ describe('Thesis proposals overview page', () => {
   beforeEach(() => {
     cy.visit('http://localhost:3000');
     cy.get('a[href="/carriera"]').should('be.visible').click();
-    cy.get('a[href="/carriera/proposte_di_tesi"]').should('be.visible').click();
+    cy.get('a[href="/carriera/tesi/proposte_di_tesi"]').should('be.visible').click();
   });
 
   it('should toggle between course proposals and all proposals', () => {
@@ -697,13 +697,14 @@ describe('Thesis proposal overview page - responsiveness', () => {
 
     // Step 2: Navigate to the thesis proposals page
     cy.get('.modal-menu a[href="/carriera"]').should('be.visible').click();
-    cy.get('a[href="/carriera/proposte_di_tesi"]').click();
+    cy.get('a[href="/carriera/tesi/proposte_di_tesi"]').click();
 
     // Step 3: Verify the page breadcrumb
     cy.get('.breadcrumb').should('be.visible');
-    cy.get('.breadcrumb-item').should('have.length', 2);
+    cy.get('.breadcrumb-item').should('have.length', 3);
     cy.get('.breadcrumb-item').eq(0).contains('Carriera');
-    cy.get('.breadcrumb-item').eq(1).contains('Proposte di tesi');
+    cy.get('.breadcrumb-item').eq(1).contains('Tesi');
+    cy.get('.breadcrumb-item').eq(2).contains('Proposte di tesi');
 
     // Step 4: Verify the thesis proposals are listed
     cy.get('.proposals-container .card-container .roundCard').should('have.length.greaterThan', 0);

@@ -1,5 +1,5 @@
 const { Op } = require('sequelize');
-const { Keyword, sequelize, Teacher, ThesisProposal, ThesisProposalDegree, Type } = require('../models');
+const { Keyword, sequelize, Teacher, ThesisProposal, ThesisProposalDegree, Type, ThesisApplication } = require('../models');
 const { getStudentData } = require('./students');
 const { buildWhereConditions } = require('../utils/filters');
 const { getIncludes } = require('../utils/includes');
@@ -33,10 +33,22 @@ const fetchThesisProposals = async (where, includes, lang, pagination) => {
 
   const sortBySnakeCase = camelToSnakeCase(sortBy);
 
+    const notInApprovedApplications = {
+    id: {
+      [Op.notIn]: sequelize.literal(
+        `(SELECT thesis_proposal_id FROM thesis_application WHERE status = 'approved')`
+      ),
+    },
+  };
+
+  const finalWhere = {
+    [Op.and]: [where, notInApprovedApplications],
+  };
+
   const { count, rows } = await ThesisProposal.findAndCountAll({
     attributes: selectThesisProposalAttributes(lang),
     include: includes,
-    where,
+    where: finalWhere,
     order: [[sortBySnakeCase, orderBy]],
     limit,
     offset,
@@ -84,7 +96,8 @@ const getTargetedThesisProposals = async (req, res) => {
         {
           id_collegio: collegioId,
           level,
-          id: { [Op.notIn]: sequelize.literal(`(SELECT thesis_proposal_id FROM thesis_proposal_degree)`) },
+          id: { [Op.notIn]: sequelize.literal(`(SELECT thesis_proposal_id FROM thesis_proposal_degree)`),
+           },
         },
         { id: { [Op.in]: studentThesisProposalIdArray } },
       ],
@@ -215,6 +228,29 @@ const getThesisProposalById = async (req, res) => {
   }
 };
 
+const getProposalAvailability = async (req, res) => {
+  try {
+    const thesisProposal = await ThesisProposal.findByPk(req.params.thesisProposalId);
+
+    if (!thesisProposal) {
+      return res.status(404).json({ error: 'Thesis proposal not found' });
+    }
+    
+    const available = await ThesisApplication.findOne({
+      where: {
+        thesis_proposal_id: req.params.thesisProposalId,
+        status: 'approved',
+      },
+    });
+
+    return res.status(200).json(
+      available ? { available: false } : { available: true }
+    );
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
 module.exports = {
   getThesisProposals,
   getTargetedThesisProposals,
@@ -222,4 +258,5 @@ module.exports = {
   getThesisProposalsKeywords,
   getThesisProposalsTeachers,
   getThesisProposalById,
+  getProposalAvailability
 };

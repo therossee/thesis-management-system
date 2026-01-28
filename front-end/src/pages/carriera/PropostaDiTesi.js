@@ -14,6 +14,7 @@ function PropostaDiTesi() {
   const { setBodyDataLoading } = useContext(BodyDataLoadingContext);
   const [thesisProposal, setThesisProposal] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isAvailable, setIsAvailable] = useState(false);
   const { t, i18n } = useTranslation();
 
   useEffect(() => {
@@ -24,6 +25,11 @@ function PropostaDiTesi() {
         setThesisProposal(thesis);
       })
       .catch(error => console.error('Error fetching thesis proposal by ID:', error))
+    API.getProposalAvailability(id)
+      .then(response => {
+        setIsAvailable(response.available);
+      })
+      .catch(error => console.error('Error fetching thesis proposal availability:', error))
       .finally(() => {
         setBodyDataLoading(false);
         setIsLoading(false);
@@ -34,7 +40,7 @@ function PropostaDiTesi() {
     if (isLoading) {
       return <></>;
     } else if (thesisProposal) {
-      return <ThesisProposalDetail thesisProposal={thesisProposal} />;
+      return <ThesisProposalDetail thesisProposal={thesisProposal} isAvailable={isAvailable} />;
     } else {
       return <CustomBadge variant="error" content={t('carriera.proposta_di_tesi.errore_proposta_di_tesi')} />;
     }
