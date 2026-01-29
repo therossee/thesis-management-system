@@ -304,6 +304,12 @@ CREATE TABLE IF NOT EXISTS thesis_sustainable_development_goal(
     FOREIGN KEY (goal_id) REFERENCES sustainable_development_goal(id) ON DELETE CASCADE
 );
 
+CREATE TABLE IF NOT EXISTS blob_storage (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    file_data LONGBLOB NOT NULL,
+    FOREIGN KEY (thesis_id) REFERENCES thesis(id) ON DELETE CASCADE
+);
+
 
 
 /**---------------------------------------------------------------------

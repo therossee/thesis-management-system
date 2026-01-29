@@ -11,22 +11,22 @@
     "devDependencies": {
         "@commitlint/cli": "^19.6.0",
         "@commitlint/config-conventional": "^19.6.0",
-        "@eslint/js": "^9.14.0",
+        "@eslint/js": "^9.39.2",
         "@trivago/prettier-plugin-sort-imports": "^4.3.0",
         "cypress": "^15.9.0",
         "eslint": "^9.39.2",
-        "eslint-config-prettier": "^9.1.0",
-        "eslint-plugin-cypress": "^4.1.0",
-        "eslint-plugin-import": "^2.31.0",
-        "eslint-plugin-jest": "^28.9.0",
+        "eslint-config-prettier": "^9.1.2",
+        "eslint-plugin-cypress": "^4.3.0",
+        "eslint-plugin-import": "^2.32.0",
+        "eslint-plugin-jest": "^28.14.0",
         "eslint-plugin-jsx-a11y": "^6.10.2",
-        "eslint-plugin-prettier": "^5.2.1",
-        "eslint-plugin-react": "^7.37.2",
-        "eslint-plugin-react-hooks": "^5.0.0",
-        "globals": "^15.12.0",
+        "eslint-plugin-prettier": "^5.5.5",
+        "eslint-plugin-react": "^7.37.5",
+        "eslint-plugin-react-hooks": "^5.2.0",
+        "globals": "^15.15.0",
         "husky": "^9.1.6",
         "lint-staged": "^15.2.10",
-        "prettier": "^3.3.3"
+        "prettier": "^3.8.1"
     },
     "lint-staged": {
         "*.{js,jsx,ts,tsx}": [
