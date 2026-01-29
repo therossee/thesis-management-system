@@ -228,7 +228,7 @@ CREATE TABLE IF NOT EXISTS thesis(
     thesis_file BLOB,
     thesis_resume BLOB,
     license_id INT,
-    thesis_status ENUM ('ongoing', 'conclusion_requested', 'conclusion_approved', 'conclusion_rejected') NOT NULL DEFAULT 'ongoing',
+    thesis_status ENUM ('ongoing', 'conclusion_requested', 'conclusion_approved', 'conclusion_rejected', 'almalaurea_done', 'enrolled_final_exam', 'confirmed_final_exam') NOT NULL DEFAULT 'ongoing',
     thesis_start_date DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     thesis_conclusion_request_date DATETIME,
     thesis_conclusion_confirmation_date DATETIME,
@@ -262,15 +262,30 @@ CREATE TABLE IF NOT EXISTS embargo_motivation(
     motivation VARCHAR(100) NOT NULL
 );
 
-CREATE TABLE IF NOT EXISTS embargo(
-    motivation_id INT NOT NULL,
+CREATE TABLE IF NOT EXISTS thesis_embargo(
     thesis_id INT NOT NULL,
-    other_motivation TEXT,
-    month_duration ENUM('12', '18', '36', 'after_explicit_consent') NOT NULL,
-    PRIMARY KEY (motivation_id, thesis_id),
-    FOREIGN KEY (motivation_id) REFERENCES embargo_motivation(id) ON DELETE CASCADE,
-    FOREIGN KEY (thesis_id) REFERENCES thesis(id) ON DELETE CASCADE
+    motivation_id INT,
+    other_motivation VARCHAR(255),
+    duration ENUM('6_months', '12_months', '24_months') NOT NULL,
+    PRIMARY KEY (thesis_id, motivation_id, other_motivation, duration),
+    FOREIGN KEY (thesis_id) REFERENCES thesis(id) ON DELETE CASCADE,
+    FOREIGN KEY (motivation_id) REFERENCES embargo_motivation(id) ON DELETE SET NULL
 );
+
+CREATE TABLE IF NOT EXISTS sustainable_development_goals(
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    goal VARCHAR(100) NOT NULL,
+);
+
+CREATE TABLE IF NOT EXISTS thesis_sustainable_development_goals(
+    thesis_id INT NOT NULL,
+    goal_id INT NOT NULL,
+    level ENUM ('primary', 'secondary') NOT NULL,
+    PRIMARY KEY (thesis_id, goal_id),
+    FOREIGN KEY (thesis_id) REFERENCES thesis(id) ON DELETE CASCADE,
+    FOREIGN KEY (goal_id) REFERENCES sustainable_development_goals(id) ON DELETE CASCADE
+);
+
 
 
 /**---------------------------------------------------------------------

@@ -269,17 +269,39 @@ CREATE TABLE IF NOT EXISTS thesis_keyword(
 
 CREATE TABLE IF NOT EXISTS embargo_motivation(
     id INT AUTO_INCREMENT PRIMARY KEY,
-    motivation VARCHAR(100) NOT NULL
+    motivation VARCHAR(255) NOT NULL,
+    motivation_en VARCHAR(255) NOT NULL
 );
 
-CREATE TABLE IF NOT EXISTS embargo(
-    motivation_id INT NOT NULL,
+CREATE TABLE IF NOT EXISTS thesis_embargo(
+    id INT AUTO_INCREMENT NOT NULL,
     thesis_id INT NOT NULL,
-    other_motivation TEXT,
-    month_duration ENUM('12', '18', '36', 'after_explicit_consent') NOT NULL,
-    PRIMARY KEY (motivation_id, thesis_id),
-    FOREIGN KEY (motivation_id) REFERENCES embargo_motivation(id) ON DELETE CASCADE,
+    duration ENUM('12_months', '18_months', '36_months', 'after_explicit_consent') NOT NULL,
+    PRIMARY KEY (id, thesis_id),
     FOREIGN KEY (thesis_id) REFERENCES thesis(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS thesis_embargo_motivation(
+    thesis_embargo_id INT NOT NULL,
+    motivation_id INT NOT NULL,
+    other_motivation VARCHAR(255),
+    PRIMARY KEY (thesis_embargo_id, motivation_id),
+    FOREIGN KEY (thesis_embargo_id) REFERENCES thesis_embargo(id) ON DELETE CASCADE,
+    FOREIGN KEY (motivation_id) REFERENCES embargo_motivation(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS sustainable_development_goal(
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    goal VARCHAR(100) NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS thesis_sustainable_development_goal(
+    thesis_id INT NOT NULL,
+    goal_id INT NOT NULL,
+    level ENUM ('primary', 'secondary') NOT NULL,
+    PRIMARY KEY (thesis_id, goal_id),
+    FOREIGN KEY (thesis_id) REFERENCES thesis(id) ON DELETE CASCADE,
+    FOREIGN KEY (goal_id) REFERENCES sustainable_development_goal(id) ON DELETE CASCADE
 );
 
 

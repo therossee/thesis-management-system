@@ -6164,3 +6164,45 @@ VALUES
     ("Istituto Italiano di Tecnologia");
 
 -- ------------------------------------------------------------
+-- ↓ embargo_motivation table ↓
+------------------------------------------------------------------------
+
+INSERT INTO
+    embargo_motivation (motivation, motivation_en)
+VALUES
+    ("Necessità di evitare la divulgazione di risultati potenzialmente brevettabili contenuti all'interno della tesi, al fine di preservare il requisito della novità necessario per la brevettabilità.", 
+    "Need to avoid the disclosure of potentially patentable results contained within the thesis, in order to preserve the novelty requirement necessary for patentability."),
+    ("Esistenza di accordi di riservatezza o impegni al rispetto della segretezza contenuti in contratti o convenzioni con società o Enti terzi",
+    "Existence of confidentiality agreements or commitments to confidentiality contained in contracts or agreements with third-party companies or entities"),
+    ("Segretezza e/o di proprietà dei risultati e informazioni di enti esterni o aziende private che hanno partecipato alla realizzazione del lavoro di ricerca.",
+    "Confidentiality and/or ownership of results and information from external entities or private companies that participated in the research work"),
+    ("Pubblicazione editoriale", "Editorial publication"),
+    ("Pubblica sicurezza (il contenuto della tesi può in qualche modo mettere a rischio la sicurezza pubblica o nazionale)",
+    "Public security (the content of the thesis may in some way jeopardize public or national security)."),
+    ("Privacy (il contenuto dell'elaborato verte su una persona ancora in vita o deceduta di recente per la quale si teme di violare il diritto alla privacy)", 
+    "Privacy (the content of the thesis concerns a person still alive or recently deceased for whom there is a fear of violating the right to privacy)"),
+    ("Altri motivi", "Other reasons");
+
+
+--- ------------------------------------------------------------
+-- ↓ sustainable development goals table ↓
+-- ------------------------------------------------------------
+INSERT INTO sustainable_development_goal (goal)
+VALUES
+    ("No Poverty"),
+    ("Zero Hunger"),
+    ("Good Health and Well-being"),
+    ("Quality Education"),
+    ("Gender Equality"),
+    ("Clean Water and Sanitation"),
+    ("Affordable and Clean Energy"),
+    ("Decent Work and Economic Growth"),
+    ("Industry, Innovation and Infrastructure"),
+    ("Reduced Inequalities"),
+    ("Sustainable Cities and Communities"),
+    ("Responsible Consumption and Production"),
+    ("Climate Action"),
+    ("Life Below Water"),
+    ("Life On Land"),
+    ("Peace, Justice and Strong Institutions"),
+    ("Partnerships for the Goals");
