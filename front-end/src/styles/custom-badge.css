@@ -91,6 +91,41 @@
   cursor: pointer;
 }
 
+.language_light,
+.language_light:focus {
+  color: var(--gray-700);
+  background-color: var(--gray-100);
+  border-color: var(--gray-400);
+}
+
+.language_light.clickable:hover,
+.language_light.clickable.active {
+  color: var(--gray-700) !important;
+  background-color: var(--gray-200) !important;
+  border-color: var(--gray-500) !important;
+  cursor: pointer;
+}
+
+.language_dark,
+.language_dark:focus {
+  color: var(--gray-200);
+  background-color: var(--gray-600);
+  border-color: var(--gray-500);
+}
+
+.language_dark.clickable:hover,
+.language_dark.clickable.active {
+  color: var(--gray-100) !important;
+  background-color: var(--gray-700) !important;
+  border-color: var(--gray-600) !important;
+  cursor: pointer;
+}
+
+.language_light .flag,
+.language_dark .flag {
+  margin-right: 0;
+}
+
 .internal_light,
 .internal_light:focus {
   color: var(--amber-700);

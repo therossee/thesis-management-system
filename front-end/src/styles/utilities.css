@@ -375,9 +375,6 @@ body {
   display: flex !important;
 }
 
-.is-invalid .select__control {
-  border-color: #dc3545 !important;
-}
 
 /*scrollbar si vede solo se sopra brakpoint lg*/
 @media (max-width: 991px) {
@@ -391,6 +388,15 @@ body {
     max-width: 90vw;
     min-width: unset;
     margin: auto;
+  }
+}
+
+@media (max-width: 991px) {
+  .modal-conclusion.modal-dialog,
+  .modal-conclusion .modal-dialog {
+    max-width: 95vw;
+    width: 95vw;
+    margin: 1rem auto;
   }
 }
 

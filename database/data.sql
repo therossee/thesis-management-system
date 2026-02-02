@@ -6206,3 +6206,86 @@ VALUES
     ("Life On Land"),
     ("Peace, Justice and Strong Institutions"),
     ("Partnerships for the Goals");
+
+
+INSERT INTO license (name, name_en, description, description_en)
+VALUES
+(
+    "Attribuzione CC BY",
+    "Attribution CC BY",
+    "Questa licenza permette a terzi di distribuire, modificare, ottimizzare ed utilizzare la tua opera come base, anche commercialmente, fino a che ti diano il credito per la creazione originale. Questa è la piu accomodante delle licenze offerte. È raccomandata per la diffusione e l'uso massimo di materiali coperti da licenza",
+    "This license lets others distribute, remix, tweak, and build upon your work, even commercially, as long as they credit you for the original creation. This is the most accommodating of licenses offered. Recommended for maximum dissemination and use of licensed materials."
+)
+,
+(
+    "Attribuzione - Condividi allo stesso modo CC BY-SA",
+    "Attribution - ShareAlike CC BY-SA",
+    "Questa licenza permette a terzi di modificare, ottimizzare ed utilizzare la tua opera come base, anche commercialmente, fino a che ti diano il credito per la creazione originale e autorizza le loro nuove creazioni con i medesimi termini. Questa licenza è spesso comparata con le licenze usate dai software opensource e gratuite \"copyleft\". Tutte le opere basate sulla tua porteranno la stessa licenza, quindi tutte le derivate permetteranno anche un uso commerciale. Questa è la licenza usata da Wikipedia, ed è consigliata per materiali che potrebbero beneficiare dell'incorporazione di contenuti da progetti come Wikipedia e similari.",
+    "This license lets others remix, tweak, and build upon your work even for commercial purposes, as long as they credit you and license their new creations under the identical terms. This license is often compared to \"copyleft\" free and open source software licenses. All new works based on yours will carry the same license, so any derivatives will also allow commercial use. This is the license used by Wikipedia, and is recommended for materials that would benefit from incorporating content from Wikipedia and similarly licensed projects."
+)
+,
+(
+    "Attribuzione - Non opere derivate CC BY-ND",
+    "Attribution - NoDerivs CC BY-ND",
+    "Questa licenza permette la ridistribuzione, commerciale e non, fintanto che viene trasmessa intera ed invariata, dandoti credito.",
+    "This license allows for redistribution, commercial and non-commercial, as long as it is passed along unchanged and in whole, with credit to you."
+)
+,
+(
+    "Attribuzione - Non commerciale CC BY-NC",
+    "Attribution - NonCommercial CC BY-NC",
+    "Questa licenza permette a terzi di modificare, ottimizzare ed utilizzare la tua opera come base per altre non commerciali, e benche le loro nuove opere dovranno accreditarti ed essere non commerciali, non devono licenziare le loro opere derivative con i medesimi termini.",
+    "This license lets others remix, tweak, and build upon your work non-commercially, and although their new works must also acknowledge you and be non-commercial, they don't have to license their derivative works on the same terms."
+)
+,
+(
+    "Attribuzione - Non commerciale - Condividi allo stesso modo CC BY-NC-SA",
+    "Attribution-NonCommercial-ShareAlike CC BY-NC-SA",
+    "Questa licenza permette a terzi di modificare, redistribuire, ottimizzare ed utilizzare la tua opera come base non commerciale, fino a che ti diano il credito e licenzino le loro nuove creazioni mediante i medesimi termini.",
+    "This license lets others remix, tweak, and build upon your work non-commercially, as long as they credit you and license their new creations under the identical terms."
+)
+,
+(
+    "Attribuzione - Non commerciale - Non opere derivate CC BY-NC-ND",
+    "Attribution-NonCommercial-NoDerivs CC BY-NC-ND",
+    "Questa licenza è la piu restrittiva delle nostre sei licenze principali, permettendo a terzi soltanto di scaricare le tue opere e condividerle ad altri fino a che ti diano il giusto credito, ma non possono cambiarle in nessun modo od utilizzarle commercialmente. Per maggiori informazioni consultare <a href='https://creativecommons.org/licenses/?lang=it' target='_blank'>questo link</a>.",
+    "This license is the most restrictive of the six main CC licenses, only allowing others to download your works and share them with others as long as they credit you, but they can't change them in any way or use them commercially. For more information visit <a href='https://creativecommons.org/licenses/?lang=it' target='_blank'>this link</a>."
+);
+
+INSERT INTO embargo_motivation (motivation, motivation_en)
+VALUES
+(
+    "Necessità di evitare la divulgazione di risultati potenzialmente brevettabili contenuti all’interno della tesi, al fine di preservare il requisito della novità necessario per la brevettazione",
+    "Need to avoid disclosure of potentially patentable results contained within the thesis in order to preserve the novelty requirements necessary for patenting",
+)
+,
+(
+    "Esistenza di accordi di riservatezza o impegni al rispetto della segretezza contenuti in contratti o convenzioni con società o Enti terzi",
+    "Existance of confidentiality agreements or prior arrangements or contracts with outside organizations or companies"
+)
+,
+(
+    "Segretezza e/o di proprietà dei risultati e informazioni di enti esterni o aziende private che hanno partecipato alla realizzazione del lavoro di ricerca",
+    "Confidentiality and/or ownership of results and information from external entities or private companies"
+)
+,
+(
+    "Pubblicazione editoriale",
+    "Editorial publication"
+)
+,
+(
+    "Pubblica sicurezza (il contenuto della tesi può in qualche modo mettere a rischio la sicurezza pubblica o nazionale)",
+    "Public security ( the content of the thesis may somehow threaten public or national security)"
+)
+,
+(
+    "Privacy (il contenuto dell’elaborato verte su una persona ancora in vita o deceduta di recente per la quale si teme di violare il diritto alla privacy)",
+    "Privacy (the content of the thesis relates to a person who is still alive or recently deceased and there is a risk of privacy violation)"
+)
+,
+(
+    "Altro",
+    "Other"
+);
+

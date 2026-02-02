@@ -16,6 +16,7 @@ moment.locale('it');
  * @param {string} variant - The variant of the badge. Available options are:
  *  - "teacher": Renders a badge with a teacher icon. Requires a "content".
  *  - "keyword": Renders a badge with a keyword icon. Requires a "content".
+ *  - "language": Renders a badge with a language flag icon. Requires a "content".
  *  - "internal": Renders a badge with an internal thesis icon.
  *  - "external": Renders a badge with an external thesis icon.
  *  - "italy": Renders a badge with the Italy flag icon.
@@ -56,6 +57,7 @@ moment.locale('it');
 const validVariants = [
   'teacher',
   'keyword',
+  'language',
   'internal',
   'external',
   'external-company',
@@ -217,12 +219,13 @@ export default function CustomBadge({ variant, content, type, filters, applyFilt
   const renderSingleSelectBadge = () => {
     const contentText = content?.content || null;
     const selectedVariant = variant === 'external-company' ? 'external' : variant;
+    const iconKey = variant === 'language' && content?.id ? content.id : contentText;
     return (
       <Button
         key="custom-badge-button"
         className={`custom-badge badge ${selectedVariant}_${appliedTheme} reset clickable`}
       >
-        <div className="custom-badge-icon">{renderIcon(contentText)}</div>
+        <div className="custom-badge-icon">{renderIcon(iconKey)}</div>
         {contentText ? <span className="custom-badge-text">{contentText}</span> : renderTranslatedContent()}
       </Button>
     );
@@ -234,6 +237,23 @@ export default function CustomBadge({ variant, content, type, filters, applyFilt
         return <i className="fa-regular fa-user fa-lg" />;
       case 'keyword':
         return <i className="fa-regular fa-key fa-lg" />;
+      case 'language': {
+        const code = String(content || '').toLowerCase();
+        const flagMap = {
+          it: 'it',
+          en: 'gb',
+          jp: 'jp',
+          es: 'es',
+          fr: 'fr',
+          pt: 'pt',
+          zh: 'cn',
+          se: 'se',
+          de: 'de',
+          ru: 'ru',
+        };
+        const flagCode = flagMap[code] || 'gb';
+        return <span className={`fi fi-${flagCode}`} aria-hidden="true" />;
+      }
       case 'internal':
         return <i className="fa-regular fa-building-columns fa-lg" />;
       case 'external':
@@ -387,6 +407,7 @@ export default function CustomBadge({ variant, content, type, filters, applyFilt
     ([
       'teacher',
       'keyword',
+      'language',
       'external-company',
       'type',
       'sorting-ASC',

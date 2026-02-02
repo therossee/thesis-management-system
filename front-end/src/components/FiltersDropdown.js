@@ -84,6 +84,14 @@ export default function FiltersDropdown({ filters, applyFilters, resetFilters })
   }, [filters]);
 
   function formatFilter(item, variant) {
+    if (variant === 'teacher' || variant === 'supervisor') {
+      return {
+        value: item.id,
+        label: item.type || item.keyword || `${item.lastName} ${item.firstName}`,
+        email: item.email,
+        variant
+      };
+    }
     return { value: item.id, label: item.type || item.keyword || `${item.lastName} ${item.firstName}`, variant };
   }
 
@@ -135,8 +143,28 @@ export default function FiltersDropdown({ filters, applyFilters, resetFilters })
         break;
       default:
         isMenuOpen = false;
-        setIsMenuOpen = () => {};
+        setIsMenuOpen = () => { };
     }
+
+    const CustomOption = (props) => {
+      const { data, innerProps, isFocused } = props;
+      return (
+        <div
+          {...innerProps}
+          style={{
+            backgroundColor: isFocused ? 'var(--dropdown-hover)' : 'inherit',
+            padding: '8px 12px',
+            cursor: 'pointer',
+          }}
+        >
+          <div style={{ fontWeight: 'bold', color: 'var(--text-800)' }}>{data.label}</div>
+          {data.email && (
+            <div style={{ fontSize: '0.85em', color: 'var(--text-700)' }}>{data.email}</div>
+          )}
+        </div>
+      );
+    };
+
 
     return (
       <>
@@ -147,7 +175,12 @@ export default function FiltersDropdown({ filters, applyFilters, resetFilters })
           <Select
             isMulti={isMulti}
             isClearable={false}
-            components={{ MultiValue: CustomMultiValue, IndicatorSeparator: () => null }}
+            components={name === 'supervisors' ? {
+              SingleValue: CustomSingleValue,
+              MultiValue: CustomMultiValue,
+              Option: CustomOption,
+              IndicatorSeparator: () => null
+            } : { MultiValue: CustomMultiValue, IndicatorSeparator: () => null }}
             name={name}
             defaultValue={selected[name]}
             options={options[name]}
@@ -158,6 +191,12 @@ export default function FiltersDropdown({ filters, applyFilters, resetFilters })
             onMenuClose={() => setIsMenuOpen(false)}
             className="multi-select"
             classNamePrefix="select"
+            filterOption={name === 'supervisors' ? (candidate, input) => {
+              const label = candidate.data.label.toLowerCase();
+              const email = candidate.data.email ? candidate.data.email.toLowerCase() : '';
+              const inputLower = input.toLowerCase();
+              return label.includes(inputLower) || email.includes(inputLower);
+            } : null}
             styles={{
               option: (basicStyles, state) => ({
                 ...basicStyles,
@@ -207,14 +246,14 @@ export default function FiltersDropdown({ filters, applyFilters, resetFilters })
           filters.keyword.length > 0 ||
           filters.type.length > 0 ||
           filters.teacher.length > 0) && (
-          <Badge className={`squared-badge-${appliedTheme} badge-inline`}>
-            {filters.keyword.length +
-              filters.type.length +
-              filters.teacher.length +
-              (filters.isInternal != 0 ? 1 : 0) +
-              (filters.isAbroad != 0 ? 1 : 0)}
-          </Badge>
-        )}
+            <Badge className={`squared-badge-${appliedTheme} badge-inline`}>
+              {filters.keyword.length +
+                filters.type.length +
+                filters.teacher.length +
+                (filters.isInternal != 0 ? 1 : 0) +
+                (filters.isAbroad != 0 ? 1 : 0)}
+            </Badge>
+          )}
         {isOpen ? <i className="fa-solid fa-chevron-up" /> : <i className="fa-solid fa-chevron-down" />}
       </Dropdown.Toggle>
 

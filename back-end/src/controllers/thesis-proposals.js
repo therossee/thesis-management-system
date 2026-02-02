@@ -192,7 +192,7 @@ const getThesisProposalsTeachers = async (req, res) => {
     const teachers = await Teacher.findAll({
       attributes: selectTeacherAttributes(),
       where,
-      order: [[sequelize.fn('concat', sequelize.col('first_name'), ' ', sequelize.col('last_name')), 'ASC']],
+      order: [[sequelize.fn('concat', sequelize.col('last_name'), ' ', sequelize.col('first_name')), 'ASC']],
     });
 
     res.json(teachers.map(teacher => teacherOverviewSchema.parse(teacher)));

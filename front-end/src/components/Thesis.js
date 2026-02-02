@@ -13,6 +13,7 @@ import LoadingModal from './LoadingModal';
 import TeacherContactCard from './TeacherContactCard';
 import ThesisRequestModal from './ThesisRequestModal';
 import Timeline from './Timeline';
+import ConclusionRequest from './ConclusionRequest';
 
 export default function Thesis(props) {
   const {
@@ -22,6 +23,8 @@ export default function Thesis(props) {
     setShowModal,
     showRequestModal,
     setShowRequestModal,
+    showConclusionRequest,
+    setShowConclusionRequest,
     onRequestSubmitResult,
     onCancelApplicationResult,
   } = props;
@@ -188,6 +191,11 @@ export default function Thesis(props) {
           show={showRequestModal}
           setShow={setShowRequestModal}
           onSubmitResult={onRequestSubmitResult}
+        />
+        <ConclusionRequest
+          show={showConclusionRequest}
+          setShow={setShowConclusionRequest}
+          onSubmitResult={() => {console.log('Conclusione richiesta inviata');}}
         />
       </div>
     </>

@@ -16,6 +16,7 @@ import Thesis from '../../components/Thesis';
 import ThesisInfo from '../../components/ThesisInfo';
 import ThesisProposals from '../../components/ThesisProposals';
 import { getSystemTheme } from '../../utils/utils';
+import '../../styles/tesi.css';
 
 export default function Tesi({ initialActiveTab }) {
   const [thesisApplication, setThesisApplication] = useState(null);
@@ -31,6 +32,7 @@ export default function Tesi({ initialActiveTab }) {
   const [isEligible, setIsEligible] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [showRequestModal, setShowRequestModal] = useState(false);
+  const [showConclusionRequest, setShowConclusionRequest] = useState(false);
   const { theme } = useContext(ThemeContext);
   const { showToast } = useContext(ToastContext);
   const appliedTheme = theme === 'auto' ? getSystemTheme() : theme;
@@ -142,6 +144,8 @@ export default function Tesi({ initialActiveTab }) {
                 showRequestModal={showRequestModal}
                 setShowRequestModal={setShowRequestModal}
                 onRequestSubmitResult={handleRequestSubmitResult}
+                showConclusionRequest={showConclusionRequest}
+                setShowConclusionRequest={setShowConclusionRequest}
                 onCancelApplicationResult={handleCancelApplicationResult}
               />
             );
@@ -165,19 +169,19 @@ export default function Tesi({ initialActiveTab }) {
   return (
     <>
       <CustomBreadcrumb activeTab={tabs.filter(tab => tab.key === activeTab)[0].label} />
-      <div className="proposal-container justify-content-between d-flex" style={{ paddingRight: '12px' }}>
+      <div className="proposal-container justify-content-between d-flex tesi-header-bar">
         <CustomHeader title={t('carriera.tesi.title')} action={() => navigate('/carriera')} />
         {thesis &&
           activeTab === 'thesis' &&
           (thesis.thesisStatus === 'ongoing' || thesis.thesisStatus === 'conclusion_rejected') && (
-            <div style={{ display: 'flex', gap: '16px', marginLeft: 'auto' }}>
+            <div className="tesi-header-actions">
               <Button
                 variant="outline-danger"
                 onClick={() => setShowModal(true)}
+                className="tesi-header-action-btn"
                 style={{
                   height: '30px',
                   display: 'flex',
-                  width: 'fit-content',
                   borderRadius: '6px',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -187,12 +191,11 @@ export default function Tesi({ initialActiveTab }) {
                 <i className="fa-regular fa-trash-can me-1" /> {t('carriera.tesi.cancel_thesis')}
               </Button>
               <Button
-                className={`btn-primary-${appliedTheme}`}
-                onClick={() => setShowModal(true)}
+                className={`btn-primary-${appliedTheme} tesi-header-action-btn`}
+                onClick={() => setShowConclusionRequest(true)}
                 style={{
                   height: '30px',
                   display: 'flex',
-                  width: 'fit-content',
                   borderRadius: '6px',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -207,10 +210,10 @@ export default function Tesi({ initialActiveTab }) {
           <Button
             variant="outline-danger"
             onClick={() => setShowModal(true)}
+            className="tesi-header-action-btn"
             style={{
               height: '30px',
               display: 'flex',
-              width: 'fit-content',
               borderRadius: '6px',
               alignItems: 'center',
               justifyContent: 'center',
@@ -222,14 +225,13 @@ export default function Tesi({ initialActiveTab }) {
         )}
         {isEligible && (
           <Button
-            className={`btn-primary-${appliedTheme}`}
+            className={`btn-primary-${appliedTheme} tesi-header-action-btn`}
             onClick={() => {
               setShowRequestModal(true);
             }}
             style={{
               height: '30px',
               display: 'flex',
-              width: 'fit-content',
               borderRadius: '6px',
               alignItems: 'center',
               justifyContent: 'center',
@@ -241,7 +243,7 @@ export default function Tesi({ initialActiveTab }) {
         )}
       </div>
       <div className="mb-3">
-        <PillButtonGroup options={tabs} active={activeTab} />
+        <PillButtonGroup options={tabs} active={activeTab}/>
       </div>
       {renderContent()}
     </>

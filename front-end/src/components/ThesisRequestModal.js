@@ -9,10 +9,9 @@ import API from '../API';
 import { ThemeContext } from '../App';
 import '../styles/utilities.css';
 import { getSystemTheme } from '../utils/utils';
-import CompanySelect from './CompanySelect';
 import CustomModal from './CustomModal';
 import LoadingModal from './LoadingModal';
-import SupervisorSelect from './SupervisorSelect';
+import CustomSelect from './CustomSelect';
 
 export default function ThesisRequestModal(props) {
   const { show, setShow, onSubmitResult } = props;
@@ -109,28 +108,11 @@ export default function ThesisRequestModal(props) {
         confirmIcon="fa-solid fa-check"
       />
       <Modal className="modal-xxl" show={show} onHide={() => setShow(false)} centered>
-        <Modal.Header>
+        <Modal.Header closeButton>
           <Modal.Title>
             <i className="fa-regular fa-file-lines fa-lg pe-2" />
             {t('carriera.richiesta_tesi.title')}
           </Modal.Title>
-          <div className="ms-auto">
-            <Button
-              className={`btn-${appliedTheme}`}
-              onClick={() => {
-                setTopic('');
-                setSupervisor(null);
-                setCoSupervisors([]);
-                setCompany(null);
-                setErrors({
-                  topic: false,
-                  supervisor: false,
-                });
-              }}
-            >
-              <i className="fa-solid fa-arrow-rotate-left fa-lg me-1" /> {t('carriera.richiesta_tesi.reset_form')}
-            </Button>
-          </div>
         </Modal.Header>
         <Modal.Body>
           <Form>
@@ -163,12 +145,14 @@ export default function ThesisRequestModal(props) {
               <Form.Label>
                 <i className="fa-regular fa-user fa-lg pe-2" /> {t('carriera.richiesta_tesi.select_supervisor')}
               </Form.Label>
-              <SupervisorSelect
+              <CustomSelect
+                mode="supervisor"
                 options={teachers
                   .filter(teacher => !coSupervisors.some(co => co.value === teacher.id))
                   .map(item => ({
                     value: item.id,
                     label: `${item.lastName} ${item.firstName}`,
+                    email: item.email,
                     variant: 'teacher',
                   }))}
                 selected={supervisor}
@@ -187,12 +171,14 @@ export default function ThesisRequestModal(props) {
               <Form.Label>
                 <i className="fa-regular fa-users fa-lg pe-2" /> {t('carriera.richiesta_tesi.select_co_supervisors')}
               </Form.Label>
-              <SupervisorSelect
+              <CustomSelect
+                mode="supervisor"
                 options={teachers
                   .filter(teacher => teacher.id !== (supervisor ? supervisor.value : null))
                   .map(item => ({
                     value: item.id,
                     label: `${item.lastName} ${item.firstName}`,
+                    email: item.email,
                     variant: 'teacher',
                   }))}
                 selected={coSupervisors}
@@ -206,7 +192,8 @@ export default function ThesisRequestModal(props) {
                 <i className="fa-regular fa-building fa-lg pe-2" />
                 {t('carriera.richiesta_tesi.select_company')}
               </Form.Label>
-              <CompanySelect
+              <CustomSelect
+                mode="company"
                 options={companies.map(company => ({
                   value: company.id,
                   label: company.corporateName,
@@ -220,9 +207,21 @@ export default function ThesisRequestModal(props) {
           </Form>
         </Modal.Body>
         <Modal.Footer>
-          <Button className="modal-cancel mb-3" size="md" onClick={() => setShow(false)}>
-            {t('carriera.proposta_di_tesi.chiudi')}
-          </Button>
+            <Button
+              className={`btn-${appliedTheme}`}
+              onClick={() => {
+                setTopic('');
+                setSupervisor(null);
+                setCoSupervisors([]);
+                setCompany(null);
+                setErrors({
+                  topic: false,
+                  supervisor: false,
+                });
+              }}
+            >
+              <i className="fa-solid fa-arrow-rotate-left fa-lg me-1" /> {t('carriera.richiesta_tesi.reset_form')}
+            </Button>
           <Button className={`btn-primary-${appliedTheme}`} onClick={() => handleShowConfirm()} size="md">
             <i className="fa-solid fa-paper-plane fa-lg pe-2" />
             {t('carriera.richiesta_tesi.submit_request')}

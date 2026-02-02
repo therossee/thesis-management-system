@@ -8,9 +8,9 @@ import '../styles/pill-button.css';
 
 export default function PillButtonGroup({ label, options, active }) {
   return (
-    <div className="pill-button-group mb-3">
+    <div className="mb-3">
       {label && <span className="pill-button-label">{label}</span>}
-      <div className="d-flex flex-row gap-2">
+      <div className="d-flex flex-row gap-2 pill-button-group">
         {options.map(option => (
           <Button
             key={option.value}

@@ -26,6 +26,10 @@ const ThesisApplicationSupervisorCoSupervisor = require('./thesis-application-su
 );
 const ThesisApplicationStatusHistory = require('./thesis-application-status-history')(sequelize, Sequelize.DataTypes);
 const Company = require('./company')(sequelize, Sequelize.DataTypes);
+const License = require('./license')(sequelize, Sequelize.DataTypes);
+const SustainableDevelopmentGoal = require('./sustainable-development-goal')(sequelize, Sequelize.DataTypes);
+const ThesisSustainableDevelopmentGoal = require('./thesis-sustainable-development-goal')(sequelize, Sequelize.DataTypes);
+const EmbargoMotivation = require('./embargo-motivation')(sequelize, Sequelize.DataTypes);
 
 const db = {};
 
@@ -50,6 +54,10 @@ db.Thesis = Thesis;
 db.ThesisSupervisorCoSupervisor = ThesisSupervisorCoSupervisor;
 db.LoggedStudent = LoggedStudent;
 db.Company = Company;
+db.License = License;
+db.SustainableDevelopmentGoal = SustainableDevelopmentGoal;
+db.ThesisSustainableDevelopmentGoal = ThesisSustainableDevelopmentGoal;
+db.EmbargoMotivation = EmbargoMotivation;   
 // Define relationships
 
 // DegreeProgramme and Collegio (one-to-many)
@@ -172,6 +180,19 @@ Thesis.belongsTo(ThesisApplication, {
 
 ThesisApplication.hasOne(Thesis, {
   foreignKey: 'thesis_application_id',
+});
+
+Thesis.hasOne(License, {
+  foreignKey: 'id',
+  sourceKey: 'license_id',
+});
+
+Thesis.hasMany(ThesisSustainableDevelopmentGoal, {
+  foreignKey: 'thesis_id',
+});
+
+ThesisSustainableDevelopmentGoal.belongsTo(Thesis, {
+  foreignKey: 'thesis_id',
 });
 
 module.exports = db;

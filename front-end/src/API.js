@@ -225,6 +225,43 @@ async function getCompanies() {
 
 // ------------------------------------
 
+// --------------------------------
+// Thesis Conclusions APIs
+
+const getSustainableDevelopmentGoals = async () => {
+  try {
+    const response = await axios.get(`${URL}/thesis-conclusion/sdgs`);
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching sustainable development goals:', error);
+  }
+};
+
+const getAvailableLicenses = async (lang) => {
+  console.log(lang);
+  try {
+    const response = await axios.get(`${URL}/thesis-conclusion/licenses`, {
+      params: { lang },
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching available licenses:', error);
+  }
+};
+
+const getEmbargoMotivations = async (lang) => {
+  try {
+    const response = await axios.get(`${URL}/thesis-conclusion/embargo-motivations`, {
+      params: { lang },
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching embargo motivations:', error);
+  }
+};
+
+// ------------------------------------
+
 const buildParams = (lang, page, limit, filters, search, sorting) => {
   const params = {
     lang,
@@ -293,6 +330,9 @@ const API = {
   cancelThesisApplication,
   startThesisFromApplication,
   getCompanies,
+  getSustainableDevelopmentGoals,
+  getAvailableLicenses,
+  getEmbargoMotivations
 };
 
 export default API;

@@ -5,6 +5,35 @@
   min-width: 330px !important;
 }
 
+.select-language .select__control {
+  min-width: 180px !important;
+  width: 180px !important;
+}
+
+.select-language-wide .select__control {
+  min-width: 100% !important;
+  width: 100% !important;
+}
+
+.select-supervisor .select__control {
+  min-width: 0 !important;
+  width: fit-content !important;
+  max-width: 100% !important;
+}
+
+.select-cosupervisors .select__control {
+  min-width: 360px !important;
+  width: 100% !important;
+  max-width: 100% !important;
+}
+
+@media (max-width: 576px) {
+  .select-cosupervisors .select__control {
+    min-width: 0 !important;
+    width: 100% !important;
+  }
+}
+
 .select__control--is-focused,
 .select__control--is-focused:hover {
   border: var(--border-default) !important;

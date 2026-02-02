@@ -7,6 +7,7 @@ const thesisApplicationsRouter = require('./routers/thesis-applications');
 const thesisRouter = require('./routers/thesis');
 const companiesRouter = require('./routers/companies');
 const testRouter = require('./routers/test-router');
+const thesisConclusionRouter = require('./routers/thesis-conclusion');
 
 require('dotenv').config();
 
@@ -27,5 +28,6 @@ app.use('/api/thesis-applications', thesisApplicationsRouter);
 app.use('/api/thesis', thesisRouter);
 app.use('/api/companies', companiesRouter);
 app.use('/api/test', testRouter);
+app.use('/api/thesis-conclusion', thesisConclusionRouter);
 
 module.exports = { app };

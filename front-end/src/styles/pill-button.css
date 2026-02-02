@@ -61,3 +61,10 @@
   color: var(--white);
   font-weight: var(--font-weight-semibold);
 }
+
+@media (max-width: 576px) {
+  .pill-button-group {
+    width: auto;
+    justify-content: space-evenly;
+  }
+}

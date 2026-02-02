@@ -220,7 +220,9 @@ CREATE TABLE IF NOT EXISTS thesis_application_status_history(
 CREATE TABLE IF NOT EXISTS license(
     id INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(100) NOT NULL,
-    description TEXT NOT NULL
+    name_en VARCHAR(100) NOT NULL,
+    description TEXT NOT NULL,
+    description_en TEXT NOT NULL
 );
 
 
@@ -229,7 +231,7 @@ CREATE TABLE IF NOT EXISTS thesis(
     topic TEXT NOT NULL,
     title VARCHAR(255),
     title_eng VARCHAR(255),
-    language ENUM('it', 'en'),
+    language ENUM('it', 'zh', 'fr', 'jp', 'en', 'pt', 'ru', 'es', 'se', 'de'),
     company_id INT,
     student_id VARCHAR(6) NOT NULL,
     thesis_application_id INT NOT NULL,
@@ -302,6 +304,13 @@ CREATE TABLE IF NOT EXISTS thesis_sustainable_development_goal(
     PRIMARY KEY (thesis_id, goal_id),
     FOREIGN KEY (thesis_id) REFERENCES thesis(id) ON DELETE CASCADE,
     FOREIGN KEY (goal_id) REFERENCES sustainable_development_goal(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS deadline(
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    type ENUM('conclusion_request', 'final_thesis_submission') NOT NULL,
+    graduation_session ENUM('March/April', 'July', 'September', 'December') NOT NULL,
+    deadline_date DATETIME NOT NULL
 );
 
 

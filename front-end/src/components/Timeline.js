@@ -94,10 +94,17 @@ export default function Timeline({ activeStep, statusHistory }) {
   const thesisSteps = getThesisSteps();
   const steps = [firstStep, secondStep, ...thesisSteps];
 
+
   const renderStep = (step, activeStep) => {
     const { key, label, description } = step;
 
+    // Trova l'indice dello step attivo e di quello corrente
+    const stepKeys = steps.map(s => s.key);
+    const activeIndex = stepKeys.indexOf(activeStep);
+    const thisIndex = stepKeys.indexOf(key);
+
     const isActive = activeStep === key;
+    const isCompleted = thisIndex < activeIndex;
 
     let circleClass;
     let titleClass;
@@ -109,13 +116,25 @@ export default function Timeline({ activeStep, statusHistory }) {
       case 'cancelled':
       case 'approved':
         historyEntry = statusHistory ? getHistoryForStatus(key) : null;
-        circleClass = isActive ? key : 'inactive';
-        titleClass = isActive ? `active active-${key}` : '';
         break;
       default:
-        circleClass = isActive ? 'pending' : 'inactive';
-        titleClass = titleClass = isActive ? `active active-${key}` : '';
         historyEntry = null;
+    }
+
+    if (isActive) {
+      // Usa la classe specifica per lo stato attivo
+      if (['approved', 'rejected', 'cancelled'].includes(key)) {
+        circleClass = key;
+      } else {
+        circleClass = 'pending'; // blu
+      }
+      titleClass = `active active-${key}`;
+    } else if (isCompleted) {
+      circleClass = 'approved';
+      titleClass = 'completed';
+    } else {
+      circleClass = 'inactive';
+      titleClass = '';
     }
 
     return (
@@ -125,6 +144,7 @@ export default function Timeline({ activeStep, statusHistory }) {
             {isActive && key === 'approved' && <i className="fa-solid fa-check align-vertical-center" />}
             {isActive && key === 'rejected' && <i className="fa-solid fa-xmark" />}
             {isActive && key === 'cancelled' && <i className="fa-solid fa-ban" />}
+            {isCompleted && <i className="fa-solid fa-check align-vertical-center" />}
           </div>
         </div>
         <div className="progress-step-content">
@@ -136,37 +156,6 @@ export default function Timeline({ activeStep, statusHistory }) {
                 <i className="fa-solid fa-clock me-1" />
                 {moment(historyEntry.changeDate).format('DD/MM/YYYY - HH:mm')}
               </div>
-              {historyEntry.note && (
-                <>
-                  <div
-                    className="progress-step-note-toggle"
-                    role="button"
-                    tabIndex={0}
-                    onClick={() => setExpandedNote(expandedNote === key ? null : key)}
-                    onKeyDown={e => {
-                      if (e.key === 'Enter' || e.key === ' ') {
-                        e.preventDefault();
-                        setExpandedNote(expandedNote === key ? null : key);
-                      }
-                    }}
-                  >
-                    <i className="fa-solid fa-comment me-2" />
-                    {key !== 'cancelled'
-                      ? expandedNote === key
-                        ? t('carriera.tesi.thesis_progress.hide_supervisor_note')
-                        : t('carriera.tesi.thesis_progress.show_supervisor_note')
-                      : expandedNote === key
-                        ? t('carriera.tesi.thesis_progress.hide_note')
-                        : t('carriera.tesi.thesis_progress.show_note')}
-                    <i className={`fa-solid fa-chevron-${expandedNote === key ? 'up' : 'down'} ms-2`} />
-                  </div>
-                  {expandedNote === key && (
-                    <div className="progress-step-note">
-                      <p style={{ whiteSpace: 'pre-line' }}>{historyEntry.note}</p>
-                    </div>
-                  )}
-                </>
-              )}
             </>
           )}
         </div>

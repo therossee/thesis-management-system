@@ -10,11 +10,10 @@ import API from '../API';
 import { BodyDataLoadingContext, ThemeContext } from '../App';
 import '../styles/custom-textarea.css';
 import { getSystemTheme } from '../utils/utils';
-import CompanySelect from './CompanySelect';
 import CustomBlock from './CustomBlock';
 import CustomModal from './CustomModal';
 import LoadingModal from './LoadingModal';
-import SupervisorSelect from './SupervisorSelect';
+import CustomSelect from './CustomSelect';
 
 export default function ThesisApplicationForm() {
   const { setBodyDataLoading } = useContext(BodyDataLoadingContext);
@@ -256,7 +255,16 @@ export default function ThesisApplicationForm() {
                       <i className="fa-solid fa-user fa-lg pe-2" />
                       {t('carriera.richiesta_tesi.select_supervisor')}
                     </h3>
-                    <SupervisorSelect
+                    <CustomSelect
+                      mode="supervisor"
+                      options={teachers
+                        .filter(teacher => !selectedCoSupervisors.some(co => co.value === teacher.id))
+                        .map(item => ({
+                          value: item.id,
+                          label: `${item.lastName} ${item.firstName}`,
+                          email: item.email,
+                          variant: 'teacher',
+                        }))}
                       isMulti={false}
                       selected={selectedSupervisor}
                       setSelected={value => {
@@ -281,7 +289,16 @@ export default function ThesisApplicationForm() {
                       <i className="fa-solid fa-users fa-lg pe-2" />
                       {t('carriera.richiesta_tesi.select_co_supervisors')}
                     </h3>
-                    <SupervisorSelect
+                    <CustomSelect
+                      mode="supervisor"
+                      options={teachers
+                        .filter(teacher => teacher.id !== (selectedSupervisor ? selectedSupervisor.value : null))
+                        .map(item => ({
+                          value: item.id,
+                          label: `${item.lastName} ${item.firstName}`,
+                          email: item.email,
+                          variant: 'teacher',
+                        }))}
                       isMulti={true}
                       selected={selectedCoSupervisors}
                       setSelected={setSelectedCoSupervisors}
@@ -296,8 +313,13 @@ export default function ThesisApplicationForm() {
                       <i className="fa-solid fa-building fa-lg pe-2" />
                       {t('carriera.richiesta_tesi.select_company')}
                     </h3>
-                    <CompanySelect
-                      isMulti={false}
+                    <CustomSelect
+                      mode="company"
+                      options={companies.map(company => ({
+                        value: company.id,
+                        label: company.corporateName,
+                        variant: 'external-company',
+                      }))}
                       selected={selectedCompany}
                       setSelected={setSelectedCompany}
                       isClearable={true}
