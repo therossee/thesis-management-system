@@ -31,6 +31,7 @@ export default function Tesi({ initialActiveTab }) {
   const [showModal, setShowModal] = useState(false);
   const [showRequestModal, setShowRequestModal] = useState(false);
   const [showConclusionRequest, setShowConclusionRequest] = useState(false);
+  const [showFinalThesis, setShowFinalThesis] = useState(false);
   const { theme } = useContext(ThemeContext);
   const { showToast } = useContext(ToastContext);
   const appliedTheme = theme === 'auto' ? getSystemTheme() : theme;
@@ -142,6 +143,8 @@ export default function Tesi({ initialActiveTab }) {
               showConclusionRequest={showConclusionRequest}
               setShowConclusionRequest={setShowConclusionRequest}
               onCancelApplicationResult={handleCancelApplicationResult}
+              showFinalThesis={showFinalThesis}
+              setShowFinalThesis={setShowFinalThesis}
             />
           );
         case 'proposals':
@@ -192,6 +195,22 @@ export default function Tesi({ initialActiveTab }) {
               </Button>
             </div>
           )}
+        {thesis && activeTab === 'thesis' && thesis.thesisStatus === 'final_thesis' && (
+          <Button
+            className={`btn-primary-${appliedTheme} tesi-header-action-btn`}
+            onClick={() => setShowFinalThesis(true)}
+            style={{
+              height: '30px',
+              display: 'flex',
+              borderRadius: '6px',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: '0 10px',
+            }}
+          >
+            <i className="fa-regular fa-circle-check me-1" /> {t('carriera.tesi.upload_final_thesis_button')}
+          </Button>
+        )}
         {thesisApplication && activeTab === 'thesis' && thesisApplication.status === 'pending' && (
           <Button
             variant="outline-danger"

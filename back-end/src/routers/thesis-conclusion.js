@@ -9,6 +9,7 @@ const {
   getAvailableLicenses,
   getEmbargoMotivations,
   getSessionDeadlines,
+  uploadFinalThesis,
 } = require('../controllers/thesis-conclusion');
 
 const tempUploadDir = path.join(__dirname, '..', '..', 'uploads', 'tmp');
@@ -37,5 +38,6 @@ router.get('/sdgs', getSustainableDevelopmentGoals);
 router.get('/licenses', getAvailableLicenses);
 router.get('/embargo-motivations', getEmbargoMotivations);
 router.get('/deadlines', getSessionDeadlines);
+router.post('/upload-final-thesis', upload.single('thesisFile'), uploadFinalThesis);
 
 module.exports = router;

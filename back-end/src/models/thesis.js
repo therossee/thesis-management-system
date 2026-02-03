@@ -72,7 +72,15 @@ module.exports = (sequelize, DataTypes) => {
         allowNull: false,
       },
       thesis_status: {
-        type: DataTypes.ENUM('ongoing', 'conclusion_requested', 'conclusion_approved', 'conclusion_rejected'),
+        type: DataTypes.ENUM(
+          'ongoing',
+          'conclusion_requested',
+          'conclusion_approved',
+          'conclusion_rejected',
+          'almalaurea',
+          'final_exam',
+          'final_thesis',
+        ),
         allowNull: false,
         defaultValue: 'ongoing',
       },

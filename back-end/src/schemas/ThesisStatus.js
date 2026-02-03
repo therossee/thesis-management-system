@@ -5,9 +5,10 @@ const thesisStatusSchema = z.enum([
   'conclusion_requested',
   'conclusion_approved',
   'conclusion_rejected',
-  'almalaurea_done',
-  'enrolled_final_exam',
-  'confirmed_final_exam',
+  'almalaurea',
+  'final_exam',
+  'final_thesis',
+  'done',
 ]);
 
 module.exports = thesisStatusSchema;

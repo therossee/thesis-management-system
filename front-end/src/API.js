@@ -283,6 +283,41 @@ const getSessionDeadlines = async type => {
   }
 };
 
+const getAllTheses = async () => {
+  try {
+    const response = await axios.get(`${URL}/thesis/all`);
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching all theses:', error);
+  }
+};
+
+const updateThesisConclusionStatus = async updateData => {
+  try {
+    const response = await axios.put(`${URL}/test/thesis-conclusion`, updateData);
+    return response.data;
+  } catch (error) {
+    console.error('Error updating thesis conclusion status:', error);
+  }
+};
+
+const uploadFinalThesis = async thesisFile => {
+  try {
+    const formData = new FormData();
+    formData.append('thesisFile', thesisFile);
+
+    const response = await axios.post(`${URL}/thesis-conclusion/upload-final-thesis`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error uploading final thesis:', error);
+    throw error;
+  }
+};
+
 // ------------------------------------
 
 const buildParams = (lang, page, limit, filters, search, sorting) => {
@@ -358,6 +393,9 @@ const API = {
   getEmbargoMotivations,
   sendThesisConclusionRequest,
   getSessionDeadlines,
+  updateThesisConclusionStatus,
+  getAllTheses,
+  uploadFinalThesis,
 };
 
 export default API;

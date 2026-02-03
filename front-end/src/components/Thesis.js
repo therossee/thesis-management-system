@@ -11,6 +11,7 @@ import '../styles/utilities.css';
 import { getSystemTheme } from '../utils/utils';
 import ConclusionRequest from './ConclusionRequest';
 import CustomModal from './CustomModal';
+import FinalThesisUpload from './FinalThesisUpload';
 import LoadingModal from './LoadingModal';
 import TeacherContactCard from './TeacherContactCard';
 import ThesisRequestModal from './ThesisRequestModal';
@@ -28,6 +29,8 @@ export default function Thesis(props) {
     setShowConclusionRequest,
     onRequestSubmitResult,
     onCancelApplicationResult,
+    showFinalThesis,
+    setShowFinalThesis,
   } = props;
   const data = thesis ? thesis : thesisApplication;
   const [isLoading, setIsLoading] = useState(false);
@@ -40,7 +43,7 @@ export default function Thesis(props) {
   const modalBody = thesis ? 'carriera.tesi.modal_cancel.body' : 'carriera.tesi.cancel_application_content';
   const modalConfirmText = thesis ? 'carriera.tesi.modal_cancel.confirm_text' : 'carriera.tesi.confirm_cancel';
   const modalConfirmIcon = thesis ? 'fa-regular fa-trash-can' : 'fa-regular fa-xmark';
-  const [sessionDeadlines, setSessionDeadlines] = useState([]);
+  const [sessionDeadlines, setSessionDeadlines] = useState({ graduationSession: null, deadlines: [] });
   const [isEligible, setIsEligible] = useState(true);
   const { theme } = useContext(ThemeContext);
   const appliedTheme = theme === 'auto' ? getSystemTheme() : theme;
@@ -141,7 +144,13 @@ export default function Thesis(props) {
       <div className="proposals-container">
         <Row className="mb-3">
           <Col md={4} lg={4}>
-            <Timeline activeStep={activeStep} statusHistory={appStatusHistory} />
+            <Timeline
+              activeStep={activeStep}
+              statusHistory={appStatusHistory}
+              conclusionRequestDate={thesis ? thesis.thesisConclusionRequestDate : null}
+              conclusionConfirmedDate={thesis ? thesis.thesisConclusionConfirmedDate : null}
+              session={sessionDeadlines}
+            />
           </Col>
           {!thesis && !thesisApplication && (
             <>
@@ -198,12 +207,20 @@ export default function Thesis(props) {
                 <Card.Header className="border-0">
                   <h3 className="thesis-topic">
                     <i className="fa-solid fa-book-open fa-sm pe-2" />
-                    {t('carriera.proposte_di_tesi.topic')}
+                    {data.title
+                      ? `${t('carriera.conclusione_tesi.title_thesis')}: ${data.title}`
+                      : t('carriera.proposte_di_tesi.topic')}
                   </h3>
                 </Card.Header>
                 <Card.Body className="pt-2 pb-0">
                   <p className="info-detail">
-                    {data.topic.length > 600 && !showFullTopic ? (
+                    {data.abstract ? (
+                      data.abstract.length > 600 && !showFullTopic ? (
+                        <>{`${t('carriera.conclusione_tesi.abstract_text')} ${data.abstract.substring(0, 597) + '... '}`}</>
+                      ) : (
+                        <>{data.abstract}</>
+                      )
+                    ) : data.topic.length > 600 && !showFullTopic ? (
                       <>{data.topic.substring(0, 597) + '... '}</>
                     ) : (
                       <>{data.topic}</>
@@ -332,6 +349,7 @@ export default function Thesis(props) {
             console.log('Conclusione richiesta inviata');
           }}
         />
+        <FinalThesisUpload show={showFinalThesis} onHide={() => setShowFinalThesis(false)} />
       </div>
     </>
   );
@@ -413,6 +431,11 @@ Thesis.propTypes = {
       }),
     ).isRequired,
     thesisStatus: PropTypes.string.isRequired,
+    thesisFilePath: PropTypes.string,
+    thesisResumePath: PropTypes.string,
+    additionalZipPath: PropTypes.string,
+    thesisConclusionRequestDate: PropTypes.string,
+    thesisConclusionConfirmedDate: PropTypes.string,
   }),
   thesisApplication: PropTypes.shape({
     id: PropTypes.number.isRequired,
@@ -438,4 +461,6 @@ Thesis.propTypes = {
   showConclusionRequest: PropTypes.bool,
   setShowConclusionRequest: PropTypes.func,
   onCancelApplicationResult: PropTypes.func.isRequired,
+  showFinalThesis: PropTypes.bool,
+  setShowFinalThesis: PropTypes.func,
 };

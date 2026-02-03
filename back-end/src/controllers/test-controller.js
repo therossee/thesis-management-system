@@ -80,6 +80,70 @@ const updateThesisApplicationStatus = async (req, res) => {
   }
 };
 
+const updateThesisConclusionStatus = async (req, res) => {
+  try {
+    const { thesisId, conclusionStatus } = req.body;
+
+    const thesis = await Thesis.findByPk(thesisId);
+    if (!thesis) {
+      return res.status(404).json({ error: 'Thesis not found' });
+    }
+
+    if (thesis.thesis_status === conclusionStatus) {
+      return res.status(400).json({ error: 'New status must be different from the current status' });
+    }
+
+    // Update thesis status
+    if (thesis.thesis_status === 'conclusion_requested') {
+      switch (conclusionStatus) {
+        case 'conclusion_approved':
+        case 'conclusion_rejected':
+          thesis.thesis_status = conclusionStatus;
+          if (conclusionStatus === 'conclusion_approved') {
+            thesis.thesis_conclusion_confirmation_date = new Date();
+          }
+          await thesis.save();
+          return res.status(200).json(thesis);
+        default:
+          return res.status(400).json({ error: 'Invalid conclusion status transition' });
+      }
+    } else if (thesis.thesis_status === 'conclusion_approved') {
+      switch (conclusionStatus) {
+        case 'almalaurea':
+          thesis.thesis_status = conclusionStatus;
+          await thesis.save();
+          return res.status(200).json(thesis);
+        default:
+          return res.status(400).json({ error: 'Invalid conclusion status transition' });
+      }
+    } else if (thesis.thesis_status === 'almalaurea') {
+      switch (conclusionStatus) {
+        case 'final_exam':
+          thesis.thesis_status = conclusionStatus;
+          await thesis.save();
+          return res.status(200).json(thesis);
+        default:
+          return res.status(400).json({ error: 'Invalid conclusion status transition' });
+      }
+    } else if (thesis.thesis_status === 'final_exam') {
+      switch (conclusionStatus) {
+        case 'final_thesis':
+          thesis.thesis_status = conclusionStatus;
+          await thesis.save();
+          return res.status(200).json(thesis);
+        default:
+          return res.status(400).json({ error: 'Invalid conclusion status transition' });
+      }
+    } else {
+      return res.status(400).json({ error: 'Invalid current thesis status for conclusion update' });
+    }
+  } catch (error) {
+    console.error('Error updating thesis conclusion status:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
 module.exports = {
   updateThesisApplicationStatus,
+  updateThesisConclusionStatus,
 };

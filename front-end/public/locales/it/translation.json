@@ -132,13 +132,15 @@
                 "hide_supervisor_note": "Nascondi nota del relatore",
                 "show_note": "Mostra nota",
                 "hide_note": "Nascondi nota",
-                                "ongoing_title": "Tesi in corso",
-                "conclusion_request_title": "Conferma conclusione",
+                "ongoing_title": "Tesi in corso",
+                "conclusion_request_title": "Richiesta conclusione",
+                "conclusion_confirmed_title": "Conclusione approvata",
                 "almalaurea_title": "Questionario AlmaLaurea",
                 "final_exam_title": "Iscrizione esame finale",
                 "final_thesis_title": "Tesi definitiva",
                 "ongoing": "Durante questa fase, lavori alla tua tesi sotto la supervisione del relatore. Puoi confrontarti con lui per chiarimenti, suggerimenti e revisioni periodiche.",
                 "conclusion_request": "Al termine del lavoro, chiedi al relatore di confermare la conclusione della tesi. Questa conferma è necessaria per poter procedere con le fasi successive.",
+                "conclusion_confirmed": "Il relatore ha confermato la conclusione della tesi. Ora puoi procedere con i passaggi finali per completare il percorso di laurea.",
                 "almalaurea": "Prima di iscriverti all'esame finale, devi compilare il questionario AlmaLaurea. Il questionario raccoglie informazioni utili per il monitoraggio dei percorsi universitari.",
                 "final_exam": "Dopo aver ricevuto la conferma di conclusione dal relatore e aver compilato il questionario, puoi iscriverti all'esame finale tramite la procedura online.",
                 "final_thesis": "Infine, carica la versione definitiva della tua tesi seguendo le indicazioni fornite dal portale. Assicurati che il documento rispetti i requisiti richiesti."
@@ -212,6 +214,17 @@
             "no_application": {
                 "title": "Nessuna candidatura inviata",
                 "content": "Al momento non sono disponibili informazioni sulla tua tesi, poiché non hai ancora inviato una candidatura. Esplora le <a href='/carriera/tesi/proposte_di_tesi'>proposte disponibili</a> o invia una richiesta di tesi personalizzata."
+            },
+            "upload_final_thesis_button": "Carica Tesi Definitiva",
+            "no_deadlines": "Nessuna scadenza imminente",
+            "no_deadlines_content": "Non ci sono scadenze imminenti per la tua tesi. Continua a monitorare questa sezione per rimanere aggiornato sugli step successivi.",
+            "deadlines": {
+                "thesis_request": "Invio richiesta tesi",
+                "exams": "Termine superamento esami",
+                "conclusion_request": "Invio richiesta conclusione tesi",
+                "ielts": "Ultima sessione IELTS valida",
+                "final_exam_registration": "Iscrizione esame finale",
+                "internship_report": "Consegna relazione tirocinio e altre attività"
             }
 
         },
@@ -342,7 +355,10 @@
             },
             "select_keywords_placeholder": "Seleziona le keyword",
             "sending": "Invio in corso...",
-            "request_conclusion": "Richiedi conclusione"
+            "request_conclusion": "Richiedi conclusione",
+            "title_thesis": "Titolo",
+            "abstract_text": "Abstract: ",
+            "upload_final_thesis": " Carica tesi definitiva"
         }
     },
     "Accedi": "Accedi",

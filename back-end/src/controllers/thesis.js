@@ -73,6 +73,10 @@ const getLoggedStudentThesis = async (req, res) => {
       id: thesisData.id,
       topic: thesisData.topic,
       student: studentData ? studentData.toJSON() : null,
+      title: thesisData.title,
+      title_eng: thesisData.title_eng,
+      abstract: thesisData.abstract,
+      abstract_eng: thesisData.abstract_eng,
       supervisor: supervisorData,
       co_supervisors: coSupervisorsData,
       company: companyData ? companyData.toJSON() : null,
@@ -189,7 +193,19 @@ const createStudentThesis = async (req, res) => {
   }
 };
 
+//debugging purpose
+const getAllTheses = async (req, res) => {
+  try {
+    const theses = await Thesis.findAll();
+    return res.status(200).json(theses);
+  } catch (error) {
+    console.error('Error fetching all theses:', error);
+    return res.status(500).json({ error: 'An error occurred while fetching all theses.' });
+  }
+};
+
 module.exports = {
   getLoggedStudentThesis,
   createStudentThesis,
+  getAllTheses,
 };

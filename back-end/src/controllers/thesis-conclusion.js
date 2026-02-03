@@ -66,6 +66,10 @@ const sendThesisConclusionRequest = async (req, res) => {
   const thesisFile = req.files?.thesisFile?.[0] || null;
   const additionalZip = req.files?.additionalZip?.[0] || null;
   const lang = req.body.language || 'it';
+  const title = req.body.title || null;
+  const abstract = req.body.abstract || null;
+  let titleEng = req.body.titleEng || null;
+  let abstractEng = req.body.abstractEng || null;
   const throwHttp = (status, message) => {
     const err = new Error(message);
     err.status = status;
@@ -92,17 +96,28 @@ const sendThesisConclusionRequest = async (req, res) => {
         throwHttp(400, 'Thesis is not in an ongoing state');
       }
 
+      if (!title || !abstract) {
+        throwHttp(400, 'Missing thesis title or abstract');
+      }
+
+      if (lang === 'en') {
+        titleEng = title;
+        abstractEng = abstract;
+      }
+
+      thesis.title = title;
+      thesis.abstract = abstract;
+      thesis.title_eng = titleEng;
+      thesis.abstract_eng = abstractEng;
+      thesis.language = lang;
+      await thesis.save({
+        transaction,
+        fields: ['title', 'abstract', 'title_eng', 'abstract_eng', 'language'],
+      });
+
       if (!thesisResume || !thesisFile) {
         throwHttp(400, 'Missing files (thesisResume, thesisFile)');
       }
-
-      console.log('Processing thesis conclusion request for student ID:', loggedStudent.id);
-      console.log('Co-supervisors:', coSupervisors);
-      console.log('Sustainable Development Goals:', sdgs);
-      console.log('Keywords:', keywords);
-      console.log('License ID:', licenseId);
-      console.log('Embargo:', embargo);
-      console.log('selected language:', lang);
 
       const uploadBaseDir = path.join(
         __dirname,
@@ -423,10 +438,52 @@ const getSessionDeadlines = async (req, res) => {
   });
 };
 
+const uploadFinalThesis = async (req, res) => {
+  const logged = await LoggedStudent.findOne();
+  if (!logged) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+  const loggedStudent = await Student.findByPk(logged.student_id);
+  if (!loggedStudent) {
+    return res.status(404).json({ error: 'Student not found' });
+  }
+  const thesis = await Thesis.findOne({
+    where: { student_id: loggedStudent.id },
+  });
+  if (!thesis) {
+    return res.status(404).json({ error: 'Thesis not found' });
+  }
+  if (thesis.thesis_status !== 'final_thesis') {
+    return res.status(400).json({ error: 'Thesis is not in a final thesis state' });
+  }
+
+  const uploadBaseDir = path.join(__dirname, '..', '..', 'uploads', 'final_thesis', String(loggedStudent.id));
+  await ensureDir(uploadBaseDir);
+  const thesisFile = req.file || null;
+  if (!thesisFile) {
+    return res.status(400).json({ error: 'Missing thesis file' });
+  }
+  const thesisPdfName = safeFilename('thesis_', loggedStudent.id || 'document.pdf');
+  const thesisPdfPath = path.join(uploadBaseDir, thesisPdfName);
+  const thesisBuffer = await fs.readFile(thesisFile.path);
+  const convertedPdfA = await convertToPdfA({
+    buffer: thesisBuffer,
+    filename: thesisFile.originalname || 'document.pdf',
+  });
+  await fs.writeFile(thesisPdfPath, convertedPdfA);
+  await fs.unlink(thesisFile.path);
+  thesis.thesis_file = null;
+  thesis.thesis_file_path = path.relative(path.join(__dirname, '..', '..'), thesisPdfPath);
+  thesis.thesis_status = 'done';
+  await thesis.save();
+  res.status(200).json({ message: 'Final thesis uploaded successfully' });
+};
+
 module.exports = {
   sendThesisConclusionRequest,
   getSustainableDevelopmentGoals,
   getAvailableLicenses,
   getEmbargoMotivations,
   getSessionDeadlines,
+  uploadFinalThesis,
 };

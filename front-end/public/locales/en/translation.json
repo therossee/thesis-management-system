@@ -159,11 +159,13 @@
                 "hide_note": "Hide note",
                 "ongoing_title": "Thesis in progress",
                 "conclusion_request_title": "Thesis conclusion confirmation",
+                "conclusion_confirmed_title": "Conclusion confirmed",
                 "almalaurea_title": "AlmaLaurea questionnaire",
                 "final_exam_title": "Final exam registration",
                 "final_thesis_title": "Final thesis",
                 "ongoing": "Your thesis is currently in progress under the supervision of the assigned supervisor.",
                 "conclusion_request": "Request confirmation of the thesis conclusion from the supervisor once the work is completed.",
+                "conclusion_confirmed": "The supervisor has confirmed the thesis conclusion. You can now proceed with the final steps.",
                 "almalaurea": "Complete the AlmaLaurea questionnaire by the established deadline. The link to access the questionnaire will be available in this section.",
                 "final_exam": "Register for the final exam through this page once you have obtained confirmation of the thesis conclusion.",
                 "final_thesis": "Upload the final version of the thesis following the instructions provided by the supervisor and the regulations."
