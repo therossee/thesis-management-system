@@ -53,5 +53,5 @@ CustomModal.propTypes = {
   bodyText: PropTypes.string.isRequired,
   confirmText: PropTypes.string.isRequired,
   confirmIcon: PropTypes.string.isRequired,
-  closeText: PropTypes.string
+  closeText: PropTypes.string,
 };

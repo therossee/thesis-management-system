@@ -7,7 +7,7 @@ const {
   getThesisProposalsKeywords,
   getThesisProposalsTeachers,
   getThesisProposalById,
-  getProposalAvailability
+  getProposalAvailability,
 } = require('../controllers/thesis-proposals');
 
 router.get('/', getThesisProposals);

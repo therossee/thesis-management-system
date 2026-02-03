@@ -7,7 +7,7 @@ const {
   getThesisProposalsKeywords,
   getThesisProposalsTeachers,
   getThesisProposalById,
-  getProposalAvailability
+  getProposalAvailability,
 } = require('../../src/controllers/thesis-proposals');
 const { getStudentData } = require('../../src/controllers/students');
 const { ThesisProposal, ThesisApplication, sequelize, Type, Keyword, Teacher } = require('../../src/models');

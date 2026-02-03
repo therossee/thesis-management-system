@@ -12,8 +12,8 @@ import '../styles/custom-textarea.css';
 import { getSystemTheme } from '../utils/utils';
 import CustomBlock from './CustomBlock';
 import CustomModal from './CustomModal';
-import LoadingModal from './LoadingModal';
 import CustomSelect from './CustomSelect';
+import LoadingModal from './LoadingModal';
 
 export default function ThesisApplicationForm() {
   const { setBodyDataLoading } = useContext(BodyDataLoadingContext);

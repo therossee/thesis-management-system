@@ -4,10 +4,10 @@ import { Col, Row } from 'react-bootstrap';
 import { Route, Routes, useLocation } from 'react-router-dom';
 
 import API from './API';
+import CustomToast from './components/CustomToast';
 import FloatingButton from './components/FloatingButton';
 import LoadingModal from './components/LoadingModal';
 import PoliNavbar from './components/Navbar';
-import CustomToast from './components/CustomToast';
 import { Sidebar } from './components/Sidebar';
 import AreaPersonale from './pages/AreaPersonale';
 import Carriera from './pages/Carriera';
@@ -131,20 +131,20 @@ function App() {
                   <Sidebar />
                   <Col className={`custom-content reduced ${desktopToggle ? 'minimized' : ''}`}>
                     <Routes>
-                    <Route path="/" element={<Homepage />} />
-                    <Route path="/area_personale" element={<AreaPersonale />} />
-                    <Route path="/home" element={<Homepage />} />
-                    <Route path="/didattica" element={<Didattica />} />
-                    <Route path="/carriera" element={<Carriera />} />
-                    <Route path="/carriera/laurea_ed_esame_finale" element={<LaureaEdEsameFinale />} />
-                    <Route path="/opportunita" element={<Opportunita />} />
-                    <Route path="/servizi" element={<Servizi />} />
-                    <Route path="/help" element={<Help />} />
-                    <Route path="*" element={<PageNotFound />} />
-                    <Route path="/servizi/test" element={<Test />} />
-                    <Route path="/carriera/tesi" element={<Tesi initialActiveTab="thesis" />} />
-                    <Route path="/carriera/tesi/proposte_di_tesi" element={<Tesi initialActiveTab="proposals" />} />
-                    <Route path="/carriera/tesi/proposta_di_tesi/:id" element={<PropostaDiTesi />} />
+                      <Route path="/" element={<Homepage />} />
+                      <Route path="/area_personale" element={<AreaPersonale />} />
+                      <Route path="/home" element={<Homepage />} />
+                      <Route path="/didattica" element={<Didattica />} />
+                      <Route path="/carriera" element={<Carriera />} />
+                      <Route path="/carriera/laurea_ed_esame_finale" element={<LaureaEdEsameFinale />} />
+                      <Route path="/opportunita" element={<Opportunita />} />
+                      <Route path="/servizi" element={<Servizi />} />
+                      <Route path="/help" element={<Help />} />
+                      <Route path="*" element={<PageNotFound />} />
+                      <Route path="/servizi/test" element={<Test />} />
+                      <Route path="/carriera/tesi" element={<Tesi initialActiveTab="thesis" />} />
+                      <Route path="/carriera/tesi/proposte_di_tesi" element={<Tesi initialActiveTab="proposals" />} />
+                      <Route path="/carriera/tesi/proposta_di_tesi/:id" element={<PropostaDiTesi />} />
                     </Routes>
                     <FloatingButton />
                   </Col>

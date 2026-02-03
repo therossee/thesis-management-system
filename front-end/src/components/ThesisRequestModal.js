@@ -10,8 +10,8 @@ import { ThemeContext } from '../App';
 import '../styles/utilities.css';
 import { getSystemTheme } from '../utils/utils';
 import CustomModal from './CustomModal';
-import LoadingModal from './LoadingModal';
 import CustomSelect from './CustomSelect';
+import LoadingModal from './LoadingModal';
 
 export default function ThesisRequestModal(props) {
   const { show, setShow, onSubmitResult } = props;
@@ -207,21 +207,21 @@ export default function ThesisRequestModal(props) {
           </Form>
         </Modal.Body>
         <Modal.Footer>
-            <Button
-              className={`btn-${appliedTheme}`}
-              onClick={() => {
-                setTopic('');
-                setSupervisor(null);
-                setCoSupervisors([]);
-                setCompany(null);
-                setErrors({
-                  topic: false,
-                  supervisor: false,
-                });
-              }}
-            >
-              <i className="fa-solid fa-arrow-rotate-left fa-lg me-1" /> {t('carriera.richiesta_tesi.reset_form')}
-            </Button>
+          <Button
+            className={`btn-${appliedTheme}`}
+            onClick={() => {
+              setTopic('');
+              setSupervisor(null);
+              setCoSupervisors([]);
+              setCompany(null);
+              setErrors({
+                topic: false,
+                supervisor: false,
+              });
+            }}
+          >
+            <i className="fa-solid fa-arrow-rotate-left fa-lg me-1" /> {t('carriera.richiesta_tesi.reset_form')}
+          </Button>
           <Button className={`btn-primary-${appliedTheme}`} onClick={() => handleShowConfirm()} size="md">
             <i className="fa-solid fa-paper-plane fa-lg pe-2" />
             {t('carriera.richiesta_tesi.submit_request')}
