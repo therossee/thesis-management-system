@@ -6163,26 +6163,6 @@ VALUES
     ("Accenture S.p.A."),
     ("Istituto Italiano di Tecnologia");
 
--- ------------------------------------------------------------
--- ↓ embargo_motivation table ↓
-------------------------------------------------------------------------
-
-INSERT INTO
-    embargo_motivation (motivation, motivation_en)
-VALUES
-    ("Necessità di evitare la divulgazione di risultati potenzialmente brevettabili contenuti all'interno della tesi, al fine di preservare il requisito della novità necessario per la brevettabilità.", 
-    "Need to avoid the disclosure of potentially patentable results contained within the thesis, in order to preserve the novelty requirement necessary for patentability."),
-    ("Esistenza di accordi di riservatezza o impegni al rispetto della segretezza contenuti in contratti o convenzioni con società o Enti terzi",
-    "Existence of confidentiality agreements or commitments to confidentiality contained in contracts or agreements with third-party companies or entities"),
-    ("Segretezza e/o di proprietà dei risultati e informazioni di enti esterni o aziende private che hanno partecipato alla realizzazione del lavoro di ricerca.",
-    "Confidentiality and/or ownership of results and information from external entities or private companies that participated in the research work"),
-    ("Pubblicazione editoriale", "Editorial publication"),
-    ("Pubblica sicurezza (il contenuto della tesi può in qualche modo mettere a rischio la sicurezza pubblica o nazionale)",
-    "Public security (the content of the thesis may in some way jeopardize public or national security)."),
-    ("Privacy (il contenuto dell'elaborato verte su una persona ancora in vita o deceduta di recente per la quale si teme di violare il diritto alla privacy)", 
-    "Privacy (the content of the thesis concerns a person still alive or recently deceased for whom there is a fear of violating the right to privacy)"),
-    ("Altri motivi", "Other reasons");
-
 
 --- ------------------------------------------------------------
 -- ↓ sustainable development goals table ↓
@@ -6209,6 +6189,10 @@ VALUES
     ("NOT APPLICABLE");
 
 
+
+-- ------------------------------------------------------------
+-- ↓ license table ↓
+-- ------------------------------------------------------------
 INSERT INTO license (name, name_en, description, description_en)
 VALUES
 (
@@ -6253,6 +6237,10 @@ VALUES
     "This license is the most restrictive of the six main CC licenses, only allowing others to download your works and share them with others as long as they credit you, but they can't change them in any way or use them commercially. For more information visit <a href='https://creativecommons.org/licenses/?lang=it' target='_blank' rel='noopener noreferrer'>this link</a>."
 );
 
+
+-------------------------------------------------------------
+-- ↓ embargo_motivation table ↓
+-- ------------------------------------------------------------
 INSERT INTO embargo_motivation (motivation, motivation_en)
 VALUES
 (
@@ -6323,5 +6311,6 @@ VALUES
     ('ielts', 2, '2026-06-13T23:59:59'),
     ('ielts', 3, '2026-07-18T23:59:59'),
     ('ielts', 4, '2026-10-10T23:59:59');
+
 
 

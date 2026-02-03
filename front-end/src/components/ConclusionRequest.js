@@ -41,7 +41,7 @@ export default function ConclusionRequest({ show, setShow, onSubmitResult }) {
   const [secondarySdg2, setSecondarySdg2] = useState('');
 
   const [authorization, setAuthorization] = useState('authorize'); // authorize | deny
-  const [licenseChoice, setLicenseChoice] = useState(0);
+  const [licenseChoice, setLicenseChoice] = useState(6);
   const [embargoPeriod, setEmbargoPeriod] = useState(''); // nessuna opzione selezionata all'inizio
   const [embargoMotivations, setEmbargoMotivations] = useState([]); // nessuna motivazione selezionata all'inizio
   const [otherEmbargoReason, setOtherEmbargoReason] = useState('');
@@ -166,12 +166,10 @@ export default function ConclusionRequest({ show, setShow, onSubmitResult }) {
   }, [show]);
 
   const sdgOptions = useMemo(() => {
-    const mapped = (sdgs || []).map(sdg => ({
+    return (sdgs || []).map(sdg => ({
       value: sdg.id ?? sdg.value,
       label: sdg.goal ? `${sdg.id} - ${sdg.goal}` : sdg.label || `SDG ${sdg.id ?? sdg.value}`,
     }));
-
-    return [...mapped, { value: 'NON APPLICABILE', label: t('carriera.conclusione_tesi.sdg_not_applicable') }];
   }, [sdgs, t]);
 
   const resetForm = () => {
@@ -189,7 +187,7 @@ export default function ConclusionRequest({ show, setShow, onSubmitResult }) {
     setSecondarySdg2('');
 
     setAuthorization('authorize');
-    setLicenseChoice('BY-NC-ND');
+    setLicenseChoice(6);
     setEmbargoPeriod('');
     setEmbargoMotivations([]);
     setOtherEmbargoReason('');
@@ -216,9 +214,9 @@ export default function ConclusionRequest({ show, setShow, onSubmitResult }) {
 
   const allDeclarationsChecked = () => {
     switch (authorization) {
-      case 'authorize':
-        return decl.decl1 && decl.decl3 && decl.decl4 && decl.decl5 && decl.decl6;
       case 'deny':
+        return decl.decl1 && decl.decl3 && decl.decl4 && decl.decl5 && decl.decl6;
+      case 'authorize':
         return decl.decl1 && decl.decl2 && decl.decl3 && decl.decl4 && decl.decl5 && decl.decl6;
     }
   };
@@ -258,9 +256,9 @@ export default function ConclusionRequest({ show, setShow, onSubmitResult }) {
     try {
       const formData = new FormData();
       formData.append('title', titleText);
-      formData.append('titleEng', titleEngText);
+      formData.append('titleEng', titleEngText === '' ? titleText : titleEngText);
       formData.append('abstract', abstractText);
-      formData.append('abstractEng', abstractEngText);
+      formData.append('abstractEng', abstractEngText === '' ? abstractText : abstractEngText);
       formData.append('language', lang);
       if (supervisor?.id) formData.append('supervisor', supervisor.id);
       if (coSupervisors?.length) {
@@ -542,10 +540,9 @@ export default function ConclusionRequest({ show, setShow, onSubmitResult }) {
                       <Form.Label htmlFor="primary-sdg">{t('carriera.conclusione_tesi.primary_sdg')}</Form.Label>
                       <CustomSelect
                         mode="sdg"
-                        options={sdgOptions.map(option => ({
-                          ...option,
-                          isDisabled: option.value === primarySdg || option.value === secondarySdg2,
-                        }))}
+                        options={sdgOptions.filter(
+                          option => option.value !== secondarySdg1 && option.value !== secondarySdg2,
+                        )}
                         selected={sdgOptions.find(option => option.value === primarySdg)}
                         setSelected={selected => setPrimarySdg(selected ? selected.value : '')}
                         isMulti={false}
@@ -561,10 +558,9 @@ export default function ConclusionRequest({ show, setShow, onSubmitResult }) {
                       </Form.Label>
                       <CustomSelect
                         mode="sdg"
-                        options={sdgOptions.map(option => ({
-                          ...option,
-                          isDisabled: option.value === primarySdg || option.value === secondarySdg2,
-                        }))}
+                        options={sdgOptions.filter(
+                          option => option.value !== primarySdg && option.value !== secondarySdg2,
+                        )}
                         selected={sdgOptions.find(option => option.value === secondarySdg1)}
                         setSelected={selected => setSecondarySdg1(selected ? selected.value : '')}
                         isMulti={false}
@@ -581,10 +577,9 @@ export default function ConclusionRequest({ show, setShow, onSubmitResult }) {
                       </Form.Label>
                       <CustomSelect
                         mode="sdg"
-                        options={sdgOptions.map(option => ({
-                          ...option,
-                          isDisabled: option.value === primarySdg || option.value === secondarySdg1,
-                        }))}
+                        options={sdgOptions.filter(
+                          option => option.value !== primarySdg && option.value !== secondarySdg1,
+                        )}
                         selected={sdgOptions.find(option => option.value === secondarySdg2)}
                         setSelected={selected => setSecondarySdg2(selected ? selected.value : '')}
                         isMulti={false}
@@ -750,8 +745,8 @@ export default function ConclusionRequest({ show, setShow, onSubmitResult }) {
                               </div>
                             </div>
                           }
-                          checked={licenseChoice.id === license.id}
-                          onChange={() => setLicenseChoice(license)}
+                          checked={licenseChoice === license.id}
+                          onChange={() => setLicenseChoice(license.id)}
                           disabled={isSubmitting}
                           className="mb-3"
                           id={`license-choice-${license.id}`}
@@ -845,7 +840,7 @@ export default function ConclusionRequest({ show, setShow, onSubmitResult }) {
                         disabled={isSubmitting}
                         id="declaration-1"
                       />
-                      {authorization === 'deny' && (
+                      {authorization === 'authorize' && (
                         <Form.Check
                           type="checkbox"
                           label={t('carriera.conclusione_tesi.declarations.declaration_2')}

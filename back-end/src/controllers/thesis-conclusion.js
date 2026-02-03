@@ -6,6 +6,8 @@ const {
   ThesisKeyword,
   ThesisSupervisorCoSupervisor,
   ThesisSustainableDevelopmentGoal,
+  ThesisEmbargo,
+  ThesisEmbargoMotivation,
   Keyword,
   Teacher,
   Student,
@@ -15,6 +17,7 @@ const {
   SustainableDevelopmentGoal,
   GraduationSession,
   Deadline,
+  sequelize,
 } = require('../models');
 
 const selectLicenseAttributes = require('../utils/selectLicenseAttributes');
@@ -62,184 +65,277 @@ const sendThesisConclusionRequest = async (req, res) => {
   const thesisResume = req.files?.thesisResume?.[0] || null;
   const thesisFile = req.files?.thesisFile?.[0] || null;
   const additionalZip = req.files?.additionalZip?.[0] || null;
+  const lang = req.body.language || 'it';
+  const throwHttp = (status, message) => {
+    const err = new Error(message);
+    err.status = status;
+    throw err;
+  };
   try {
-    const logged = await LoggedStudent.findOne();
-    if (!logged) {
-      return res.status(401).json({ error: 'Unauthorized' });
-    }
-    const loggedStudent = await Student.findByPk(logged.student_id);
-    if (!loggedStudent) {
-      return res.status(404).json({ error: 'Student not found' });
-    }
-    const thesis = await Thesis.findOne({
-      where: { student_id: loggedStudent.id },
-    });
-    if (!thesis) {
-      return res.status(404).json({ error: 'Thesis not found' });
-    }
-    if (thesis.thesis_status !== 'ongoing') {
-      return res.status(400).json({ error: 'Thesis is not in an ongoing state' });
-    }
-
-    if (!thesisResume || !thesisFile) {
-      return res.status(400).json({ error: 'Missing files (thesisResume, thesisFile)' });
-    }
-
-    const uploadBaseDir = path.join(
-      __dirname,
-      '..',
-      '..',
-      'uploads',
-      'thesis_conclusion_request',
-      String(loggedStudent.id),
-    );
-    await ensureDir(uploadBaseDir);
-
-    const thesisPdfName = safeFilename('thesis_', loggedStudent.id || 'document.pdf');
-    const thesisPdfPath = path.join(uploadBaseDir, thesisPdfName);
-    const thesisBuffer = await fs.readFile(thesisFile.path);
-    const convertedPdfA = await convertToPdfA({
-      buffer: thesisBuffer,
-      filename: thesisFile.originalname || 'document.pdf',
-    });
-    await fs.writeFile(thesisPdfPath, convertedPdfA);
-    await fs.unlink(thesisFile.path);
-
-    if (coSupervisors) {
-      const currentCoSupervisors = await ThesisSupervisorCoSupervisor.findAll({
-        where: {
-          thesis_id: thesis.id,
-          is_supervisor: false,
-        },
+    await sequelize.transaction(async transaction => {
+      const logged = await LoggedStudent.findOne({ transaction });
+      if (!logged) {
+        throwHttp(401, 'Unauthorized');
+      }
+      const loggedStudent = await Student.findByPk(logged.student_id, { transaction });
+      if (!loggedStudent) {
+        throwHttp(404, 'Student not found');
+      }
+      const thesis = await Thesis.findOne({
+        where: { student_id: loggedStudent.id },
+        transaction,
       });
-      const currentIds = currentCoSupervisors.map(cs => cs.teacher_id).sort();
-      const newIds = coSupervisors
-        .map(coSup => (typeof coSup === 'object' ? coSup.id : coSup))
-        .filter(id => id !== null && id !== undefined)
-        .sort();
+      if (!thesis) {
+        throwHttp(404, 'Thesis not found');
+      }
+      if (thesis.thesis_status !== 'ongoing') {
+        throwHttp(400, 'Thesis is not in an ongoing state');
+      }
 
-      const arraysAreEqual = currentIds.length === newIds.length && currentIds.every((id, idx) => id === newIds[idx]);
+      if (!thesisResume || !thesisFile) {
+        throwHttp(400, 'Missing files (thesisResume, thesisFile)');
+      }
 
-      if (!arraysAreEqual) {
-        await ThesisSupervisorCoSupervisor.destroy({
+      console.log('Processing thesis conclusion request for student ID:', loggedStudent.id);
+      console.log('Co-supervisors:', coSupervisors);
+      console.log('Sustainable Development Goals:', sdgs);
+      console.log('Keywords:', keywords);
+      console.log('License ID:', licenseId);
+      console.log('Embargo:', embargo);
+      console.log('selected language:', lang);
+
+      const uploadBaseDir = path.join(
+        __dirname,
+        '..',
+        '..',
+        'uploads',
+        'thesis_conclusion_request',
+        String(loggedStudent.id),
+      );
+      await ensureDir(uploadBaseDir);
+
+      const thesisPdfName = safeFilename('thesis_', loggedStudent.id || 'document.pdf');
+      const thesisPdfPath = path.join(uploadBaseDir, thesisPdfName);
+      const thesisBuffer = await fs.readFile(thesisFile.path);
+      const convertedPdfA = await convertToPdfA({
+        buffer: thesisBuffer,
+        filename: thesisFile.originalname || 'document.pdf',
+      });
+      await fs.writeFile(thesisPdfPath, convertedPdfA);
+      await fs.unlink(thesisFile.path);
+      if (coSupervisors) {
+        const currentCoSupervisors = await ThesisSupervisorCoSupervisor.findAll({
           where: {
             thesis_id: thesis.id,
             is_supervisor: false,
           },
+          transaction,
         });
-        const co_supervisors = await Teacher.findAll({
-          where: {
-            id: {
-              [Op.in]: newIds,
+        const currentIds = currentCoSupervisors.map(cs => cs.teacher_id).sort();
+        const newIds = coSupervisors
+          .map(coSup => (typeof coSup === 'object' ? coSup.id : coSup))
+          .filter(id => id !== null && id !== undefined)
+          .sort();
+
+        const arraysAreEqual = currentIds.length === newIds.length && currentIds.every((id, idx) => id === newIds[idx]);
+
+        if (!arraysAreEqual) {
+          await ThesisSupervisorCoSupervisor.destroy({
+            where: {
+              thesis_id: thesis.id,
+              is_supervisor: false,
             },
-          },
-        });
-        if (co_supervisors.length !== newIds.length) {
-          return res.status(400).json({ error: 'One or more co-supervisors not found' });
-        }
-        for (const coSup of co_supervisors) {
-          await ThesisSupervisorCoSupervisor.create({
-            thesis_id: thesis.id,
-            teacher_id: coSup.id,
-            is_supervisor: false,
+            transaction,
           });
-        }
-      }
-    }
-
-    if (sdgs) {
-      // check if the sustainable development goals provided are defined in the database
-      const normalizedSdgs = sdgs.map(goal => ({
-        id: typeof goal === 'object' ? goal.id : goal,
-        level: typeof goal === 'object' ? goal.level : null,
-      }));
-      const goalIds = normalizedSdgs.map(goal => goal.id).filter(id => id !== null && id !== undefined);
-      const currentGoals = await SustainableDevelopmentGoal.findAll({
-        where: {
-          id: {
-            [Op.in]: goalIds,
-          },
-        },
-      });
-      if (currentGoals.length !== goalIds.length) {
-        return res.status(400).json({ error: 'One or more sustainable development goals not found' });
-      }
-      for (const goal of normalizedSdgs) {
-        await ThesisSustainableDevelopmentGoal.create({
-          thesis_id: thesis.id,
-          goal_id: goal.id,
-          level: goal.level,
-        });
-      }
-    }
-
-    if (keywords) {
-      const keywordIds = keywords
-        .map(k => (typeof k === 'object' ? k.id : k))
-        .filter(id => id !== -1 && id !== undefined && id !== null);
-      const keywordNames = keywords.filter(k => typeof k === 'string' && k.trim().length > 0).map(k => k.trim());
-      const currentKeywords = keywordIds.length
-        ? await Keyword.findAll({
+          const co_supervisors = await Teacher.findAll({
             where: {
               id: {
-                [Op.in]: keywordIds,
+                [Op.in]: newIds,
               },
             },
-          })
-        : [];
-      for (const keyword of currentKeywords) {
-        await ThesisKeyword.create({
-          thesis_id: thesis.id,
-          keyword_id: keyword.id,
-        });
+            transaction,
+          });
+          if (co_supervisors.length !== newIds.length) {
+            throwHttp(400, 'One or more co-supervisors not found');
+          }
+          for (const coSup of co_supervisors) {
+            await ThesisSupervisorCoSupervisor.create(
+              {
+                thesis_id: thesis.id,
+                teacher_id: coSup.id,
+                is_supervisor: false,
+              },
+              { transaction },
+            );
+          }
+        }
       }
-      for (const newKeyword of keywordNames) {
-        const nk = await Keyword.create({ keyword: newKeyword, keyword_en: newKeyword });
-        await ThesisKeyword.create({
-          thesis_id: thesis.id,
-          keyword_id: nk.id,
+
+      if (sdgs) {
+        const normalizedSdgs = sdgs
+          .map(goal => ({
+            id: typeof goal === 'object' ? goal.id : goal,
+            level: typeof goal === 'object' ? goal.level : null,
+          }))
+          .filter(goal => Number.isFinite(Number(goal.id)));
+        const goalIds = normalizedSdgs.map(goal => Number(goal.id));
+        const currentGoals = await SustainableDevelopmentGoal.findAll({
+          where: {
+            id: {
+              [Op.in]: goalIds,
+            },
+          },
+          transaction,
         });
+        if (goalIds.length && currentGoals.length !== goalIds.length) {
+          throwHttp(400, 'One or more sustainable development goals not found');
+        }
+        for (const goal of normalizedSdgs) {
+          await ThesisSustainableDevelopmentGoal.create(
+            {
+              thesis_id: thesis.id,
+              goal_id: Number(goal.id),
+              sdg_level: goal.level,
+            },
+            { transaction },
+          );
+        }
       }
-    }
 
-    if (thesisResume) {
-      const resumeName = safeFilename('resume_', loggedStudent.id || 'resume.pdf');
-      const resumePath = path.join(uploadBaseDir, resumeName);
-      await moveFile(thesisResume.path, resumePath);
-      thesis.thesis_resume = null;
-      thesis.thesis_resume_path = path.relative(path.join(__dirname, '..', '..'), resumePath);
-    } else {
-      thesis.thesis_resume = null;
-      thesis.thesis_resume_path = null;
-    }
-    thesis.license_id = licenseId;
-    if (embargo) {
-      thesis.embargo_motivation_id = embargo.id || null;
-      thesis.embargo_duration_months = embargo.duration_months || null;
-    } else {
-      thesis.embargo_motivation_id = null;
-      thesis.embargo_duration_months = null;
-    }
-    thesis.thesis_file = null;
-    thesis.thesis_file_path = path.relative(path.join(__dirname, '..', '..'), thesisPdfPath);
+      if (keywords) {
+        const keywordIds = keywords
+          .map(k => (typeof k === 'object' ? k.id : k))
+          .filter(id => id !== -1 && id !== undefined && id !== null);
+        const keywordNames = keywords.filter(k => typeof k === 'string' && k.trim().length > 0).map(k => k.trim());
+        const currentKeywords = keywordIds.length
+          ? await Keyword.findAll({
+              where: {
+                id: {
+                  [Op.in]: keywordIds,
+                },
+              },
+              transaction,
+            })
+          : [];
+        for (const keyword of currentKeywords) {
+          await ThesisKeyword.create(
+            {
+              thesis_id: thesis.id,
+              keyword_id: keyword.id,
+            },
+            { transaction },
+          );
+        }
+        for (const newKeyword of keywordNames) {
+          const nk = await Keyword.create({ keyword: newKeyword, keyword_en: newKeyword }, { transaction });
+          await ThesisKeyword.create(
+            {
+              thesis_id: thesis.id,
+              keyword_id: nk.id,
+            },
+            { transaction },
+          );
+        }
+      }
 
-    if (additionalZip) {
-      const zipName = safeFilename('additional_', loggedStudent.id || 'supplementary.zip');
-      const zipPath = path.join(uploadBaseDir, zipName);
-      await moveFile(additionalZip.path, zipPath);
-      thesis.additional_zip = null;
-      thesis.additional_zip_path = path.relative(path.join(__dirname, '..', '..'), zipPath);
-    } else {
-      thesis.additional_zip = null;
-      thesis.additional_zip_path = null;
-    }
-    thesis.thesis_conclusion_request_date = new Date();
-    thesis.thesis_status = 'conclusion_requested';
-    await thesis.save();
+      if (thesisResume) {
+        const resumeName = safeFilename('resume_', loggedStudent.id || 'resume.pdf');
+        const resumePath = path.join(uploadBaseDir, resumeName);
+        await moveFile(thesisResume.path, resumePath);
+        thesis.thesis_resume = null;
+        thesis.thesis_resume_path = path.relative(path.join(__dirname, '..', '..'), resumePath);
+      } else {
+        thesis.thesis_resume = null;
+        thesis.thesis_resume_path = null;
+      }
+      thesis.license_id = Number.isFinite(licenseId) && licenseId > 0 ? licenseId : null;
+      if (embargo) {
+        const duration = embargo.duration || embargo.duration_months || embargo.embargoPeriod;
+        const motivationsRaw = Array.isArray(embargo.motivations)
+          ? embargo.motivations
+          : Array.isArray(embargo.motivation)
+            ? embargo.motivation
+            : [];
+
+        if (!duration && motivationsRaw.length === 0) {
+          throwHttp(400, 'Embargo data is incomplete');
+        }
+
+        if (!duration) {
+          throwHttp(400, 'Embargo duration is required');
+        }
+
+        const existingEmbargo = await ThesisEmbargo.findOne({
+          where: { thesis_id: String(thesis.id) },
+          transaction,
+        });
+        if (existingEmbargo) {
+          await ThesisEmbargoMotivation.destroy({
+            where: { thesis_embargo_id: existingEmbargo.id },
+            transaction,
+          });
+          await ThesisEmbargo.destroy({
+            where: { id: existingEmbargo.id },
+            transaction,
+          });
+        }
+
+        const createdEmbargo = await ThesisEmbargo.create(
+          {
+            thesis_id: String(thesis.id),
+            duration,
+          },
+          { transaction },
+        );
+
+        const normalizedMotivations = motivationsRaw.map(m =>
+          typeof m === 'object' ? { id: m.id, other: m.other } : { id: m, other: null },
+        );
+        const motivationIds = normalizedMotivations.map(m => Number(m?.id)).filter(id => Number.isFinite(id));
+        const existingMotivations = motivationIds.length
+          ? await EmbargoMotivation.findAll({
+              where: { id: { [Op.in]: motivationIds } },
+              transaction,
+            })
+          : [];
+        if (motivationIds.length && existingMotivations.length !== motivationIds.length) {
+          throwHttp(400, 'One or more embargo motivations not found');
+        }
+
+        for (const motivation of normalizedMotivations) {
+          const motivationId = Number(motivation?.id);
+          if (!Number.isFinite(motivationId)) continue;
+          await ThesisEmbargoMotivation.create(
+            {
+              thesis_embargo_id: createdEmbargo.id,
+              motivation_id: motivationId,
+              other_motivation: motivation?.other || null,
+            },
+            { transaction },
+          );
+        }
+      }
+      thesis.thesis_file = null;
+      thesis.thesis_file_path = path.relative(path.join(__dirname, '..', '..'), thesisPdfPath);
+
+      if (additionalZip) {
+        const zipName = safeFilename('additional_', loggedStudent.id || 'supplementary.zip');
+        const zipPath = path.join(uploadBaseDir, zipName);
+        await moveFile(additionalZip.path, zipPath);
+        thesis.additional_zip = null;
+        thesis.additional_zip_path = path.relative(path.join(__dirname, '..', '..'), zipPath);
+      } else {
+        thesis.additional_zip = null;
+        thesis.additional_zip_path = null;
+      }
+      thesis.thesis_conclusion_request_date = new Date();
+      thesis.thesis_status = 'conclusion_requested';
+      await thesis.save({ transaction });
+    });
 
     res.json({ message: 'Thesis conclusion request submitted successfully' });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.status(error.status || 500).json({ error: error.message });
   }
 };
 
@@ -265,7 +361,6 @@ const getAvailableLicenses = async (req, res) => {
 
 const getEmbargoMotivations = async (req, res) => {
   try {
-    // Assuming deadlines are stored in a Deadlines model
     const motivations = await EmbargoMotivation.findAll({
       attributes: selectMotivationAttributes(req.query.lang || 'it'),
     });
@@ -283,7 +378,7 @@ const getSessionDeadlines = async (req, res) => {
   let deadlineType;
   if (type === 'no_application') deadlineType = 'thesis_request';
   else if (type === 'application') deadlineType = 'conclusion_request';
-  else if (type === 'thesis') deadlineType = 'conclusion_request';
+  else if (type === 'thesis') deadlineType = 'final_exam_registration';
   else return res.status(400).json({ error: 'Invalid flag' });
 
   const query = {
