@@ -146,6 +146,66 @@
   color: var(--text-700) !important;
 }
 
+.cr-upload-col {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  gap: 0.5rem;
+}
+
+.cr-upload-header {
+  min-height: 72px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.cr-upload-header .form-label {
+  text-align: center;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  width: 100%;
+}
+
+.cr-upload-meta {
+  font-size: var(--font-size-xs);
+  text-align: center;
+}
+
+.cr-upload-col .form-group {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.cr-file-row {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+  margin-top: auto;
+}
+
+.cr-file-name {
+  max-width: 100%;
+  text-align: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (max-width: 992px) {
+  .cr-upload-header {
+    min-height: 0;
+  }
+
+  .cr-file-name {
+    max-width: 100%;
+  }
+}
+
 .modal-conclusion-content.cr-clean .cr-section:last-child {
   border-bottom: 0;
   padding-bottom: 0;

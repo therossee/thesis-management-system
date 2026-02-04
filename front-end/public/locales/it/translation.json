@@ -358,7 +358,31 @@
             "request_conclusion": "Richiedi conclusione",
             "title_thesis": "Titolo",
             "abstract_text": "Abstract: ",
-            "upload_final_thesis": " Carica tesi definitiva"
+            "upload_final_thesis": " Carica tesi definitiva",
+            "confirmation_modal": {
+                "title": "Conferma richiesta conclusione",
+                "body": "Sei sicuro di voler inviare la richiesta di conferma conclusione tesi? Una volta inviata, non potrai più modificare i dettagli della tesi.",
+                "confirm_button": "Si, invia la richiesta",
+                "cancel_button": "Annulla"
+            },
+            "request_submitted_title": "Richiesta inviata con successo!",
+            "request_submitted_content": "Il relatore riceverà la richiesta di confermare la conclusione della tesi.",
+            "request_submission_failed_title": "Errore durante l'invio della richiesta.",
+            "request_submission_failed_content": "Si è verificato un errore durante l'invio della richiesta. Riprova più tardi.",
+            "final_thesis_modal": {
+                "title": "Carica tesi definitiva",
+                "body": "Sei sicuro di voler caricare la tesi definitiva? Una volta caricata, non potrai più modificare i dettagli della tesi.",
+                "confirm_button": "Si, carica la tesi",
+                "cancel_button": "Annulla",
+                "instructions": "Seleziona il file della tesi definitiva da caricare. Assicurati che il documento rispetti i requisiti richiesti."
+            },
+            "final_thesis_upload": "Carica documento",
+            "final_thesis_uploaded_title": "Tesi definitiva caricata con successo!",
+            "final_thesis_uploaded_content": "La tua tesi definitiva è stata caricata correttamente. Preparati per la discussione!",
+            "final_thesis_upload_failed_title": "Errore durante il caricamento della tesi definitiva.",
+            "final_thesis_upload_failed_content": "Si è verificato un errore durante il caricamento della tesi definitiva. Riprova più tardi.",
+            "select_file": "Seleziona file",
+            "no_file_selected": "Nessun file selezionato"
         }
     },
     "Accedi": "Accedi",

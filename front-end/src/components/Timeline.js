@@ -97,7 +97,13 @@ export default function Timeline({
   };
 
   const getThesisSteps = () => {
-    const isConclusionApproved = normalizedActiveStep === 'conclusion_approved';
+    const isConclusionApprovedLike = [
+      'conclusion_approved',
+      'almalaurea',
+      'final_exam',
+      'final_thesis',
+      'done',
+    ].includes(normalizedActiveStep);
     return [
       {
         key: 'ongoing',
@@ -106,10 +112,10 @@ export default function Timeline({
       },
       {
         key: 'conclusion_requested',
-        label: isConclusionApproved
+        label: isConclusionApprovedLike
           ? t('carriera.tesi.thesis_progress.conclusion_confirmed_title')
           : t('carriera.tesi.thesis_progress.conclusion_request_title'),
-        description: isConclusionApproved
+        description: isConclusionApprovedLike
           ? t('carriera.tesi.thesis_progress.conclusion_confirmed')
           : t('carriera.tesi.thesis_progress.conclusion_request'),
       },
@@ -145,13 +151,14 @@ export default function Timeline({
     const isConclusionRequested = activeStep === 'conclusion_requested';
     const isConclusionApproved = activeStep === 'conclusion_approved';
     const isConclusionRejected = activeStep === 'conclusion_rejected';
+    const isDone = activeStep === 'done';
 
     if (isConclusionRequested || isConclusionRejected) {
       effectiveActiveStep = 'ongoing';
     } else if (isConclusionApproved) {
       effectiveActiveStep = 'almalaurea';
     }
-    const activeIndex = stepKeys.indexOf(effectiveActiveStep);
+    const activeIndex = isDone ? stepKeys.length : stepKeys.indexOf(effectiveActiveStep);
     const thisIndex = stepKeys.indexOf(key);
 
     const isActive = effectiveActiveStep === key;

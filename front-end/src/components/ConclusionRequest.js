@@ -6,17 +6,20 @@ import { useTranslation } from 'react-i18next';
 import PropTypes from 'prop-types';
 
 import API from '../API';
-import { ThemeContext } from '../App';
+import { ThemeContext, ToastContext } from '../App';
 import '../styles/modal-conclusion.css';
 import { getSystemTheme } from '../utils/utils';
 import CustomBadge from './CustomBadge';
+import CustomModal from './CustomModal';
 import CustomSelect from './CustomSelect';
+import InfoTooltip from './InfoTooltip';
 import LoadingModal from './LoadingModal';
 import SegmentedControl from './SegmentedControl';
 
 export default function ConclusionRequest({ show, setShow, onSubmitResult }) {
   const { t, i18n } = useTranslation();
   const { theme } = useContext(ThemeContext);
+  const { showToast } = useContext(ToastContext);
   const appliedTheme = theme === 'auto' ? getSystemTheme() : theme;
 
   const [error, setError] = useState('');
@@ -40,16 +43,15 @@ export default function ConclusionRequest({ show, setShow, onSubmitResult }) {
   const [secondarySdg1, setSecondarySdg1] = useState('');
   const [secondarySdg2, setSecondarySdg2] = useState('');
 
-  const [authorization, setAuthorization] = useState('authorize'); // authorize | deny
+  const [authorization, setAuthorization] = useState('authorize');
   const [licenseChoice, setLicenseChoice] = useState(6);
-  const [embargoPeriod, setEmbargoPeriod] = useState(''); // nessuna opzione selezionata all'inizio
-  const [embargoMotivations, setEmbargoMotivations] = useState([]); // nessuna motivazione selezionata all'inizio
+  const [embargoPeriod, setEmbargoPeriod] = useState('');
+  const [embargoMotivations, setEmbargoMotivations] = useState([]);
   const [otherEmbargoReason, setOtherEmbargoReason] = useState('');
 
-  const [resumePdf, setResumePdf] = useState(null); // idSmPdfFile (riassunto)
-  const [pdfFile, setPdfFile] = useState(null); // idPdfFile (tesi pdf/a)
-  const [supplementaryZip, setSupplementaryZip] = useState(null); // idZipFile
-
+  const [resumePdf, setResumePdf] = useState(null);
+  const [pdfFile, setPdfFile] = useState(null);
+  const [supplementaryZip, setSupplementaryZip] = useState(null);
   const [decl, setDecl] = useState({
     decl1: false,
     decl2: false,
@@ -62,6 +64,7 @@ export default function ConclusionRequest({ show, setShow, onSubmitResult }) {
   const [teachers, setTeachers] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showConfirmationModal, setShowConfirmationModal] = useState(false);
 
   const authorizationControlRef = useRef(null);
   const authorizationAuthorizeRef = useRef(null);
@@ -254,6 +257,8 @@ export default function ConclusionRequest({ show, setShow, onSubmitResult }) {
 
     setIsSubmitting(true);
     try {
+      setShowConfirmationModal(false);
+      setShow(false);
       const formData = new FormData();
       formData.append('title', titleText);
       formData.append('titleEng', titleEngText === '' ? titleText : titleEngText);
@@ -298,6 +303,11 @@ export default function ConclusionRequest({ show, setShow, onSubmitResult }) {
       if (supplementaryZip) formData.append('additionalZip', supplementaryZip);
 
       await API.sendThesisConclusionRequest(formData);
+      showToast({
+        success: true,
+        title: t('carriera.conclusione_tesi.request_submitted_title'),
+        message: t('carriera.conclusione_tesi.request_submitted_content'),
+      });
 
       if (onSubmitResult) onSubmitResult(true);
       handleClose();
@@ -305,6 +315,11 @@ export default function ConclusionRequest({ show, setShow, onSubmitResult }) {
     } catch (err) {
       console.error(err);
       setError('Invio fallito. Controlla i campi e riprova.');
+      showToast({
+        success: false,
+        title: t('carriera.conclusione_tesi.request_submission_failed_title'),
+        message: t('carriera.conclusione_tesi.request_submission_failed_content'),
+      });
       if (onSubmitResult) onSubmitResult(false);
     } finally {
       setIsSubmitting(false);
@@ -318,597 +333,673 @@ export default function ConclusionRequest({ show, setShow, onSubmitResult }) {
   if (isLoading) return <LoadingModal show={true} onHide={() => setIsLoading(false)} />;
 
   return (
-    <Modal
-      show={show}
-      onHide={handleClose}
-      centered
-      backdrop="static"
-      keyboard={!isSubmitting}
-      dialogClassName="modal-conclusion"
-      contentClassName="modal-conclusion-content-shell"
-    >
-      <Modal.Header closeButton={!isSubmitting}>
-        <Modal.Title className="cr-modal-title">
-          <i className="fa-regular fa-typewriter me-2" />
-          Conclusione Tesi
-        </Modal.Title>
-      </Modal.Header>
+    <>
+      {(isLoading || isSubmitting) && <LoadingModal show={true} onHide={() => {}} />}
+      <Modal
+        show={show}
+        onHide={handleClose}
+        centered
+        backdrop="static"
+        keyboard={!isSubmitting}
+        dialogClassName="modal-conclusion"
+        contentClassName="modal-conclusion-content-shell"
+      >
+        <Modal.Header closeButton={!isSubmitting}>
+          <Modal.Title className="cr-modal-title">
+            <i className="fa-regular fa-typewriter me-2" />
+            Conclusione Tesi
+          </Modal.Title>
+        </Modal.Header>
 
-      <Modal.Body style={{ maxHeight: '75vh', overflow: 'hidden', padding: 0 }}>
-        <div className="modal-conclusion-scroll">
-          <div className="modal-conclusion-content cr-clean">
-            {error ? (
-              <Alert variant="danger" className="m-3 mb-0">
-                {error}
-              </Alert>
-            ) : null}
+        <Modal.Body style={{ maxHeight: '75vh', overflow: 'hidden', padding: 0 }}>
+          <div className="modal-conclusion-scroll">
+            <div className="modal-conclusion-content cr-clean">
+              {error ? (
+                <Alert variant="danger" className="m-3 mb-0">
+                  {error}
+                </Alert>
+              ) : null}
 
-            <Form>
-              <div className="cr-section">
-                <div className="cr-section-title">
-                  <span>
-                    <i className="fa-regular fa-file-lines me-2"></i>
-                    {t('carriera.conclusione_tesi.details')}
-                  </span>
-                </div>
+              <Form>
+                <div className="cr-section">
+                  <div className="cr-section-title">
+                    <span>
+                      <i className="fa-regular fa-file-lines me-2"></i>
+                      {t('carriera.conclusione_tesi.details')}
+                    </span>
+                  </div>
 
-                <Row className="mb-3 align-items-start">
-                  <Col md={3}>
-                    <Form.Group>
-                      <Form.Label htmlFor="select-language">{t('carriera.conclusione_tesi.language')}</Form.Label>
-                      <CustomSelect
-                        mode="supervisor"
-                        options={languageOptions}
-                        selected={selectedLanguage}
-                        setSelected={selected => setLang(selected.value)}
-                        isMulti={false}
-                        isClearable={false}
-                        badgeVariant="language"
-                        className="select-language"
-                        id="select-language"
-                      />
-                    </Form.Group>
-                  </Col>
-
-                  <Col>
-                    <Form.Group>
-                      <Form.Label htmlFor="select-supervisor">{t('carriera.conclusione_tesi.supervisor')}</Form.Label>
-                      <CustomSelect
-                        mode="supervisor"
-                        options={supervisor ? [supervisor] : []}
-                        selected={supervisor}
-                        setSelected={setSupervisor}
-                        isMulti={false}
-                        isDisabled={true}
-                        className="select-supervisor"
-                        id="select-supervisor"
-                      />
-                    </Form.Group>
-                  </Col>
-
-                  <Col md={6}>
-                    <Form.Group>
-                      <Form.Label htmlFor="select-cosupervisors">
-                        {t('carriera.conclusione_tesi.co_supervisors')}
-                      </Form.Label>
-                      <CustomSelect
-                        mode="supervisor"
-                        options={coSupervisorOptions}
-                        selected={coSupervisors}
-                        setSelected={setCoSupervisors}
-                        isMulti={true}
-                        className="select-cosupervisors"
-                        placeholder={t('carriera.richiesta_tesi.select_co_supervisors_placeholder')}
-                        id="select-cosupervisors"
-                      />
-                      <span className="text-muted cr-help">{t('carriera.conclusione_tesi.co_supervisors_help')}</span>
-                    </Form.Group>
-                  </Col>
-                </Row>
-
-                <Row className="mb-3">
-                  <Col md={12}>
-                    <Form.Group>
-                      <Form.Label htmlFor="title-original">
-                        <i className={flagSelector(lang)} /> {t('carriera.conclusione_tesi.title_original')}
-                      </Form.Label>
-                      <Form.Control
-                        as="textarea"
-                        value={titleText}
-                        maxLength={255}
-                        onChange={e => setTitleText(e.target.value)}
-                        disabled={isSubmitting}
-                        id="title-original"
-                      />
-                    </Form.Group>
-                    <div className="text-end text-muted">{titleText.length} / 255</div>
-                  </Col>
-                </Row>
-
-                {needsEnglishTranslation && (
-                  <Row className="mb-3">
-                    <Col md={12}>
+                  <Row className="mb-3 align-items-start">
+                    <Col md={3}>
                       <Form.Group>
-                        <Form.Label htmlFor="title-translation">
-                          <i className="fi fi-gb" /> {t('carriera.conclusione_tesi.title_translation')}
-                        </Form.Label>
-                        <div className="text-muted cr-help mb-2">
-                          {t('carriera.conclusione_tesi.title_translation_help')}
-                        </div>
-                        <Form.Control
-                          as="textarea"
-                          rows={2}
-                          value={titleEngText}
-                          onChange={e => setTitleEngText(e.target.value)}
-                          maxLength={255}
-                          disabled={isSubmitting}
-                          id="title-translation"
+                        <Form.Label htmlFor="select-language">{t('carriera.conclusione_tesi.language')}</Form.Label>
+                        <CustomSelect
+                          mode="supervisor"
+                          options={languageOptions}
+                          selected={selectedLanguage}
+                          setSelected={selected => setLang(selected.value)}
+                          isMulti={false}
+                          isClearable={false}
+                          badgeVariant="language"
+                          className="select-language"
+                          id="select-language"
                         />
-                        <div className="text-end text-muted">{titleEngText.length} / 255</div>
+                      </Form.Group>
+                    </Col>
+
+                    <Col>
+                      <Form.Group>
+                        <Form.Label htmlFor="select-supervisor">{t('carriera.conclusione_tesi.supervisor')}</Form.Label>
+                        <CustomSelect
+                          mode="supervisor"
+                          options={supervisor ? [supervisor] : []}
+                          selected={supervisor}
+                          setSelected={setSupervisor}
+                          isMulti={false}
+                          isDisabled={true}
+                          className="select-supervisor"
+                          id="select-supervisor"
+                        />
+                      </Form.Group>
+                    </Col>
+
+                    <Col md={6}>
+                      <Form.Group>
+                        <Form.Label htmlFor="select-cosupervisors">
+                          {t('carriera.conclusione_tesi.co_supervisors')}
+                        </Form.Label>
+                        <CustomSelect
+                          mode="supervisor"
+                          options={coSupervisorOptions}
+                          selected={coSupervisors}
+                          setSelected={setCoSupervisors}
+                          isMulti={true}
+                          className="select-cosupervisors"
+                          placeholder={t('carriera.richiesta_tesi.select_co_supervisors_placeholder')}
+                          id="select-cosupervisors"
+                        />
+                        <span className="text-muted cr-help">{t('carriera.conclusione_tesi.co_supervisors_help')}</span>
                       </Form.Group>
                     </Col>
                   </Row>
-                )}
 
-                <Row className="mb-3">
-                  <Col md={12}>
-                    <Form.Group>
-                      <Form.Label htmlFor="abstract">
-                        <i className={flagSelector(lang)} /> {t('carriera.conclusione_tesi.abstract')}
-                      </Form.Label>
-                      <Form.Control
-                        as="textarea"
-                        rows={6}
-                        value={abstractText}
-                        onChange={e => setAbstractText(e.target.value)}
-                        maxLength={3550}
-                        disabled={isSubmitting}
-                        id="abstract"
-                      />
-                      <div className="text-end text-muted">{abstractText.length} / 3550</div>
-                    </Form.Group>
-                  </Col>
-                </Row>
-                {needsEnglishTranslation && (
                   <Row className="mb-3">
                     <Col md={12}>
                       <Form.Group>
-                        <Form.Label htmlFor="abstract-translation">
-                          <i className="fi fi-gb" /> {t('carriera.conclusione_tesi.abstract_translation')}
+                        <Form.Label htmlFor="title-original">
+                          <i className={flagSelector(lang)} /> {t('carriera.conclusione_tesi.title_original')}
                         </Form.Label>
-                        <div className="text-muted cr-help">
-                          {t('carriera.conclusione_tesi.abstract_translation_help')}
-                        </div>
+                        <Form.Control
+                          as="textarea"
+                          value={titleText}
+                          maxLength={255}
+                          onChange={e => setTitleText(e.target.value)}
+                          disabled={isSubmitting}
+                          id="title-original"
+                        />
+                      </Form.Group>
+                      <div className="text-end text-muted">{titleText.length} / 255</div>
+                    </Col>
+                  </Row>
+
+                  {needsEnglishTranslation && (
+                    <Row className="mb-3">
+                      <Col md={12}>
+                        <Form.Group>
+                          <Form.Label htmlFor="title-translation">
+                            <i className="fi fi-gb" /> {t('carriera.conclusione_tesi.title_translation')}
+                          </Form.Label>
+                          <div className="text-muted cr-help mb-2">
+                            {t('carriera.conclusione_tesi.title_translation_help')}
+                          </div>
+                          <Form.Control
+                            as="textarea"
+                            rows={2}
+                            value={titleEngText}
+                            onChange={e => setTitleEngText(e.target.value)}
+                            maxLength={255}
+                            disabled={isSubmitting}
+                            id="title-translation"
+                          />
+                          <div className="text-end text-muted">{titleEngText.length} / 255</div>
+                        </Form.Group>
+                      </Col>
+                    </Row>
+                  )}
+
+                  <Row className="mb-3">
+                    <Col md={12}>
+                      <Form.Group>
+                        <Form.Label htmlFor="abstract">
+                          <i className={flagSelector(lang)} /> {t('carriera.conclusione_tesi.abstract')}
+                        </Form.Label>
                         <Form.Control
                           as="textarea"
                           rows={6}
-                          value={abstractEngText}
-                          onChange={e => setAbstractEngText(e.target.value)}
+                          value={abstractText}
+                          onChange={e => setAbstractText(e.target.value)}
                           maxLength={3550}
                           disabled={isSubmitting}
-                          id="abstract-translation"
+                          id="abstract"
                         />
-                        <div className="text-end text-muted">{abstractEngText.length} / 3550</div>
+                        <div className="text-end text-muted">{abstractText.length} / 3550</div>
                       </Form.Group>
                     </Col>
                   </Row>
-                )}
-
-                <Row className="mb-3">
-                  <Col md={12}>
-                    <Form.Group>
-                      <Form.Label htmlFor="keywords">Keywords</Form.Label>
-                      <CustomSelect
-                        mode="keyword"
-                        selected={keywords}
-                        setSelected={setKeywords}
-                        placeholder={t('carriera.conclusione_tesi.select_keywords_placeholder')}
-                        options={keywordsList.map(kw => ({
-                          value: kw.keyword,
-                          label: kw.keyword,
-                          variant: 'keyword',
-                        }))}
-                        isMulti={true}
-                        isDisabled={isSubmitting}
-                        id="keywords"
-                      />
-                    </Form.Group>
-                  </Col>
-                </Row>
-              </div>
-
-              {/* SDG */}
-              <div className="cr-section">
-                <div className="cr-section-title">
-                  <i className="fa-regular fa-globe" />
-                  <span>Sustainable Development Goals - SDGs</span>
-                </div>
-
-                <Row className="mb-2">
-                  <Col md={12}>
-                    <div className="text-muted cr-help">
-                      <p dangerouslySetInnerHTML={{ __html: t('carriera.conclusione_tesi.sdg_description_1') }} />
-                    </div>
-                    <div className="text-muted cr-help">
-                      <b>{t('carriera.conclusione_tesi.sdg_description_2')}</b>
-                    </div>
-                  </Col>
-                </Row>
-                <Row className="mb-2 g-3">
-                  <Col md={4}>
-                    <Form.Group>
-                      <Form.Label htmlFor="primary-sdg">{t('carriera.conclusione_tesi.primary_sdg')}</Form.Label>
-                      <CustomSelect
-                        mode="sdg"
-                        options={sdgOptions.filter(
-                          option => option.value !== secondarySdg1 && option.value !== secondarySdg2,
-                        )}
-                        selected={sdgOptions.find(option => option.value === primarySdg)}
-                        setSelected={selected => setPrimarySdg(selected ? selected.value : '')}
-                        isMulti={false}
-                        isClearable={true}
-                        className="select-sdg"
-                      />
-                    </Form.Group>
-                  </Col>
-                  <Col md={4}>
-                    <Form.Group>
-                      <Form.Label htmlFor="secondary-sdg-1">
-                        {t('carriera.conclusione_tesi.secondary_sdg_1')}
-                      </Form.Label>
-                      <CustomSelect
-                        mode="sdg"
-                        options={sdgOptions.filter(
-                          option => option.value !== primarySdg && option.value !== secondarySdg2,
-                        )}
-                        selected={sdgOptions.find(option => option.value === secondarySdg1)}
-                        setSelected={selected => setSecondarySdg1(selected ? selected.value : '')}
-                        isMulti={false}
-                        isClearable={true}
-                        className="select-sdg"
-                      />
-                    </Form.Group>
-                  </Col>
-
-                  <Col md={4}>
-                    <Form.Group>
-                      <Form.Label htmlFor="secondary-sdg-2">
-                        {t('carriera.conclusione_tesi.secondary_sdg_2')}
-                      </Form.Label>
-                      <CustomSelect
-                        mode="sdg"
-                        options={sdgOptions.filter(
-                          option => option.value !== primarySdg && option.value !== secondarySdg1,
-                        )}
-                        selected={sdgOptions.find(option => option.value === secondarySdg2)}
-                        setSelected={selected => setSecondarySdg2(selected ? selected.value : '')}
-                        isMulti={false}
-                        isClearable={true}
-                        className="select-sdg"
-                      />
-                    </Form.Group>
-                  </Col>
-                </Row>
-              </div>
-
-              {/* AUTORIZZAZIONE */}
-              <div className="cr-section">
-                <div className="cr-section-title">
-                  {authorization === 'authorize' ? (
-                    <i className="fa-regular fa-lock-open" />
-                  ) : (
-                    <i className="fa-regular fa-lock" />
+                  {needsEnglishTranslation && (
+                    <Row className="mb-3">
+                      <Col md={12}>
+                        <Form.Group>
+                          <Form.Label htmlFor="abstract-translation">
+                            <i className="fi fi-gb" /> {t('carriera.conclusione_tesi.abstract_translation')}
+                          </Form.Label>
+                          <div className="text-muted cr-help">
+                            {t('carriera.conclusione_tesi.abstract_translation_help')}
+                          </div>
+                          <Form.Control
+                            as="textarea"
+                            rows={6}
+                            value={abstractEngText}
+                            onChange={e => setAbstractEngText(e.target.value)}
+                            maxLength={3550}
+                            disabled={isSubmitting}
+                            id="abstract-translation"
+                          />
+                          <div className="text-end text-muted">{abstractEngText.length} / 3550</div>
+                        </Form.Group>
+                      </Col>
+                    </Row>
                   )}
-                  <span>{t('carriera.conclusione_tesi.authorization')}</span>
-                </div>
 
-                <Row className="mb-3">
-                  <Col md={12}>
-                    <SegmentedControl
-                      name="autorizzazione"
-                      segments={[
-                        {
-                          label: t('carriera.conclusione_tesi.authorization_authorize'),
-                          value: 'authorize',
-                          ref: authorizationAuthorizeRef,
-                        },
-                        {
-                          label: t('carriera.conclusione_tesi.authorization_deny'),
-                          value: 'deny',
-                          ref: authorizationDenyRef,
-                        },
-                      ]}
-                      callback={value => setAuthorization(value)}
-                      defaultIndex={authorization === 'authorize' ? 0 : 1}
-                      controlRef={authorizationControlRef}
-                      style={{ width: '100%', maxWidth: '100%' }}
-                      disabled={isSubmitting}
-                    />
-                    <a
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      href="https://didattica.polito.it/pdf/informazioni_secretazione.pdf"
-                      className="cr-link"
-                    >
-                      {t('carriera.conclusione_tesi.authorization_info')}
-                    </a>
-                  </Col>
-                </Row>
-
-                {authorization === 'deny' && (
-                  <>
-                    <Row className="mb-3 g-3">
-                      <Col md={7}>
-                        <Form.Label htmlFor="motivations">{t('carriera.conclusione_tesi.motivations')}</Form.Label>
-                        {embargoMotivationsList.map(mot => (
-                          <>
-                            <Form.Check
-                              type="checkbox"
-                              key={mot.id}
-                              label={i18n.language === 'it' ? mot.motivation : mot.motivation_en}
-                              checked={embargoMotivations.includes(mot.id)}
-                              onChange={e => toggleMotivation(mot.id, e.target.checked)}
-                              disabled={isSubmitting}
-                              className="mb-2"
-                            />
-                            {mot.id === 7 && (
-                              <Form.Control
-                                type="text"
-                                placeholder={t('carriera.conclusione_tesi.other_motivation_placeholder')}
-                                value={otherEmbargoReason}
-                                onChange={e => setOtherEmbargoReason(e.target.value)}
-                                disabled={isSubmitting || !embargoMotivations.includes(7)}
-                              />
-                            )}
-                          </>
-                        ))}
-                      </Col>
-
-                      <Col md={5}>
-                        <Form.Label htmlFor="embargo-period">
-                          {t('carriera.conclusione_tesi.embargo_period.title')}
-                        </Form.Label>
-
-                        <Form.Check
-                          type="radio"
-                          name="embargo-period"
-                          label={t('carriera.conclusione_tesi.embargo_period.12_months')}
-                          checked={embargoPeriod === '12_months'}
-                          onChange={() => setEmbargoPeriod('12_months')}
-                          disabled={isSubmitting}
-                        />
-                        <Form.Check
-                          type="radio"
-                          name="embargo-period"
-                          label={t('carriera.conclusione_tesi.embargo_period.18_months')}
-                          checked={embargoPeriod === '18_months'}
-                          onChange={() => setEmbargoPeriod('18_months')}
-                          disabled={isSubmitting}
-                        />
-                        <Form.Check
-                          type="radio"
-                          name="embargo-period"
-                          label={t('carriera.conclusione_tesi.embargo_period.36_months')}
-                          checked={embargoPeriod === '36_months'}
-                          onChange={() => setEmbargoPeriod('36_months')}
-                          disabled={isSubmitting}
-                        />
-                        <Form.Check
-                          type="radio"
-                          name="embargo-period"
-                          label={t('carriera.conclusione_tesi.embargo_period.after_explicit_consent')}
-                          checked={embargoPeriod === 'after_explicit_consent'}
-                          onChange={() => setEmbargoPeriod('after_explicit_consent')}
-                          disabled={isSubmitting}
-                        />
-                      </Col>
-                    </Row>
-                    <Row className="mb-2">
-                      <div className="text-muted cr-help">{t('carriera.conclusione_tesi.embargo_details')}</div>
-                    </Row>
-                  </>
-                )}
-
-                {authorization === 'authorize' && (
-                  <Row className="mb-2">
+                  <Row className="mb-3">
                     <Col md={12}>
-                      <Form.Label htmlFor="license-choice">{t('carriera.conclusione_tesi.license_choice')}</Form.Label>
-
-                      {licenses.map(license => (
-                        <Form.Check
-                          type="radio"
-                          name="license-choice"
-                          key={license.id}
-                          label={
-                            <div className="d-flex flex-column align-items-start">
-                              <div className="d-flex align-items-center">
-                                <b>{i18n.language === 'it' ? license.name : license.name_en}</b>
-                                {checkRecommendedLicense(license) && (
-                                  <CustomBadge
-                                    variant="recommended"
-                                    content={
-                                      <>
-                                        <i className="fa-regular fa-thumbs-up" />{' '}
-                                        {t('carriera.conclusione_tesi.license_recommended')}
-                                      </>
-                                    }
-                                    style={{ marginLeft: '10px' }}
-                                  />
-                                )}
-                              </div>
-                              <div className="text-muted">
-                                {i18n.language === 'it' ? (
-                                  <p dangerouslySetInnerHTML={{ __html: license.description }}></p>
-                                ) : (
-                                  <p dangerouslySetInnerHTML={{ __html: license.description_en }}></p>
-                                )}
-                              </div>
-                            </div>
-                          }
-                          checked={licenseChoice === license.id}
-                          onChange={() => setLicenseChoice(license.id)}
-                          disabled={isSubmitting}
-                          className="mb-3"
-                          id={`license-choice-${license.id}`}
+                      <Form.Group>
+                        <Form.Label htmlFor="keywords">Keywords</Form.Label>
+                        <CustomSelect
+                          mode="keyword"
+                          selected={keywords}
+                          setSelected={setKeywords}
+                          placeholder={t('carriera.conclusione_tesi.select_keywords_placeholder')}
+                          options={keywordsList.map(kw => ({
+                            value: kw.keyword,
+                            label: kw.keyword,
+                            variant: 'keyword',
+                          }))}
+                          isMulti={true}
+                          isDisabled={isSubmitting}
+                          id="keywords"
                         />
-                      ))}
+                      </Form.Group>
                     </Col>
                   </Row>
-                )}
-              </div>
+                </div>
 
-              {/* DOCUMENTI */}
-              <div className="cr-section">
-                <div className="cr-section-title">
-                  <i className="fa-regular fa-file-upload" />
-                  <span>{t('carriera.conclusione_tesi.documents_to_upload')}</span>
+                {/* SDG */}
+                <div className="cr-section">
+                  <div className="cr-section-title">
+                    <i className="fa-regular fa-globe" />
+                    <span>Sustainable Development Goals - SDGs</span>
+                  </div>
+
+                  <Row className="mb-2">
+                    <Col md={12}>
+                      <div className="text-muted cr-help">
+                        <p dangerouslySetInnerHTML={{ __html: t('carriera.conclusione_tesi.sdg_description_1') }} />
+                      </div>
+                      <div className="text-muted cr-help">
+                        <b>{t('carriera.conclusione_tesi.sdg_description_2')}</b>
+                      </div>
+                    </Col>
+                  </Row>
+                  <Row className="mb-2 g-3">
+                    <Col md={4}>
+                      <Form.Group>
+                        <Form.Label htmlFor="primary-sdg">{t('carriera.conclusione_tesi.primary_sdg')}</Form.Label>
+                        <CustomSelect
+                          mode="sdg"
+                          options={sdgOptions.filter(
+                            option => option.value !== secondarySdg1 && option.value !== secondarySdg2,
+                          )}
+                          selected={sdgOptions.find(option => option.value === primarySdg)}
+                          setSelected={selected => setPrimarySdg(selected ? selected.value : '')}
+                          isMulti={false}
+                          isClearable={true}
+                          className="select-sdg"
+                        />
+                      </Form.Group>
+                    </Col>
+                    <Col md={4}>
+                      <Form.Group>
+                        <Form.Label htmlFor="secondary-sdg-1">
+                          {t('carriera.conclusione_tesi.secondary_sdg_1')}
+                        </Form.Label>
+                        <CustomSelect
+                          mode="sdg"
+                          options={sdgOptions.filter(
+                            option => option.value !== primarySdg && option.value !== secondarySdg2,
+                          )}
+                          selected={sdgOptions.find(option => option.value === secondarySdg1)}
+                          setSelected={selected => setSecondarySdg1(selected ? selected.value : '')}
+                          isMulti={false}
+                          isClearable={true}
+                          className="select-sdg"
+                        />
+                      </Form.Group>
+                    </Col>
+
+                    <Col md={4}>
+                      <Form.Group>
+                        <Form.Label htmlFor="secondary-sdg-2">
+                          {t('carriera.conclusione_tesi.secondary_sdg_2')}
+                        </Form.Label>
+                        <CustomSelect
+                          mode="sdg"
+                          options={sdgOptions.filter(
+                            option => option.value !== primarySdg && option.value !== secondarySdg1,
+                          )}
+                          selected={sdgOptions.find(option => option.value === secondarySdg2)}
+                          setSelected={selected => setSecondarySdg2(selected ? selected.value : '')}
+                          isMulti={false}
+                          isClearable={true}
+                          className="select-sdg"
+                        />
+                      </Form.Group>
+                    </Col>
+                  </Row>
+                </div>
+
+                {/* AUTORIZZAZIONE */}
+                <div className="cr-section">
+                  <div className="cr-section-title">
+                    {authorization === 'authorize' ? (
+                      <i className="fa-regular fa-lock-open" />
+                    ) : (
+                      <i className="fa-regular fa-lock" />
+                    )}
+                    <span>{t('carriera.conclusione_tesi.authorization')}</span>
+                  </div>
+
+                  <Row className="mb-3">
+                    <Col md={12}>
+                      <SegmentedControl
+                        name="autorizzazione"
+                        segments={[
+                          {
+                            label: t('carriera.conclusione_tesi.authorization_authorize'),
+                            value: 'authorize',
+                            ref: authorizationAuthorizeRef,
+                          },
+                          {
+                            label: t('carriera.conclusione_tesi.authorization_deny'),
+                            value: 'deny',
+                            ref: authorizationDenyRef,
+                          },
+                        ]}
+                        callback={value => setAuthorization(value)}
+                        defaultIndex={authorization === 'authorize' ? 0 : 1}
+                        controlRef={authorizationControlRef}
+                        style={{ width: '100%', maxWidth: '100%' }}
+                        disabled={isSubmitting}
+                      />
+                      <a
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        href="https://didattica.polito.it/pdf/informazioni_secretazione.pdf"
+                        className="cr-link"
+                      >
+                        {t('carriera.conclusione_tesi.authorization_info')}
+                      </a>
+                    </Col>
+                  </Row>
+
+                  {authorization === 'deny' && (
+                    <>
+                      <Row className="mb-3 g-3">
+                        <Col md={7}>
+                          <Form.Label htmlFor="motivations">{t('carriera.conclusione_tesi.motivations')}</Form.Label>
+                          {embargoMotivationsList.map(mot => (
+                            <>
+                              <Form.Check
+                                type="checkbox"
+                                key={mot.id}
+                                label={i18n.language === 'it' ? mot.motivation : mot.motivation_en}
+                                checked={embargoMotivations.includes(mot.id)}
+                                onChange={e => toggleMotivation(mot.id, e.target.checked)}
+                                disabled={isSubmitting}
+                                className="mb-2"
+                              />
+                              {mot.id === 7 && (
+                                <Form.Control
+                                  type="text"
+                                  placeholder={t('carriera.conclusione_tesi.other_motivation_placeholder')}
+                                  value={otherEmbargoReason}
+                                  onChange={e => setOtherEmbargoReason(e.target.value)}
+                                  disabled={isSubmitting || !embargoMotivations.includes(7)}
+                                />
+                              )}
+                            </>
+                          ))}
+                        </Col>
+
+                        <Col md={5}>
+                          <Form.Label htmlFor="embargo-period">
+                            {t('carriera.conclusione_tesi.embargo_period.title')}
+                          </Form.Label>
+
+                          <Form.Check
+                            type="radio"
+                            name="embargo-period"
+                            label={t('carriera.conclusione_tesi.embargo_period.12_months')}
+                            checked={embargoPeriod === '12_months'}
+                            onChange={() => setEmbargoPeriod('12_months')}
+                            disabled={isSubmitting}
+                          />
+                          <Form.Check
+                            type="radio"
+                            name="embargo-period"
+                            label={t('carriera.conclusione_tesi.embargo_period.18_months')}
+                            checked={embargoPeriod === '18_months'}
+                            onChange={() => setEmbargoPeriod('18_months')}
+                            disabled={isSubmitting}
+                          />
+                          <Form.Check
+                            type="radio"
+                            name="embargo-period"
+                            label={t('carriera.conclusione_tesi.embargo_period.36_months')}
+                            checked={embargoPeriod === '36_months'}
+                            onChange={() => setEmbargoPeriod('36_months')}
+                            disabled={isSubmitting}
+                          />
+                          <Form.Check
+                            type="radio"
+                            name="embargo-period"
+                            label={t('carriera.conclusione_tesi.embargo_period.after_explicit_consent')}
+                            checked={embargoPeriod === 'after_explicit_consent'}
+                            onChange={() => setEmbargoPeriod('after_explicit_consent')}
+                            disabled={isSubmitting}
+                          />
+                        </Col>
+                      </Row>
+                      <Row className="mb-2">
+                        <div className="text-muted cr-help">{t('carriera.conclusione_tesi.embargo_details')}</div>
+                      </Row>
+                    </>
+                  )}
+
+                  {authorization === 'authorize' && (
+                    <Row className="mb-2">
+                      <Col md={12}>
+                        <Form.Label htmlFor="license-choice">
+                          {t('carriera.conclusione_tesi.license_choice')}
+                        </Form.Label>
+
+                        {licenses.map(license => (
+                          <Form.Check
+                            type="radio"
+                            name="license-choice"
+                            key={license.id}
+                            label={
+                              <div className="d-flex flex-column align-items-start">
+                                <div className="d-flex align-items-center">
+                                  <b>{i18n.language === 'it' ? license.name : license.name_en}</b>
+                                  {checkRecommendedLicense(license) && (
+                                    <CustomBadge
+                                      variant="recommended"
+                                      content={
+                                        <>
+                                          <i className="fa-regular fa-thumbs-up" />{' '}
+                                          {t('carriera.conclusione_tesi.license_recommended')}
+                                        </>
+                                      }
+                                      style={{ marginLeft: '10px' }}
+                                    />
+                                  )}
+                                </div>
+                                <div className="text-muted">
+                                  {i18n.language === 'it' ? (
+                                    <p dangerouslySetInnerHTML={{ __html: license.description }}></p>
+                                  ) : (
+                                    <p dangerouslySetInnerHTML={{ __html: license.description_en }}></p>
+                                  )}
+                                </div>
+                              </div>
+                            }
+                            checked={licenseChoice === license.id}
+                            onChange={() => setLicenseChoice(license.id)}
+                            disabled={isSubmitting}
+                            className="mb-3"
+                            id={`license-choice-${license.id}`}
+                          />
+                        ))}
+                      </Col>
+                    </Row>
+                  )}
+                </div>
+
+                {/* DOCUMENTI */}
+                <div className="cr-section">
+                  <div className="cr-section-title">
+                    <i className="fa-regular fa-file-upload" />
+                    <span>{t('carriera.conclusione_tesi.documents_to_upload')}</span>
+                  </div>
+
+                  <Row className="mb-2 g-3">
+                    <Col md={4}>
+                      <div className="cr-upload-col">
+                        <div className="cr-upload-header">
+                          <Form.Label htmlFor="summary-for-committee-pdf">
+                            {t('carriera.conclusione_tesi.summary_for_committee_pdf')}
+                            <InfoTooltip tooltipText={t('carriera.conclusione_tesi.summary_for_committee_subtext')} />
+                          </Form.Label>
+                          <div className="text-muted cr-upload-meta">
+                            ({t('carriera.conclusione_tesi.max_size_20_mb')})
+                          </div>
+                        </div>
+                        <Form.Group>
+                          <Form.Control
+                            type="file"
+                            accept="application/pdf"
+                            onChange={e => setResumePdf(e.target.files && e.target.files[0] ? e.target.files[0] : null)}
+                            disabled={isSubmitting}
+                            id="summary-for-committee-pdf"
+                            className="d-none"
+                          />
+                          <div className="cr-file-row">
+                            <Form.Label
+                              htmlFor="summary-for-committee-pdf"
+                              className={`btn btn-outlined-${appliedTheme} mb-0`}
+                            >
+                              <i className="fa-regular fa-upload me-2" />
+                              {t('carriera.conclusione_tesi.select_file')}
+                            </Form.Label>
+                            <span className="text-muted cr-file-name">
+                              {resumePdf ? resumePdf.name : t('carriera.conclusione_tesi.no_file_selected')}
+                            </span>
+                          </div>
+                        </Form.Group>
+                      </div>
+                    </Col>
+
+                    <Col md={4}>
+                      <div className="cr-upload-col">
+                        <div className="cr-upload-header">
+                          <Form.Label htmlFor="final-thesis-pdfa">
+                            {t('carriera.conclusione_tesi.final_thesis_pdfa')}
+                          </Form.Label>
+                          <div className="text-muted cr-upload-meta">
+                            ({t('carriera.conclusione_tesi.max_size_200_mb')})
+                          </div>
+                        </div>
+                        <Form.Group>
+                          <Form.Control
+                            type="file"
+                            accept="application/pdf"
+                            onChange={e => setPdfFile(e.target.files && e.target.files[0] ? e.target.files[0] : null)}
+                            disabled={isSubmitting}
+                            id="final-thesis-pdfa"
+                            className="d-none"
+                          />
+                          <div className="cr-file-row">
+                            <Form.Label htmlFor="final-thesis-pdfa" className={`btn btn-outlined-${appliedTheme} mb-0`}>
+                              <i className="fa-regular fa-upload me-2" />
+                              {t('carriera.conclusione_tesi.select_file')}
+                            </Form.Label>
+                            <span className="text-muted cr-file-name">
+                              {pdfFile ? pdfFile.name : t('carriera.conclusione_tesi.no_file_selected')}
+                            </span>
+                          </div>
+                        </Form.Group>
+                      </div>
+                    </Col>
+
+                    <Col md={4}>
+                      <div className="cr-upload-col">
+                        <div className="cr-upload-header">
+                          <Form.Label htmlFor="supplementary-zip">
+                            {t('carriera.conclusione_tesi.supplementary_zip')}
+                          </Form.Label>
+                          <div className="text-muted cr-upload-meta">
+                            ({t('carriera.conclusione_tesi.max_size_200_mb')})
+                          </div>
+                        </div>
+                        <Form.Group>
+                          <Form.Control
+                            type="file"
+                            accept="application/zip"
+                            onChange={e =>
+                              setSupplementaryZip(e.target.files && e.target.files[0] ? e.target.files[0] : null)
+                            }
+                            disabled={isSubmitting}
+                            id="supplementary-zip"
+                            className="d-none"
+                          />
+                          <div className="cr-file-row">
+                            <Form.Label htmlFor="supplementary-zip" className={`btn btn-outlined-${appliedTheme} mb-0`}>
+                              <i className="fa-regular fa-upload me-2" />
+                              {t('carriera.conclusione_tesi.select_file')}
+                            </Form.Label>
+                            <span className="text-muted cr-file-name">
+                              {supplementaryZip
+                                ? supplementaryZip.name
+                                : t('carriera.conclusione_tesi.no_file_selected')}
+                            </span>
+                          </div>
+                        </Form.Group>
+                      </div>
+                    </Col>
+                  </Row>
                 </div>
 
                 <Row className="mb-2">
-                  <Col md={12}>
-                    <Form.Label htmlFor="summary-for-committee-pdf">
-                      {t('carriera.conclusione_tesi.summary_for_committee_pdf')}
-                    </Form.Label>{' '}
-                    <span className="text-muted">({t('carriera.conclusione_tesi.max_size_20_mb')})</span>
-                    <div className="text-muted cr-help">
-                      {t('carriera.conclusione_tesi.summary_for_committee_subtext')}
-                    </div>
-                    <Form.Group>
-                      <Form.Control
-                        type="file"
-                        accept="application/pdf"
-                        onChange={e => setResumePdf(e.target.files && e.target.files[0] ? e.target.files[0] : null)}
-                        disabled={isSubmitting}
-                      />
-                    </Form.Group>
-                  </Col>
-                </Row>
-
-                <Row className="mb-2">
-                  <Col md={12}>
-                    <Form.Label htmlFor="final-thesis-pdfa">
-                      {t('carriera.conclusione_tesi.final_thesis_pdfa')}
-                    </Form.Label>{' '}
-                    <span className="text-muted">({t('carriera.conclusione_tesi.max_size_200_mb')})</span>
-                    <Form.Group>
-                      <Form.Control
-                        type="file"
-                        accept="application/pdf"
-                        onChange={e => setPdfFile(e.target.files && e.target.files[0] ? e.target.files[0] : null)}
-                        disabled={isSubmitting}
-                      />
-                    </Form.Group>
-                  </Col>
-                </Row>
-
-                <Row className="mb-2">
-                  <Col md={12}>
-                    <Form.Label htmlFor="supplementary-zip">
-                      {t('carriera.conclusione_tesi.supplementary_zip')}
-                    </Form.Label>{' '}
-                    <span>({t('carriera.conclusione_tesi.max_size_200_mb')})</span>
-                    <Form.Group>
-                      <Form.Control
-                        type="file"
-                        accept="application/zip"
-                        onChange={e =>
-                          setSupplementaryZip(e.target.files && e.target.files[0] ? e.target.files[0] : null)
-                        }
-                        disabled={isSubmitting}
-                      />
-                    </Form.Group>
-                  </Col>
-                </Row>
-              </div>
-
-              <Row className="mb-2">
-                <div className="cr-section-title">
-                  <i className="fa-regular fa-pen-to-square" />
-                  <span>{t('carriera.conclusione_tesi.declarations.student_declarations')}</span>
-                </div>
-                <Col md="auto">
-                  <div
-                    style={{ backgroundColor: appliedTheme === 'dark' ? '#2c2c2c' : '#d9edf7', borderRadius: '6px' }}
-                  >
-                    <div className="ms-2 me-2 pt-2 pb-2">
-                      <b>{t('carriera.conclusione_tesi.declarations.student_declarations_intro')}</b>
-                      <Form.Check
-                        type="checkbox"
-                        label={t('carriera.conclusione_tesi.declarations.declaration_1')}
-                        checked={decl.decl1}
-                        onChange={e => setDecl(prev => ({ ...prev, decl1: e.target.checked }))}
-                        disabled={isSubmitting}
-                        id="declaration-1"
-                      />
-                      {authorization === 'authorize' && (
+                  <div className="cr-section-title">
+                    <i className="fa-regular fa-pen-to-square" />
+                    <span>{t('carriera.conclusione_tesi.declarations.student_declarations')}</span>
+                  </div>
+                  <Col md="auto">
+                    <div
+                      style={{ backgroundColor: appliedTheme === 'dark' ? '#2c2c2c' : '#d9edf7', borderRadius: '6px' }}
+                    >
+                      <div className="ms-2 me-2 pt-2 pb-2">
+                        <b>{t('carriera.conclusione_tesi.declarations.student_declarations_intro')}</b>
                         <Form.Check
                           type="checkbox"
-                          label={t('carriera.conclusione_tesi.declarations.declaration_2')}
-                          checked={decl.decl2}
-                          onChange={e => setDecl(prev => ({ ...prev, decl2: e.target.checked }))}
+                          label={t('carriera.conclusione_tesi.declarations.declaration_1')}
+                          checked={decl.decl1}
+                          onChange={e => setDecl(prev => ({ ...prev, decl1: e.target.checked }))}
                           disabled={isSubmitting}
-                          id="declaration-2"
+                          id="declaration-1"
                         />
-                      )}
-                      <Form.Check
-                        type="checkbox"
-                        label={t('carriera.conclusione_tesi.declarations.declaration_3')}
-                        checked={decl.decl3}
-                        onChange={e => setDecl(prev => ({ ...prev, decl3: e.target.checked }))}
-                        disabled={isSubmitting}
-                        id="declaration-3"
-                      />
-                      <Form.Check
-                        type="checkbox"
-                        label={t('carriera.conclusione_tesi.declarations.declaration_4')}
-                        checked={decl.decl4}
-                        onChange={e => setDecl(prev => ({ ...prev, decl4: e.target.checked }))}
-                        disabled={isSubmitting}
-                        id="declaration-4"
-                      />
-                      <Form.Check
-                        type="checkbox"
-                        label={t('carriera.conclusione_tesi.declarations.declaration_5')}
-                        checked={decl.decl5}
-                        onChange={e => setDecl(prev => ({ ...prev, decl5: e.target.checked }))}
-                        disabled={isSubmitting}
-                        id="declaration-5"
-                      />
-                      <Form.Check
-                        type="checkbox"
-                        label={t('carriera.conclusione_tesi.declarations.declaration_6')}
-                        checked={decl.decl6}
-                        onChange={e => setDecl(prev => ({ ...prev, decl6: e.target.checked }))}
-                        disabled={isSubmitting}
-                        id="declaration-6"
-                      />
+                        {authorization === 'authorize' && (
+                          <Form.Check
+                            type="checkbox"
+                            label={t('carriera.conclusione_tesi.declarations.declaration_2')}
+                            checked={decl.decl2}
+                            onChange={e => setDecl(prev => ({ ...prev, decl2: e.target.checked }))}
+                            disabled={isSubmitting}
+                            id="declaration-2"
+                          />
+                        )}
+                        <Form.Check
+                          type="checkbox"
+                          label={t('carriera.conclusione_tesi.declarations.declaration_3')}
+                          checked={decl.decl3}
+                          onChange={e => setDecl(prev => ({ ...prev, decl3: e.target.checked }))}
+                          disabled={isSubmitting}
+                          id="declaration-3"
+                        />
+                        <Form.Check
+                          type="checkbox"
+                          label={t('carriera.conclusione_tesi.declarations.declaration_4')}
+                          checked={decl.decl4}
+                          onChange={e => setDecl(prev => ({ ...prev, decl4: e.target.checked }))}
+                          disabled={isSubmitting}
+                          id="declaration-4"
+                        />
+                        <Form.Check
+                          type="checkbox"
+                          label={t('carriera.conclusione_tesi.declarations.declaration_5')}
+                          checked={decl.decl5}
+                          onChange={e => setDecl(prev => ({ ...prev, decl5: e.target.checked }))}
+                          disabled={isSubmitting}
+                          id="declaration-5"
+                        />
+                        <Form.Check
+                          type="checkbox"
+                          label={t('carriera.conclusione_tesi.declarations.declaration_6')}
+                          checked={decl.decl6}
+                          onChange={e => setDecl(prev => ({ ...prev, decl6: e.target.checked }))}
+                          disabled={isSubmitting}
+                          id="declaration-6"
+                        />
 
-                      {!allDeclarationsChecked && (
-                        <div className="text-muted mt-2">
-                          {t('carriera.conclusione_tesi.declarations.declarations_required')}
-                        </div>
-                      )}
+                        {!allDeclarationsChecked && (
+                          <div className="text-muted mt-2">
+                            {t('carriera.conclusione_tesi.declarations.declarations_required')}
+                          </div>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                </Col>
-              </Row>
-            </Form>
+                  </Col>
+                </Row>
+              </Form>
+            </div>
           </div>
-        </div>
-      </Modal.Body>
+        </Modal.Body>
 
-      <Modal.Footer className="d-flex justify-content-end gap-2">
-        <Button className={`btn-outlined-${appliedTheme} mb-3`} size="md" onClick={() => resetForm()}>
-          <i className="fa-solid fa-rotate-left pe-2" />
-          {t('carriera.richiesta_tesi.reset')}
-        </Button>
+        <Modal.Footer className="d-flex justify-content-end gap-2">
+          <Button className={`btn-outlined-${appliedTheme} mb-3`} size="md" onClick={() => resetForm()}>
+            <i className="fa-solid fa-rotate-left pe-2" />
+            {t('carriera.richiesta_tesi.reset')}
+          </Button>
 
-        <Button className={`btn-primary-${appliedTheme}`} onClick={handleUpload} disabled={!canSubmit || isSubmitting}>
-          <i className="fa-solid fa-paper-plane pe-2" />
-          {isSubmitting ? t('carriera.conclusione_tesi.sending') : t('carriera.conclusione_tesi.request_conclusion')}
-        </Button>
-      </Modal.Footer>
-    </Modal>
+          <Button
+            className={`btn-primary-${appliedTheme}`}
+            onClick={() => {
+              setShow(false);
+              setShowConfirmationModal(true);
+            }}
+            disabled={!canSubmit || isSubmitting}
+          >
+            <i className="fa-solid fa-paper-plane pe-2" />
+            {isSubmitting ? t('carriera.conclusione_tesi.sending') : t('carriera.conclusione_tesi.request_conclusion')}
+          </Button>
+        </Modal.Footer>
+      </Modal>
+      <CustomModal
+        show={showConfirmationModal}
+        handleClose={() => {
+          setShowConfirmationModal(false);
+          setShow(true);
+        }}
+        handleConfirm={handleUpload}
+        titleText={t('carriera.conclusione_tesi.confirmation_modal.title')}
+        bodyText={t('carriera.conclusione_tesi.confirmation_modal.body')}
+        confirmText={t('carriera.conclusione_tesi.confirmation_modal.confirm_button')}
+        confirmIcon="fa-solid fa-paper-plane"
+        closeText={t('carriera.conclusione_tesi.confirmation_modal.cancel_button')}
+        isLoading={isSubmitting}
+      />
+    </>
   );
 }
 

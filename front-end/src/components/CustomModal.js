@@ -23,8 +23,15 @@ export default function CustomModal({
   const appliedTheme = theme === 'auto' ? getSystemTheme() : theme;
 
   return (
-    <Modal show={show} onHide={handleClose} contentClassName="modal-content" backdropClassName="modal-overlay" centered>
-      <Modal.Header closeButton={true} className="modal-header">
+    <Modal
+      show={show}
+      onHide={handleClose}
+      backdrop="static"
+      keyboard={false}
+      contentClassName="modal-content"
+      centered
+    >
+      <Modal.Header closeButton className="modal-header">
         <Modal.Title className="modal-title">
           <i className="fa-regular fa-circle-exclamation" />
           {` `}

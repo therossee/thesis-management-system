@@ -349,7 +349,7 @@ export default function Thesis(props) {
             console.log('Conclusione richiesta inviata');
           }}
         />
-        <FinalThesisUpload show={showFinalThesis} onHide={() => setShowFinalThesis(false)} />
+        <FinalThesisUpload show={showFinalThesis} setShow={setShowFinalThesis} />
       </div>
     </>
   );

@@ -41,11 +41,6 @@ const ensureDir = async dirPath => {
   await fs.mkdir(dirPath, { recursive: true });
 };
 
-const safeFilename = (prefix, originalname) => {
-  const ext = path.extname(originalname || '');
-  return `${prefix}_${Date.now()}${ext}`;
-};
-
 const moveFile = async (fromPath, toPath) => {
   try {
     await fs.rename(fromPath, toPath);
@@ -129,7 +124,7 @@ const sendThesisConclusionRequest = async (req, res) => {
       );
       await ensureDir(uploadBaseDir);
 
-      const thesisPdfName = safeFilename('thesis_', loggedStudent.id || 'document.pdf');
+      const thesisPdfName = `thesis_${loggedStudent.id}.pdf`;
       const thesisPdfPath = path.join(uploadBaseDir, thesisPdfName);
       const thesisBuffer = await fs.readFile(thesisFile.path);
       const convertedPdfA = await convertToPdfA({
@@ -254,7 +249,7 @@ const sendThesisConclusionRequest = async (req, res) => {
       }
 
       if (thesisResume) {
-        const resumeName = safeFilename('resume_', loggedStudent.id || 'resume.pdf');
+        const resumeName = `resume_${loggedStudent.id}.pdf`;
         const resumePath = path.join(uploadBaseDir, resumeName);
         await moveFile(thesisResume.path, resumePath);
         thesis.thesis_resume = null;
@@ -334,7 +329,7 @@ const sendThesisConclusionRequest = async (req, res) => {
       thesis.thesis_file_path = path.relative(path.join(__dirname, '..', '..'), thesisPdfPath);
 
       if (additionalZip) {
-        const zipName = safeFilename('additional_', loggedStudent.id || 'supplementary.zip');
+        const zipName = `additional_${loggedStudent.id}.zip`;
         const zipPath = path.join(uploadBaseDir, zipName);
         await moveFile(additionalZip.path, zipPath);
         thesis.additional_zip = null;
@@ -463,7 +458,7 @@ const uploadFinalThesis = async (req, res) => {
   if (!thesisFile) {
     return res.status(400).json({ error: 'Missing thesis file' });
   }
-  const thesisPdfName = safeFilename('thesis_', loggedStudent.id || 'document.pdf');
+  const thesisPdfName = `final_thesis_${loggedStudent.id}.pdf`;
   const thesisPdfPath = path.join(uploadBaseDir, thesisPdfName);
   const thesisBuffer = await fs.readFile(thesisFile.path);
   const convertedPdfA = await convertToPdfA({

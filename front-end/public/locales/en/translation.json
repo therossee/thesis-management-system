@@ -217,7 +217,9 @@
             "no_application": {
                 "title": "No application submitted",
                 "content": "There is currently no information available about your thesis because you have not yet submitted an application. Explore the <a href='/carriera/tesi/proposte_di_tesi'>available proposals</a> or submit a custom thesis request."
-            }
+            },
+            "upload_final_thesis_button": "Upload Final Thesis"
+
         },
         "richiesta_tesi": {
             "title": "Thesis Request",
@@ -347,7 +349,31 @@
             },
             "select_keywords_placeholder": "Select keywords",
             "sending": "Sending...",
-            "request_conclusion": "Request conclusion"
+            "request_conclusion": "Request conclusion",
+                        "upload_final_thesis": " Upload final thesis",
+            "confirmation_modal": {
+                "title": "Confirm conclusion request",
+                "body": "Are you sure you want to send the request to confirm the conclusion of the thesis? Once sent, you will no longer be able to modify the thesis details.",
+                "confirm_button": "Yes, send the request",
+                "cancel_button": "Cancel"
+            },
+            "request_submitted_title": "Request submitted successfully!",
+            "request_submitted_content": "The supervisor will receive the request to confirm the conclusion of the thesis.",
+            "request_submission_failed_title": "Error submitting the request.",
+            "request_submission_failed_content": "An error occurred while submitting the request. Please try again later.",
+            "final_thesis_modal": {
+                "title": "Upload final thesis",
+                "body": "Are you sure you want to upload the final thesis? Once uploaded, you will no longer be able to modify the thesis details.",
+                "confirm_button": "Yes, upload the thesis",
+                "cancel_button": "Cancel"
+            },
+            "final_thesis_upload": "Upload document",
+            "final_thesis_uploaded_title": "Final thesis uploaded successfully!",
+            "final_thesis_uploaded_content": "Your final thesis has been uploaded successfully. Get ready for the discussion!",
+            "final_thesis_upload_failed_title": "Error uploading the final thesis.",
+            "final_thesis_upload_failed_content": "An error occurred while uploading the final thesis. Please try again later.",
+            "select_file": "Select file",
+            "no_file_selected": "No file selected"
         }
     },
     "Accedi": "Login",
