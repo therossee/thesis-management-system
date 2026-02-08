@@ -12,6 +12,7 @@ import { getSystemTheme } from '../utils/utils';
 import CustomBlock from './CustomBlock';
 import CustomModal from './CustomModal';
 import FinalThesisUpload from './FinalThesisUpload';
+import InfoTooltip from './InfoTooltip';
 import LoadingModal from './LoadingModal';
 import TeacherContactCard from './TeacherContactCard';
 import ThesisRequestModal from './ThesisRequestModal';
@@ -226,11 +227,16 @@ export default function Thesis(props) {
             <Col md={8} lg={8}>
               {thesis && checkIfConclusionRequest() && (
                 <Card className="mb-3 roundCard py-2 ">
-                  <Card.Header className="border-0">
-                    <h3 className="thesis-topic">
+                  <Card.Header className="border-0 d-flex align-items-center">
+                    <h3 className="thesis-topic mb-0">
                       <i className="fa-regular fa-clipboard fa-sm pe-2" />
                       {t('carriera.conclusione_tesi.summary')}
                     </h3>
+                    <InfoTooltip
+                      tooltipText={t('carriera.conclusione_tesi.summary')}
+                      placement="right"
+                      id="thesis-summary-tooltip"
+                    />
                   </Card.Header>
                   <Card.Body className="pt-2 pb-0">
                     <CustomBlock icon="text-size" title="Titolo" ignoreMoreLines>
@@ -244,10 +250,11 @@ export default function Thesis(props) {
                       )}
                       {thesis.abstract.length > 300 && (
                         <Button
-                          variant="contact-link"
+                          variant="link"
                           onClick={() => setShowFullAbstract(!showFullAbstract)}
                           aria-expanded={showFullAbstract}
-                          className="p-0 h3 thesis-topic d-flex align-items-center gap-2 mb-3"
+                          className="p-0 custom-link d-inline-flex align-items-center gap-1 align-baseline"
+                          style={{ fontSize: 'inherit', lineHeight: 'inherit', verticalAlign: 'baseline' }}
                         >
                           <i
                             className={`fa-regular fa-chevron-${showFullAbstract ? 'up' : 'down'} cosupervisor-button`}
@@ -273,11 +280,16 @@ export default function Thesis(props) {
                 </Card>
               )}
               <Card className="mb-3 roundCard py-2 pb-2">
-                <Card.Header className="border-0">
-                  <h3 className="thesis-topic">
+                <Card.Header className="border-0 d-flex align-items-center">
+                  <h3 className="thesis-topic mb-0">
                     <i className="fa-regular fa-book-open fa-sm pe-2" />
                     {t('carriera.proposte_di_tesi.topic')}
                   </h3>
+                  <InfoTooltip
+                    tooltipText={t('carriera.proposte_di_tesi.topic')}
+                    placement="right"
+                    id="thesis-topic-tooltip"
+                  />
                 </Card.Header>
                 <Card.Body className="pt-2 pb-0">
                   <p className="info-detail">
@@ -286,20 +298,21 @@ export default function Thesis(props) {
                     ) : (
                       <>{data.topic}</>
                     )}
+                    {data.topic.length > 600 && (
+                      <Button
+                        variant="link"
+                        onClick={() => setShowFullTopic(!showFullTopic)}
+                        aria-expanded={showFullTopic}
+                        className="p-0 custom-link d-inline-flex align-items-center gap-1 align-baseline"
+                        style={{ fontSize: 'inherit', lineHeight: 'inherit', verticalAlign: 'baseline' }}
+                      >
+                        <i className={`fa-regular fa-chevron-${showFullTopic ? 'up' : 'down'} cosupervisor-button`} />
+                        <span className="cosupervisor-button">
+                          {t(`carriera.tesi.${showFullTopic ? 'show_less' : 'show_more'}`)}
+                        </span>
+                      </Button>
+                    )}
                   </p>
-                  {data.topic.length > 600 && (
-                    <Button
-                      variant="contact-link"
-                      onClick={() => setShowFullTopic(!showFullTopic)}
-                      aria-expanded={showFullTopic}
-                      className="p-0 h3 thesis-topic d-flex align-items-center gap-2 mb-3"
-                    >
-                      <i className={`fa-regular fa-chevron-${showFullTopic ? 'up' : 'down'} cosupervisor-button`} />
-                      <span className="cosupervisor-button">
-                        {t(`carriera.tesi.${showFullTopic ? 'show_less' : 'show_more'}`)}
-                      </span>
-                    </Button>
-                  )}
                 </Card.Body>
               </Card>
               <Row className="mb-3">
@@ -330,6 +343,11 @@ export default function Thesis(props) {
                             <h3 className="thesis-topic">
                               <i className="fa-regular fa-info-circle" /> {t('carriera.tesi.information.title')}
                             </h3>
+                            <InfoTooltip
+                              tooltipText={t('carriera.tesi.information.title')}
+                              placement="right"
+                              id="thesis-information-tooltip"
+                            />
                           </Card.Header>
                           <Card.Body>
                             <ul>
@@ -350,6 +368,15 @@ export default function Thesis(props) {
                                 ? t('carriera.richiesta_tesi.next_steps_rejected.title')
                                 : t('carriera.richiesta_tesi.next_steps_cancelled.title')}
                             </h3>
+                            <InfoTooltip
+                              tooltipText={
+                                thesisApplication.status === 'rejected'
+                                  ? t('carriera.richiesta_tesi.next_steps_rejected.title')
+                                  : t('carriera.richiesta_tesi.next_steps_cancelled.title')
+                              }
+                              placement="right"
+                              id="thesis-next-steps-tooltip"
+                            />
                           </Card.Header>
                           <Card.Body>
                             <p
@@ -428,11 +455,12 @@ function LinkCard() {
   const { t } = useTranslation();
   return (
     <Card className="mb-3 roundCard py-2 ">
-      <Card.Header className="border-0">
-        <h3 className="thesis-topic">
+      <Card.Header className="border-0 d-flex align-items-center">
+        <h3 className="thesis-topic mb-0">
           <i className="fa-regular fa-book fa-sm pe-2" />
           {t('carriera.tesi.utilities.title')}
         </h3>
+        <InfoTooltip tooltipText={t('carriera.tesi.utilities.title')} placement="right" id="thesis-utilities-tooltip" />
       </Card.Header>
       <Card.Body className="pt-2 pb-0">
         <LinkBlock

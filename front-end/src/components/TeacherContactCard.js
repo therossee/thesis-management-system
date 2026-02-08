@@ -7,6 +7,7 @@ import PropTypes from 'prop-types';
 
 import { ThemeContext } from '../App';
 import '../styles/teacher-contact-card.css';
+import InfoTooltip from './InfoTooltip';
 
 export default function TeacherContactCard({ supervisor, coSupervisors }) {
   const { t } = useTranslation();
@@ -33,6 +34,7 @@ export default function TeacherContactCard({ supervisor, coSupervisors }) {
         <h3 className="thesis-topic">
           <i className="fa-regular fa-address-card me-2" />
           {t('carriera.tesi.contacts.title')}
+          <InfoTooltip tooltipText={t('carriera.tesi.contacts.tooltip')} placement="top" id="contacts-tooltip" />
         </h3>
         <div className="supervisor-main">
           <div className="contact-item d-flex align-items-start gap-3 mb-3 mt-3">

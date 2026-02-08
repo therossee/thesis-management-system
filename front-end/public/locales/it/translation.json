@@ -223,8 +223,8 @@
                 "ielts": "Ultima sessione IELTS valida",
                 "final_exam_registration": "Iscrizione esame finale",
                 "internship_report": "Consegna relazione tirocinio e altre attività"
-            }
-
+            },
+            "timeline_tooltip": "La timeline mostra le fasi principali della tua tesi."
         },
         "richiesta_tesi": {
             "title": "Richiesta Tesi",

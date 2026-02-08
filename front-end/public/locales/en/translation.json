@@ -222,8 +222,8 @@
                 "title": "No application submitted",
                 "content": "There is currently no information available about your thesis because you have not yet submitted an application. Explore the <a href='/carriera/tesi/proposte_di_tesi'>available proposals</a> or submit a custom thesis request."
             },
-            "upload_final_thesis_button": "Upload Final Thesis"
-
+            "upload_final_thesis_button": "Upload Final Thesis",
+            "timeline_tooltip": "The timeline shows the main phases of your thesis."
         },
         "richiesta_tesi": {
             "title": "Thesis Request",
