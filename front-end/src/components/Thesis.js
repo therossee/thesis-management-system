@@ -9,6 +9,7 @@ import API from '../API';
 import { ThemeContext, ToastContext } from '../App';
 import '../styles/utilities.css';
 import { getSystemTheme } from '../utils/utils';
+import CustomBlock from './CustomBlock';
 import CustomModal from './CustomModal';
 import FinalThesisUpload from './FinalThesisUpload';
 import LoadingModal from './LoadingModal';
@@ -33,6 +34,7 @@ export default function Thesis(props) {
   const data = thesis ? thesis : thesisApplication;
   const [isLoading, setIsLoading] = useState(false);
   const [showFullTopic, setShowFullTopic] = useState(false);
+  const [showFullAbstract, setShowFullAbstract] = useState(false);
   const { showToast } = useContext(ToastContext);
   const supervisors = data ? [data.supervisor, ...data.coSupervisors] : [];
   const activeStep = data ? (thesis ? thesis.thesisStatus : thesisApplication.status) : 'none';
@@ -47,6 +49,27 @@ export default function Thesis(props) {
   const appliedTheme = theme === 'auto' ? getSystemTheme() : theme;
   const { t } = useTranslation();
   console.log(sessionDeadlines);
+
+  const getFileName = path => {
+    if (!path) return '-';
+    const chunks = String(path).split('/');
+    return chunks[chunks.length - 1] || '-';
+  };
+
+  const checkIfConclusionRequest = () => {
+    switch (thesis.thesisStatus) {
+      case 'conclusion_requested':
+      case 'conclusion_approved':
+      case 'conclusion_rejected':
+      case 'compiled_questionnaire':
+      case 'final_exam':
+      case 'final_thesis':
+      case 'done':
+        return true;
+      default:
+        return false;
+    }
+  };
 
   const handleCancelApplication = () => {
     setIsLoading(true);
@@ -201,24 +224,64 @@ export default function Thesis(props) {
           )}
           {(thesis || thesisApplication) && (
             <Col md={8} lg={8}>
+              {thesis && checkIfConclusionRequest() && (
+                <Card className="mb-3 roundCard py-2 ">
+                  <Card.Header className="border-0">
+                    <h3 className="thesis-topic">
+                      <i className="fa-regular fa-clipboard fa-sm pe-2" />
+                      {t('carriera.conclusione_tesi.summary')}
+                    </h3>
+                  </Card.Header>
+                  <Card.Body className="pt-2 pb-0">
+                    <CustomBlock icon="text-size" title="Titolo" ignoreMoreLines>
+                      {thesis.title}
+                    </CustomBlock>
+                    <CustomBlock icon="align-left" title="Abstract" ignoreMoreLines>
+                      {thesis.abstract.length > 300 && !showFullAbstract ? (
+                        <>{thesis.abstract.substring(0, 297) + '... '}</>
+                      ) : (
+                        <>{thesis.abstract}</>
+                      )}
+                      {thesis.abstract.length > 300 && (
+                        <Button
+                          variant="contact-link"
+                          onClick={() => setShowFullAbstract(!showFullAbstract)}
+                          aria-expanded={showFullAbstract}
+                          className="p-0 h3 thesis-topic d-flex align-items-center gap-2 mb-3"
+                        >
+                          <i
+                            className={`fa-regular fa-chevron-${showFullAbstract ? 'up' : 'down'} cosupervisor-button`}
+                          />
+                          <span className="cosupervisor-button">
+                            {t(`carriera.tesi.${showFullAbstract ? 'show_less' : 'show_more'}`)}
+                          </span>
+                        </Button>
+                      )}
+                    </CustomBlock>
+
+                    <div className="mt-3 mb-2 fw-semibold">{t('carriera.conclusione_tesi.documents_to_upload')}</div>
+                    <CustomBlock icon="file-pdf" title="Riassunto PDF" ignoreMoreLines>
+                      {getFileName(thesis.thesisResumePath)}
+                    </CustomBlock>
+                    <CustomBlock icon="file-circle-check" title="Tesi PDF/A" ignoreMoreLines>
+                      {getFileName(thesis.thesisFilePath)}
+                    </CustomBlock>
+                    <CustomBlock icon="file-zipper" title="Allegato .zip" ignoreMoreLines>
+                      {getFileName(thesis.additionalZipPath)}
+                    </CustomBlock>
+                  </Card.Body>
+                </Card>
+              )}
               <Card className="mb-3 roundCard py-2 pb-2">
                 <Card.Header className="border-0">
                   <h3 className="thesis-topic">
                     <i className="fa-regular fa-book-open fa-sm pe-2" />
-                    {data.title
-                      ? `${t('carriera.conclusione_tesi.title_thesis')}: ${data.title}`
-                      : t('carriera.proposte_di_tesi.topic')}
+                    {t('carriera.proposte_di_tesi.topic')}
                   </h3>
                 </Card.Header>
                 <Card.Body className="pt-2 pb-0">
                   <p className="info-detail">
-                    {data.abstract ? (
-                      data.abstract.length > 600 && !showFullTopic ? (
-                        <>{`${t('carriera.conclusione_tesi.abstract_text')} ${data.abstract.substring(0, 597) + '... '}`}</>
-                      ) : (
-                        <>{data.abstract}</>
-                      )
-                    ) : data.topic.length > 600 && !showFullTopic ? (
+                    {data.topic.length > 600 && !showFullTopic ? (
                       <>{data.topic.substring(0, 597) + '... '}</>
                     ) : (
                       <>{data.topic}</>
@@ -431,6 +494,10 @@ Thesis.propTypes = {
     additionalZipPath: PropTypes.string,
     thesisConclusionRequestDate: PropTypes.string,
     thesisConclusionConfirmedDate: PropTypes.string,
+    abstract: PropTypes.string,
+    abstractEng: PropTypes.string,
+    title: PropTypes.string,
+    titleEng: PropTypes.string,
   }),
   thesisApplication: PropTypes.shape({
     id: PropTypes.number.isRequired,
