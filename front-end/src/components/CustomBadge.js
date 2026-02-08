@@ -56,6 +56,7 @@ moment.locale('it');
 
 const validVariants = [
   'teacher',
+  'teacher_inline',
   'keyword',
   'sdg',
   'recommended',
@@ -133,7 +134,9 @@ export default function CustomBadge({ variant, content, type, filters, applyFilt
         key={`${item}-${index}`}
         className={`custom-badge badge ${variant}_${appliedTheme} ${variant === 'type' ? 'pe-2' : ''}`}
       >
-        {variant === 'type' && <div className="custom-badge-icon">{renderIcon(item)}</div>}
+        {(variant === 'type' || variant === 'teacher' || variant === 'teacher_inline' || variant === 'sdg') && (
+          <div className="custom-badge-icon">{renderIcon(item)}</div>
+        )}
         <div className="custom-badge-text">{item}</div>
       </div>
     ));
@@ -237,6 +240,7 @@ export default function CustomBadge({ variant, content, type, filters, applyFilt
   const renderIcon = content => {
     switch (variant) {
       case 'teacher':
+      case 'teacher_inline':
         return <i className="fa-regular fa-user fa-lg" />;
       case 'keyword':
         return <i className="fa-regular fa-key fa-lg" />;

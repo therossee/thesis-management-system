@@ -22,7 +22,6 @@ const {
 
 const selectLicenseAttributes = require('../utils/selectLicenseAttributes');
 const selectMotivationAttributes = require('../utils/selectMotivationAttributes');
-const { convertToPdfA } = require('../utils/pdfconverter');
 
 const parseJsonField = (value, fallback) => {
   if (value === undefined || value === null || value === '') return fallback;
@@ -49,6 +48,28 @@ const moveFile = async (fromPath, toPath) => {
     await fs.copyFile(fromPath, toPath);
     await fs.unlink(fromPath);
   }
+};
+
+const isPdfAByMetadata = pdfBuffer => {
+  if (!Buffer.isBuffer(pdfBuffer) || pdfBuffer.length < 5) return false;
+  if (pdfBuffer.subarray(0, 5).toString('latin1') !== '%PDF-') return false;
+
+  const content = pdfBuffer.toString('latin1');
+  const hasPdfAIdentification = /pdfaid:part\s*>\s*[123]\s*</i.test(content);
+  const hasConformance = /pdfaid:conformance\s*>\s*[ABU]\s*</i.test(content);
+
+  return hasPdfAIdentification && hasConformance;
+};
+
+const readAndValidatePdfA = async file => {
+  if (!file?.path) return null;
+  const fileBuffer = await fs.readFile(file.path);
+  if (!isPdfAByMetadata(fileBuffer)) {
+    const err = new Error('Thesis file must be a valid PDF/A');
+    err.status = 400;
+    throw err;
+  }
+  return fileBuffer;
 };
 
 const sendThesisConclusionRequest = async (req, res) => {
@@ -126,13 +147,12 @@ const sendThesisConclusionRequest = async (req, res) => {
 
       const thesisPdfName = `thesis_${loggedStudent.id}.pdf`;
       const thesisPdfPath = path.join(uploadBaseDir, thesisPdfName);
-      const thesisBuffer = await fs.readFile(thesisFile.path);
-      const convertedPdfA = await convertToPdfA({
-        buffer: thesisBuffer,
-        filename: thesisFile.originalname || 'document.pdf',
-      });
-      await fs.writeFile(thesisPdfPath, convertedPdfA);
-      await fs.unlink(thesisFile.path);
+      try {
+        const thesisBuffer = await readAndValidatePdfA(thesisFile);
+        await fs.writeFile(thesisPdfPath, thesisBuffer);
+      } finally {
+        await fs.unlink(thesisFile.path).catch(() => {});
+      }
       if (coSupervisors) {
         const currentCoSupervisors = await ThesisSupervisorCoSupervisor.findAll({
           where: {
@@ -460,13 +480,15 @@ const uploadFinalThesis = async (req, res) => {
   }
   const thesisPdfName = `final_thesis_${loggedStudent.id}.pdf`;
   const thesisPdfPath = path.join(uploadBaseDir, thesisPdfName);
-  const thesisBuffer = await fs.readFile(thesisFile.path);
-  const convertedPdfA = await convertToPdfA({
-    buffer: thesisBuffer,
-    filename: thesisFile.originalname || 'document.pdf',
-  });
-  await fs.writeFile(thesisPdfPath, convertedPdfA);
-  await fs.unlink(thesisFile.path);
+  let thesisBuffer;
+  try {
+    thesisBuffer = await readAndValidatePdfA(thesisFile);
+  } catch (error) {
+    await fs.unlink(thesisFile.path).catch(() => {});
+    return res.status(error.status || 500).json({ error: error.message });
+  }
+  await fs.writeFile(thesisPdfPath, thesisBuffer);
+  await fs.unlink(thesisFile.path).catch(() => {});
   thesis.thesis_file = null;
   thesis.thesis_file_path = path.relative(path.join(__dirname, '..', '..'), thesisPdfPath);
   thesis.thesis_status = 'done';

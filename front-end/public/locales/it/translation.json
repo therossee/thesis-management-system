@@ -134,13 +134,17 @@
                 "hide_note": "Nascondi nota",
                 "ongoing_title": "Tesi in corso",
                 "conclusion_request_title": "Richiesta conclusione",
+                "conclusion_outcome_title": "Esito conclusione",
                 "conclusion_confirmed_title": "Conclusione approvata",
+                "conclusion_rejected_title": "Conclusione respinta",
                 "almalaurea_title": "Questionario AlmaLaurea",
                 "final_exam_title": "Iscrizione esame finale",
                 "final_thesis_title": "Tesi definitiva",
                 "ongoing": "Durante questa fase, lavori alla tua tesi sotto la supervisione del relatore. Puoi confrontarti con lui per chiarimenti, suggerimenti e revisioni periodiche.",
                 "conclusion_request": "Al termine del lavoro, chiedi al relatore di confermare la conclusione della tesi. Questa conferma è necessaria per poter procedere con le fasi successive.",
+                "conclusion_outcome": "Attendi l'esito della richiesta di conclusione da parte del relatore.",
                 "conclusion_confirmed": "Il relatore ha confermato la conclusione della tesi. Ora puoi procedere con i passaggi finali per completare il percorso di laurea.",
+                "conclusion_rejected": "Il relatore ha respinto la richiesta di conclusione. Verifica eventuali note e aggiorna la tesi prima di inviare una nuova richiesta.",
                 "almalaurea": "Prima di iscriverti all'esame finale, devi compilare il questionario AlmaLaurea. Il questionario raccoglie informazioni utili per il monitoraggio dei percorsi universitari.",
                 "final_exam": "Dopo aver ricevuto la conferma di conclusione dal relatore e aver compilato il questionario, puoi iscriverti all'esame finale tramite la procedura online.",
                 "final_thesis": "Infine, carica la versione definitiva della tua tesi seguendo le indicazioni fornite dal portale. Assicurati che il documento rispetti i requisiti richiesti."
@@ -193,12 +197,6 @@
                 "content": "In questa sezione puoi gestire la tua tesi di laurea. Se non hai ancora una tesi attiva, puoi inviare una richiesta di tesi personalizzata o esplorare le proposte di tesi disponibili. Una volta che la tua candidatura sarà approvata, potrai monitorare lo stato della tua tesi e caricare il lavoro finale."
             },
             "conclusion_request_button": "Richiedi conclusione",
-            "cancel_thesis": "Cancella tesi",
-            "modal_cancel": {
-                "title": "Cancella tesi",
-                "body": "Sei sicuro di voler cancellare la tua tesi? L'azione non può essere annullata.",
-                "confirm_text": "Si, cancella"
-            },
             "application_form": "Nuova Richiesta Tesi",
             "information": {
                 "title": "Informazioni sulla tesi",
@@ -253,8 +251,6 @@
             "supervisor_required": "Il relatore è obbligatorio",
             "submit": "Invia",
             "reset": "Resetta il form",
-            "not_eligible": "Non idoneo",
-            "not_eligible_message": "Non sei idoneo per richiedere una tesi in questo momento. Verifica di aver soddisfatto tutti i requisiti necessari.",
             "go_back": "Torna indietro",
             "too_long": "L'argomento della tesi supera il limite di caratteri consentito",
             "confirm_title": "Conferma invio richiesta",
@@ -308,7 +304,7 @@
             "motivations": "Motivazioni per l'embargo (seleziona uno o più motivi)",
             "period": "Periodo di embargo",
             "other_motivation_placeholder": "Specifica il motivo...",
-            "embargo_details": "Sarà comunque consultabile sul catalogo online delle Biblioteche la scheda catalografica relativa alla tesi con tutti i metadati del laureato (nome, cognome, titolo tesi e relatore/i). \n Al termine del periodo la tesi verrà distribuita con la licenza \"Non commerciale - Non opere derivate CC BY-NC-ND\": la licenza e la piu restrittiva delle nostre sei licenze principali, permettendo a terzi soltanto di scaricare le tue opere e condividerle ad altri fino a che ti diano il giusto credito, ma non possono cambiarle in nessun modo od utilizzarle commercialmente",
+            "embargo_details": "Sarà comunque consultabile sul catalogo online delle Biblioteche la scheda catalografica relativa alla tesi con tutti i metadati del laureato (nome, cognome, titolo tesi e relatore/i). \n Al termine del periodo la tesi verrà distribuita con la licenza \"Non commerciale - Non opere derivate CC BY-NC-ND\": la licenza è la piu restrittiva delle nostre sei licenze principali, permettendo a terzi soltanto di scaricare le tue opere e condividerle ad altri fino a che ti diano il giusto credito, ma non possono cambiarle in nessun modo od utilizzarle commercialmente",
             "embargo_period": {
                 "title": "Periodo di embargo: ",
                 "12_months": "Dopo 12 mesi dal deposito",
@@ -355,6 +351,13 @@
             },
             "select_keywords_placeholder": "Seleziona le keyword",
             "sending": "Invio in corso...",
+            "save_draft": "Salva bozza",
+            "draft_saved": "Bozza salvata. I file allegati non vengono salvati nella bozza.",
+            "draft_save_failed": "Salvataggio bozza non riuscito.",
+            "draft_loaded": "Bozza caricata automaticamente. I file allegati vanno ricaricati.",
+            "draft_load_failed": "Impossibile caricare la bozza salvata.",
+            "show_more": "Mostra di più",
+            "show_less": "Mostra meno",
             "request_conclusion": "Richiedi conclusione",
             "title_thesis": "Titolo",
             "abstract_text": "Abstract: ",
@@ -382,7 +385,13 @@
             "final_thesis_upload_failed_title": "Errore durante il caricamento della tesi definitiva.",
             "final_thesis_upload_failed_content": "Si è verificato un errore durante il caricamento della tesi definitiva. Riprova più tardi.",
             "select_file": "Seleziona file",
-            "no_file_selected": "Nessun file selezionato"
+            "no_file_selected": "Nessun file selezionato",
+            "not_eligible": "Non idoneo",
+            "not_eligible_message": "Non sei idoneo per richiedere la conclusione tesi in questo momento. Verifica di aver soddisfatto tutti i requisiti necessari.",
+            "next_step": "Avanti",
+            "previous_step": "Indietro",
+            "go_back": "Torna alla pagina della tesi",
+            "summary": "Riepilogo"
         }
     },
     "Accedi": "Accedi",

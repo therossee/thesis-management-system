@@ -31,7 +31,7 @@ export default function TeacherContactCard({ supervisor, coSupervisors }) {
     <Card className="teacher-contact-card">
       <Card.Body>
         <h3 className="thesis-topic">
-          <i className="fa-solid fa-address-card me-2" />
+          <i className="fa-regular fa-address-card me-2" />
           {t('carriera.tesi.contacts.title')}
         </h3>
         <div className="supervisor-main">

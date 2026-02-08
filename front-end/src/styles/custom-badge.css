@@ -38,6 +38,22 @@
   border-color: var(--info-600);
 }
 
+.teacher_inline_light,
+.teacher_inline_light:focus {
+  color: var(--info-700);
+  background-color: var(--info-200);
+  border: 0;
+  padding: 0.45rem 0.85rem;
+  min-height: 40px;
+}
+
+.teacher_inline_light,
+.teacher_inline_light:focus {
+  color: var(--info-700);
+  background-color: var(--info-200);
+  border: 0;
+}
+
 .teacher_light.clickable:hover,
 .teacher_light.clickable.active {
   color: var(--info-700) !important;
@@ -51,6 +67,22 @@
   color: var(--info-800);
   background-color: var(--info-200);
   border-color: var(--info-600);
+}
+
+.teacher_inline_dark,
+.teacher_inline_dark:focus {
+  color: var(--info-800);
+  background-color: var(--info-200);
+  border: 0;
+  padding: 0.45rem 0.85rem;
+  min-height: 40px;
+}
+
+.teacher_inline_dark,
+.teacher_inline_dark:focus {
+  color: var(--info-800);
+  background-color: var(--info-200);
+  border: 0;
 }
 
 .teacher_dark.clickable:hover,
@@ -126,6 +158,7 @@
   color: var(--blue-700);
   background-color: var(--blue-100);
   border-color: var(--blue-500);
+  max-width: 100%;
 }
 
 .sdg_light.clickable:hover,
@@ -141,6 +174,15 @@
   color: var(--blue-200);
   background-color: var(--blue-700);
   border-color: var(--blue-500);
+  max-width: 100%;
+}
+
+.sdg_light .custom-badge-text,
+.sdg_dark .custom-badge-text {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
 }
 
 .sdg_dark.clickable:hover,

@@ -117,8 +117,10 @@ export default function CustomSelect({
   className,
   formatCreateLabel,
   maxMulti = 4,
+  menuOutside = false,
 }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const menuPortalTarget = typeof document !== 'undefined' ? document.body : null;
 
   const commonStyles = useMemo(
     () => ({
@@ -160,6 +162,9 @@ export default function CustomSelect({
           classNamePrefix="select"
           styles={commonStyles}
           formatCreateLabel={formatCreateLabel || (inputValue => `Aggiungi "${inputValue}"`)}
+          menuPortalTarget={menuPortalTarget}
+          menuPosition="fixed"
+          menuShouldScrollIntoView={false}
         />
       </div>
     );
@@ -222,6 +227,10 @@ export default function CustomSelect({
           className={`multi-select ${className || ''} ${error ? 'is-invalid' : ''}`}
           classNamePrefix="select"
           styles={commonStyles}
+          menuPortalTarget={menuPortalTarget}
+          menuPosition="fixed"
+          menuPlacement="top"
+          menuShouldScrollIntoView={false}
         />
       </div>
     );
@@ -257,6 +266,9 @@ export default function CustomSelect({
         classNamePrefix="select"
         filterOption={filterOption}
         styles={commonStyles}
+        menuPortalTarget={menuOutside ? menuPortalTarget : undefined}
+        menuPosition={menuOutside ? 'fixed' : 'absolute'}
+        menuShouldScrollIntoView={menuOutside ? false : undefined}
       />
     </div>
   );
@@ -276,4 +288,5 @@ CustomSelect.propTypes = {
   className: PropTypes.string,
   formatCreateLabel: PropTypes.func,
   maxMulti: PropTypes.number,
+  menuOutside: PropTypes.bool,
 };

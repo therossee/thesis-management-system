@@ -30,7 +30,6 @@ export default function Tesi({ initialActiveTab }) {
   const location = useLocation();
   const [showModal, setShowModal] = useState(false);
   const [showRequestModal, setShowRequestModal] = useState(false);
-  const [showConclusionRequest, setShowConclusionRequest] = useState(false);
   const [showFinalThesis, setShowFinalThesis] = useState(false);
   const { theme } = useContext(ThemeContext);
   const { showToast } = useContext(ToastContext);
@@ -108,6 +107,23 @@ export default function Tesi({ initialActiveTab }) {
     }
   };
 
+  const handleFinalThesisUploadResult = success => {
+    if (success) {
+      pendingToastRef.current = {
+        success: true,
+        title: t('carriera.conclusione_tesi.final_thesis_uploaded_title'),
+        message: t('carriera.conclusione_tesi.final_thesis_uploaded_content'),
+      };
+      setRefreshKey(prev => prev + 1);
+    } else {
+      showToast({
+        success: false,
+        title: t('carriera.conclusione_tesi.final_thesis_upload_failed_title'),
+        message: t('carriera.conclusione_tesi.final_thesis_upload_failed_content'),
+      });
+    }
+  };
+
   const handleCancelApplicationResult = success => {
     if (success) {
       pendingToastRef.current = {
@@ -140,11 +156,10 @@ export default function Tesi({ initialActiveTab }) {
               showRequestModal={showRequestModal}
               setShowRequestModal={setShowRequestModal}
               onRequestSubmitResult={handleRequestSubmitResult}
-              showConclusionRequest={showConclusionRequest}
-              setShowConclusionRequest={setShowConclusionRequest}
               onCancelApplicationResult={handleCancelApplicationResult}
               showFinalThesis={showFinalThesis}
               setShowFinalThesis={setShowFinalThesis}
+              onFinalThesisUploadResult={handleFinalThesisUploadResult}
             />
           );
         case 'proposals':
@@ -165,23 +180,8 @@ export default function Tesi({ initialActiveTab }) {
           (thesis.thesisStatus === 'ongoing' || thesis.thesisStatus === 'conclusion_rejected') && (
             <div className="tesi-header-actions">
               <Button
-                variant="outline-danger"
-                onClick={() => setShowModal(true)}
-                className="tesi-header-action-btn"
-                style={{
-                  height: '30px',
-                  display: 'flex',
-                  borderRadius: '6px',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  padding: '0 10px',
-                }}
-              >
-                <i className="fa-regular fa-trash-can me-1" /> {t('carriera.tesi.cancel_thesis')}
-              </Button>
-              <Button
                 className={`btn-primary-${appliedTheme} tesi-header-action-btn`}
-                onClick={() => setShowConclusionRequest(true)}
+                onClick={() => navigate('/carriera/tesi/conclusione_tesi')}
                 style={{
                   height: '30px',
                   display: 'flex',

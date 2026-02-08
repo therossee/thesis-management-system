@@ -34,7 +34,8 @@
 }
 
 .select-sdg .select__value-container {
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
+  overflow: hidden;
 }
 
 .select-sdg .custom-badge {
@@ -42,7 +43,9 @@
 }
 
 .select-sdg .custom-badge-text {
-  white-space: normal;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 @media (max-width: 576px) {
@@ -72,6 +75,10 @@
   background-color: var(--surface) !important;
   border: var(--border-default) !important;
   font-size: var(--font-size-sm) !important;
+}
+
+.select__menu-portal {
+  z-index: 2000 !important;
 }
 
 .select__option {

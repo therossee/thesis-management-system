@@ -6,19 +6,18 @@ import { useTranslation } from 'react-i18next';
 import PropTypes from 'prop-types';
 
 import API from '../API';
-import { ThemeContext, ToastContext } from '../App';
-import '../styles/modal-conclusion.css';
+import { ThemeContext } from '../App';
+import '../styles/conclusion-process.css';
 import { getSystemTheme } from '../utils/utils';
 import CustomModal from './CustomModal';
 import LoadingModal from './LoadingModal';
 
-function FinalThesisUpload({ show, setShow }) {
+function FinalThesisUpload({ show, setShow, onSubmitResult }) {
   const [showConfirmationModal, setShowConfirmationModal] = useState(false);
   const [pdfFile, setPdfFile] = useState(null);
   const { t } = useTranslation();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { theme } = useContext(ThemeContext);
-  const { showToast } = useContext(ToastContext);
   const appliedTheme = theme === 'auto' ? getSystemTheme() : theme;
 
   const resetForm = () => {
@@ -33,21 +32,13 @@ function FinalThesisUpload({ show, setShow }) {
     setShowConfirmationModal(false);
     API.uploadFinalThesis(pdfFile)
       .then(() => {
-        showToast({
-          success: true,
-          title: t('carriera.conclusione_tesi.final_thesis_uploaded_title'),
-          message: t('carriera.conclusione_tesi.final_thesis_uploaded_content'),
-        });
+        onSubmitResult(true);
         resetForm();
         setShow(false);
       })
       .catch(error => {
         console.error('Error uploading final thesis:', error);
-        showToast({
-          success: false,
-          title: t('carriera.conclusione_tesi.final_thesis_upload_failed_title'),
-          message: t('carriera.conclusione_tesi.final_thesis_upload_failed_content'),
-        });
+        onSubmitResult(false);
       })
       .finally(() => {
         setIsSubmitting(false);
@@ -56,7 +47,7 @@ function FinalThesisUpload({ show, setShow }) {
   return (
     <>
       {isSubmitting && <LoadingModal show={isSubmitting} onHide={() => setIsSubmitting(false)} />}
-      <Modal show={show} onHide={() => setShow(false)} centered contentClassName="modal-conclusion-content-shell">
+      <Modal show={show} onHide={() => setShow(false)} centered contentClassName="conclusion-process-content-shell">
         <Modal.Header closeButton>
           <Modal.Title className="cr-modal-title">
             <i className="fa-regular fa-file-upload me-2" />
@@ -64,7 +55,7 @@ function FinalThesisUpload({ show, setShow }) {
           </Modal.Title>
         </Modal.Header>
         <Modal.Body>
-          <div className="modal-conclusion-content cr-clean">
+          <div className="conclusion-process-content cr-clean">
             <div className="cr-section">
               <div className="cr-section-description mb-4 text-center">
                 {t('carriera.conclusione_tesi.final_thesis_modal.instructions')}
@@ -146,6 +137,7 @@ function FinalThesisUpload({ show, setShow }) {
 FinalThesisUpload.propTypes = {
   show: PropTypes.bool.isRequired,
   setShow: PropTypes.func.isRequired,
+  onSubmitResult: PropTypes.func.isRequired,
 };
 
 export default FinalThesisUpload;

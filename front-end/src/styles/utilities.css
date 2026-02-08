@@ -409,8 +409,8 @@ body {
 }
 
 @media (max-width: 991px) {
-  .modal-conclusion.modal-dialog,
-  .modal-conclusion .modal-dialog {
+  .conclusion-process.modal-dialog,
+  .conclusion-process .modal-dialog {
     max-width: 95vw;
     width: 95vw;
     margin: 1rem auto;

@@ -7,7 +7,7 @@ import { FaArrowLeft, FaRectangleXmark } from 'react-icons/fa6';
 import { ThemeContext } from '../App';
 import { getSystemTheme } from '../utils/utils';
 
-export default function Ineligible() {
+export default function NotEligible() {
   const { t } = useTranslation();
   const { theme } = useContext(ThemeContext);
   const appliedTheme = theme === 'auto' ? getSystemTheme() : theme;
@@ -15,15 +15,15 @@ export default function Ineligible() {
     <Card className="mt-3 roundCard">
       <Card.Body className="d-flex flex-column align-items-center my-4">
         <div className="pol-headline pol-headline--with-bar" style={{ color: 'var(--primary)' }}>
-          <h3 className="bold-weight">{t('carriera.richiesta_tesi.not_eligible')}</h3>
+          <h3 className="bold-weight">{t('carriera.conclusione_tesi.not_eligible')}</h3>
         </div>
         <FaRectangleXmark size={100} style={{ color: 'var(--primary)' }} strokeWidth={1} />
         <div className="mb-3 mt-2 text-center" style={{ color: 'var(--text)' }}>
-          <p> {t('carriera.richiesta_tesi.not_eligible_message')} </p>
+          <p> {t('carriera.conclusione_tesi.not_eligible_message')} </p>
         </div>
         <Button className={`btn-${appliedTheme}`} size="sm" onClick={() => window.history.back()}>
           <FaArrowLeft size={16} />
-          {t('carriera.richiesta_tesi.go_back')}{' '}
+          {t('carriera.conclusione_tesi.go_back')}{' '}
         </Button>
       </Card.Body>
     </Card>

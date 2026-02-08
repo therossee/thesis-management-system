@@ -9,7 +9,6 @@ import API from '../API';
 import { ThemeContext, ToastContext } from '../App';
 import '../styles/utilities.css';
 import { getSystemTheme } from '../utils/utils';
-import ConclusionRequest from './ConclusionRequest';
 import CustomModal from './CustomModal';
 import FinalThesisUpload from './FinalThesisUpload';
 import LoadingModal from './LoadingModal';
@@ -25,9 +24,8 @@ export default function Thesis(props) {
     setShowModal,
     showRequestModal,
     setShowRequestModal,
-    showConclusionRequest,
-    setShowConclusionRequest,
     onRequestSubmitResult,
+    onFinalThesisUploadResult,
     onCancelApplicationResult,
     showFinalThesis,
     setShowFinalThesis,
@@ -206,7 +204,7 @@ export default function Thesis(props) {
               <Card className="mb-3 roundCard py-2 pb-2">
                 <Card.Header className="border-0">
                   <h3 className="thesis-topic">
-                    <i className="fa-solid fa-book-open fa-sm pe-2" />
+                    <i className="fa-regular fa-book-open fa-sm pe-2" />
                     {data.title
                       ? `${t('carriera.conclusione_tesi.title_thesis')}: ${data.title}`
                       : t('carriera.proposte_di_tesi.topic')}
@@ -233,7 +231,7 @@ export default function Thesis(props) {
                       aria-expanded={showFullTopic}
                       className="p-0 h3 thesis-topic d-flex align-items-center gap-2 mb-3"
                     >
-                      <i className={`fa-solid fa-chevron-${showFullTopic ? 'up' : 'down'} cosupervisor-button`} />
+                      <i className={`fa-regular fa-chevron-${showFullTopic ? 'up' : 'down'} cosupervisor-button`} />
                       <span className="cosupervisor-button">
                         {t(`carriera.tesi.${showFullTopic ? 'show_less' : 'show_more'}`)}
                       </span>
@@ -267,7 +265,7 @@ export default function Thesis(props) {
                         <Card className="mb-3 roundCard py-2 ">
                           <Card.Header className="border-0">
                             <h3 className="thesis-topic">
-                              <i className="fa-solid fa-info-circle" /> {t('carriera.tesi.information.title')}
+                              <i className="fa-regular fa-info-circle" /> {t('carriera.tesi.information.title')}
                             </h3>
                           </Card.Header>
                           <Card.Body>
@@ -284,7 +282,7 @@ export default function Thesis(props) {
                         <Card className="mb-1 roundCard py-2 ">
                           <Card.Header className="border-0">
                             <h3 className="thesis-topic">
-                              <i className="fa-solid fa-route" />{' '}
+                              <i className="fa-regular fa-route" />{' '}
                               {thesisApplication.status === 'rejected'
                                 ? t('carriera.richiesta_tesi.next_steps_rejected.title')
                                 : t('carriera.richiesta_tesi.next_steps_cancelled.title')}
@@ -342,14 +340,11 @@ export default function Thesis(props) {
           setShow={setShowRequestModal}
           onSubmitResult={onRequestSubmitResult}
         />
-        <ConclusionRequest
-          show={showConclusionRequest}
-          setShow={setShowConclusionRequest}
-          onSubmitResult={() => {
-            console.log('Conclusione richiesta inviata');
-          }}
+        <FinalThesisUpload
+          show={showFinalThesis}
+          setShow={setShowFinalThesis}
+          onSubmitResult={onFinalThesisUploadResult}
         />
-        <FinalThesisUpload show={showFinalThesis} setShow={setShowFinalThesis} />
       </div>
     </>
   );
@@ -372,7 +367,7 @@ function LinkCard() {
     <Card className="mb-3 roundCard py-2 ">
       <Card.Header className="border-0">
         <h3 className="thesis-topic">
-          <i className="fa-solid fa-book fa-sm pe-2" />
+          <i className="fa-regular fa-book fa-sm pe-2" />
           {t('carriera.tesi.utilities.title')}
         </h3>
       </Card.Header>
@@ -463,4 +458,6 @@ Thesis.propTypes = {
   onCancelApplicationResult: PropTypes.func.isRequired,
   showFinalThesis: PropTypes.bool,
   setShowFinalThesis: PropTypes.func,
+  onFinalThesisUploadResult: PropTypes.func.isRequired,
+  onConclusionRequestResult: PropTypes.func.isRequired,
 };

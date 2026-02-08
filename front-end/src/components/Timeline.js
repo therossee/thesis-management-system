@@ -1,4 +1,4 @@
-import React, { useContext, useState } from 'react';
+import React, { useContext, useEffect, useRef, useState } from 'react';
 
 import { Button, Card, Modal } from 'react-bootstrap';
 import { useTranslation } from 'react-i18next';
@@ -47,6 +47,7 @@ export default function Timeline({
   const hasNoData = !normalizedActiveStep && !hasStatusHistory;
   const isDisabled = hasNoData;
   const [show, setShow] = useState(false);
+  const timelineScrollRef = useRef(null);
 
   const getHistoryForStatus = targetStatus => {
     if (!statusHistory || statusHistory.length === 0) return null;
@@ -97,13 +98,8 @@ export default function Timeline({
   };
 
   const getThesisSteps = () => {
-    const isConclusionApprovedLike = [
-      'conclusion_approved',
-      'almalaurea',
-      'final_exam',
-      'final_thesis',
-      'done',
-    ].includes(normalizedActiveStep);
+    const isConclusionApproved = normalizedActiveStep === 'conclusion_approved';
+    const isConclusionRejected = normalizedActiveStep === 'conclusion_rejected';
     return [
       {
         key: 'ongoing',
@@ -112,12 +108,21 @@ export default function Timeline({
       },
       {
         key: 'conclusion_requested',
-        label: isConclusionApprovedLike
+        label: t('carriera.tesi.thesis_progress.conclusion_request_title'),
+        description: t('carriera.tesi.thesis_progress.conclusion_request'),
+      },
+      {
+        key: 'conclusion_outcome',
+        label: isConclusionApproved
           ? t('carriera.tesi.thesis_progress.conclusion_confirmed_title')
-          : t('carriera.tesi.thesis_progress.conclusion_request_title'),
-        description: isConclusionApprovedLike
+          : isConclusionRejected
+            ? t('carriera.tesi.thesis_progress.conclusion_rejected_title')
+            : t('carriera.tesi.thesis_progress.conclusion_outcome_title'),
+        description: isConclusionApproved
           ? t('carriera.tesi.thesis_progress.conclusion_confirmed')
-          : t('carriera.tesi.thesis_progress.conclusion_request'),
+          : isConclusionRejected
+            ? t('carriera.tesi.thesis_progress.conclusion_rejected')
+            : t('carriera.tesi.thesis_progress.conclusion_outcome'),
       },
       {
         key: 'almalaurea',
@@ -141,6 +146,19 @@ export default function Timeline({
   const thesisSteps = getThesisSteps();
   const steps = [firstStep, secondStep, ...thesisSteps];
 
+  useEffect(() => {
+    const container = timelineScrollRef.current;
+    if (!container) return;
+    const activeElement = container.querySelector('.progress-step.is-active-step');
+    if (!activeElement) {
+      container.scrollTop = 0;
+      return;
+    }
+    const targetScrollTop = activeElement.offsetTop - container.clientHeight / 2 + activeElement.clientHeight / 2;
+    const maxScrollTop = container.scrollHeight - container.clientHeight;
+    container.scrollTop = Math.min(Math.max(targetScrollTop, 0), Math.max(maxScrollTop, 0));
+  }, [normalizedActiveStep, hasNoData, steps.length]);
+
   const renderStep = (step, activeStep) => {
     const { key, label, description } = step;
 
@@ -153,10 +171,10 @@ export default function Timeline({
     const isConclusionRejected = activeStep === 'conclusion_rejected';
     const isDone = activeStep === 'done';
 
-    if (isConclusionRequested || isConclusionRejected) {
-      effectiveActiveStep = 'ongoing';
-    } else if (isConclusionApproved) {
-      effectiveActiveStep = 'almalaurea';
+    if (isConclusionRequested) {
+      effectiveActiveStep = 'conclusion_requested';
+    } else if (isConclusionApproved || isConclusionRejected) {
+      effectiveActiveStep = 'conclusion_outcome';
     }
     const activeIndex = isDone ? stepKeys.length : stepKeys.indexOf(effectiveActiveStep);
     const thisIndex = stepKeys.indexOf(key);
@@ -176,6 +194,12 @@ export default function Timeline({
       case 'cancelled':
       case 'approved':
         historyEntry = statusHistory ? getHistoryForStatus(key) : null;
+        break;
+      case 'conclusion_outcome':
+        historyEntry =
+          statusHistory && (isConclusionApproved || isConclusionRejected)
+            ? getHistoryForStatus(isConclusionApproved ? 'conclusion_approved' : 'conclusion_rejected')
+            : null;
         break;
       default:
         historyEntry = null;
@@ -210,7 +234,7 @@ export default function Timeline({
         circleClass = 'approved';
         titleClass = 'completed';
       }
-      if (key === 'almalaurea') {
+      if (key === 'conclusion_outcome') {
         circleClass = 'waiting';
         titleClass = 'active';
       }
@@ -218,12 +242,12 @@ export default function Timeline({
 
     if (isConclusionRejected) {
       if (key === 'conclusion_requested') {
+        circleClass = 'approved';
+        titleClass = 'completed';
+      }
+      if (key === 'conclusion_outcome') {
         circleClass = 'rejected';
         titleClass = 'active';
-      }
-      if (key === 'ongoing') {
-        circleClass = 'pending';
-        titleClass = '';
       }
     }
 
@@ -232,6 +256,7 @@ export default function Timeline({
         key={key}
         className={[
           'progress-step',
+          isActive ? 'is-active-step' : '',
           isDisabled && !(hasNoData && key === 'pending') && !isConclusionRequestedStep ? 'disabled' : '',
           isFuture && !isConclusionRequestedStep ? 'faded' : '',
         ]
@@ -263,7 +288,7 @@ export default function Timeline({
               {moment(conclusionRequestDate).format('DD/MM/YYYY - HH:mm')}
             </div>
           )}
-          {key === 'conclusion_approved' && conclusionConfirmedDate && (
+          {key === 'conclusion_outcome' && conclusionConfirmedDate && (
             <div className="progress-step-date">
               <i className="fa-solid fa-clock me-1" />
               {moment(conclusionConfirmedDate).format('DD/MM/YYYY - HH:mm')}
@@ -295,7 +320,11 @@ export default function Timeline({
           </div>
         </Card.Header>
         <Card.Body>
-          <div className="progress-tracker-container">{steps.map(step => renderStep(step, normalizedActiveStep))}</div>
+          <div className="timeline-scroll" ref={timelineScrollRef}>
+            <div className="progress-tracker-container">
+              {steps.map(step => renderStep(step, normalizedActiveStep))}
+            </div>
+          </div>
         </Card.Body>
       </Card>
       <Modal show={show} onHide={() => setShow(false)} centered>

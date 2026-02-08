@@ -231,7 +231,7 @@ CREATE TABLE IF NOT EXISTS thesis(
     topic TEXT NOT NULL,
     title VARCHAR(255),
     title_eng VARCHAR(255),
-    language ENUM('it', 'zh', 'fr', 'jp', 'en', 'pt', 'ru', 'es', 'se', 'de'),
+    language ENUM('it', 'en'),
     company_id INT,
     student_id VARCHAR(6) NOT NULL,
     thesis_application_id INT NOT NULL,
@@ -247,7 +247,7 @@ CREATE TABLE IF NOT EXISTS thesis(
     thesis_start_date DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     thesis_conclusion_request_date DATETIME,
     thesis_conclusion_confirmation_date DATETIME,
-    thesis_status ENUM('ongoing', 'conclusion_requested', 'conclusion_approved', 'conclusion_rejected', 'almalaurea', 'final_exam', 'final_thesis', 'done') NOT NULL DEFAULT 'ongoing',
+    thesis_status ENUM('ongoing', 'conclusion_requested', 'conclusion_approved', 'conclusion_rejected', 'compiled_questionnaire', 'final_exam', 'final_thesis', 'done') NOT NULL DEFAULT 'ongoing',
     FOREIGN KEY (company_id) REFERENCES company(id) ON DELETE RESTRICT, -- RESTRICT policy in order to pay attention to the deletion of a company
     FOREIGN KEY (student_id) REFERENCES student(id) ON DELETE RESTRICT, -- RESTRICT policy because why should you delete a student?
     FOREIGN KEY (thesis_application_id) REFERENCES thesis_application(id) ON DELETE CASCADE, -- CASCADE policy to delete the thesis if the application is deleted

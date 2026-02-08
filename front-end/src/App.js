@@ -17,6 +17,7 @@ import Homepage from './pages/Homepage';
 import Opportunita from './pages/Opportunita';
 import PageNotFound from './pages/PageNotFound';
 import Servizi from './pages/Servizi';
+import ConclusioneTesi from './pages/carriera/ConclusioneTesi';
 import LaureaEdEsameFinale from './pages/carriera/LaureaEdEsameFinale';
 import PropostaDiTesi from './pages/carriera/PropostaDiTesi';
 import Tesi from './pages/carriera/Tesi';
@@ -145,6 +146,7 @@ function App() {
                       <Route path="/carriera/tesi" element={<Tesi initialActiveTab="thesis" />} />
                       <Route path="/carriera/tesi/proposte_di_tesi" element={<Tesi initialActiveTab="proposals" />} />
                       <Route path="/carriera/tesi/proposta_di_tesi/:id" element={<PropostaDiTesi />} />
+                      <Route path="/carriera/tesi/conclusione_tesi" element={<ConclusioneTesi />} />
                     </Routes>
                     <FloatingButton />
                   </Col>
