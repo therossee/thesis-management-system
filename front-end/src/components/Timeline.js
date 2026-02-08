@@ -179,9 +179,10 @@ export default function Timeline({
     const activeIndex = isDone ? stepKeys.length : stepKeys.indexOf(effectiveActiveStep);
     const thisIndex = stepKeys.indexOf(key);
 
-    const isActive = effectiveActiveStep === key;
+    const isOutcomeWaitingActive = isConclusionRequested && key === 'conclusion_outcome';
+    const isActive = effectiveActiveStep === key || isOutcomeWaitingActive;
     const isCompleted = thisIndex < activeIndex;
-    const isFuture = thisIndex > activeIndex;
+    const isFuture = thisIndex > activeIndex && !isOutcomeWaitingActive;
     const isConclusionRequestedStep = isConclusionRequested && key === 'conclusion_requested';
 
     let circleClass;
@@ -225,6 +226,11 @@ export default function Timeline({
     }
 
     if (isConclusionRequested && key === 'conclusion_requested') {
+      circleClass = 'pending';
+      titleClass = 'active';
+    }
+
+    if (isConclusionRequested && key === 'conclusion_outcome') {
       circleClass = 'waiting';
       titleClass = 'active';
     }

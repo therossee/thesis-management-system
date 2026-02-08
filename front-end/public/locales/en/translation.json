@@ -388,7 +388,11 @@
             "next_step": "Next step",
             "previous_step": "Previous step",
             "go_back": "Go back",
-            "summary": "Summary"
+            "summary": "Summary",
+            "success_title": "Request submitted successfully!",
+            "success_message": "Your thesis conclusion request has been submitted. You can return to the thesis page to check its status.",
+            "error_title": "Error submitting the request.",
+            "error_message": "An error occurred while submitting the request. Please try again later."
         }
     },
     "Accedi": "Login",

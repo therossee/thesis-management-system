@@ -17,6 +17,7 @@ import { ConclusionRequestProvider } from './conclusion-request-steps/Conclusion
 import StepAuthorization from './conclusion-request-steps/StepAuthorization';
 import StepDeclarations from './conclusion-request-steps/StepDeclarations';
 import StepDetails from './conclusion-request-steps/StepDetails';
+import StepOutcome from './conclusion-request-steps/StepOutcome';
 import StepSubmit from './conclusion-request-steps/StepSubmit';
 import StepUploads from './conclusion-request-steps/StepUploads';
 
@@ -71,6 +72,7 @@ export default function ConclusionRequest({ onSubmitResult }) {
   const [showConfirmationModal, setShowConfirmationModal] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
   const [showSdgDescription, setShowSdgDescription] = useState(false);
+  const [submissionOutcome, setSubmissionOutcome] = useState(null);
 
   const formBodyRef = useRef(null);
 
@@ -182,6 +184,7 @@ export default function ConclusionRequest({ onSubmitResult }) {
 
     setDecl({ decl1: false, decl2: false, decl3: false, decl4: false, decl5: false, decl6: false });
     setCurrentStep(0);
+    setSubmissionOutcome(null);
   };
 
   const handleClose = () => {
@@ -325,12 +328,15 @@ export default function ConclusionRequest({ onSubmitResult }) {
 
       await API.sendThesisConclusionRequest(formData);
 
+      setSubmissionOutcome('success');
+      setCurrentStep(steps.length - 1);
       onSubmitResult(true);
       handleClose();
-      resetForm();
     } catch (err) {
       console.error(err);
       setError('Invio fallito. Controlla i campi e riprova.');
+      setSubmissionOutcome('error');
+      setCurrentStep(steps.length - 1);
       onSubmitResult(false);
     } finally {
       setIsSubmitting(false);
@@ -428,6 +434,7 @@ export default function ConclusionRequest({ onSubmitResult }) {
       selectedEmbargoLabels,
       declarationsAcceptedCount,
       declarationsTotalCount,
+      submissionOutcome,
     }),
     [
       t,
@@ -470,6 +477,7 @@ export default function ConclusionRequest({ onSubmitResult }) {
       selectedEmbargoLabels,
       declarationsAcceptedCount,
       declarationsTotalCount,
+      submissionOutcome,
     ],
   );
 
@@ -497,61 +505,64 @@ export default function ConclusionRequest({ onSubmitResult }) {
                   {currentStep === 2 && <StepUploads />}
                   {currentStep === 3 && <StepDeclarations />}
                   {currentStep === 4 && <StepSubmit />}
+                  {currentStep === 5 && <StepOutcome />}
                 </Form>
               </ConclusionRequestProvider>
             </div>
           </Card.Body>
 
-          <Card.Footer className="cr-form-footer w-100">
-            <div className="cr-form-footer-left">
-              <Button
-                className={`btn-outlined-${appliedTheme}`}
-                size="md"
-                onClick={handleSaveDraft}
-                disabled={isSubmitting}
-              >
-                <i className="fa-regular fa-floppy-disk pe-2" />
-                {t('carriera.conclusione_tesi.save_draft')}
-              </Button>
-              <Button className={`btn-outlined-${appliedTheme}`} size="md" onClick={() => resetForm()}>
-                <i className="fa-solid fa-rotate-left pe-2" />
-                {t('carriera.richiesta_tesi.reset')}
-              </Button>
-            </div>
-
-            <div className="cr-form-footer-right">
-              {currentStep > 0 && (
+          {currentStep < steps.length - 1 && (
+            <Card.Footer className="cr-form-footer w-100">
+              <div className="cr-form-footer-left">
                 <Button
                   className={`btn-outlined-${appliedTheme}`}
                   size="md"
-                  onClick={goToPreviousStep}
+                  onClick={handleSaveDraft}
                   disabled={isSubmitting}
                 >
-                  <i className="fa-solid fa-arrow-left pe-2" />
-                  {t('carriera.conclusione_tesi.previous_step')}
+                  <i className="fa-regular fa-floppy-disk pe-2" />
+                  {t('carriera.conclusione_tesi.save_draft')}
                 </Button>
-              )}
+                <Button className={`btn-outlined-${appliedTheme}`} size="md" onClick={() => resetForm()}>
+                  <i className="fa-solid fa-rotate-left pe-2" />
+                  {t('carriera.richiesta_tesi.reset')}
+                </Button>
+              </div>
 
-              {currentStep < steps.length - 1 ? (
-                <Button className={`btn-primary-${appliedTheme}`} onClick={goToNextStep} disabled={isSubmitting}>
-                  {t('carriera.conclusione_tesi.next_step')} <i className="fa-solid fa-arrow-right ps-2" />
-                </Button>
-              ) : (
-                <Button
-                  className={`btn-primary-${appliedTheme}`}
-                  onClick={() => {
-                    setShowConfirmationModal(true);
-                  }}
-                  disabled={!canSubmit || isSubmitting}
-                >
-                  <i className="fa-solid fa-paper-plane pe-2" />
-                  {isSubmitting
-                    ? t('carriera.conclusione_tesi.sending')
-                    : t('carriera.conclusione_tesi.request_conclusion')}
-                </Button>
-              )}
-            </div>
-          </Card.Footer>
+              <div className="cr-form-footer-right">
+                {currentStep > 0 && (
+                  <Button
+                    className={`btn-outlined-${appliedTheme}`}
+                    size="md"
+                    onClick={goToPreviousStep}
+                    disabled={isSubmitting}
+                  >
+                    <i className="fa-solid fa-arrow-left pe-2" />
+                    {t('carriera.conclusione_tesi.previous_step')}
+                  </Button>
+                )}
+
+                {currentStep < steps.length - 2 ? (
+                  <Button className={`btn-primary-${appliedTheme}`} onClick={goToNextStep} disabled={isSubmitting}>
+                    {t('carriera.conclusione_tesi.next_step')} <i className="fa-solid fa-arrow-right ps-2" />
+                  </Button>
+                ) : currentStep === steps.length - 2 ? (
+                  <Button
+                    className={`btn-primary-${appliedTheme}`}
+                    onClick={() => {
+                      setShowConfirmationModal(true);
+                    }}
+                    disabled={!canSubmit || isSubmitting}
+                  >
+                    <i className="fa-solid fa-paper-plane pe-2" />
+                    {isSubmitting
+                      ? t('carriera.conclusione_tesi.sending')
+                      : t('carriera.conclusione_tesi.request_conclusion')}
+                  </Button>
+                ) : null}
+              </div>
+            </Card.Footer>
+          )}
         </Card>
         <CustomModal
           show={showConfirmationModal}

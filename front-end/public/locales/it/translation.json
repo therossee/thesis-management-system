@@ -391,7 +391,11 @@
             "next_step": "Avanti",
             "previous_step": "Indietro",
             "go_back": "Torna alla pagina della tesi",
-            "summary": "Riepilogo"
+            "summary": "Riepilogo",
+            "success_title": "Richiesta inviata con successo!",
+            "success_message": "La tua richiesta di conclusione tesi è stata inviata. Puoi tornare alla pagina tesi per verificarne lo stato.",
+            "error_title": "Errore durante l'invio della richiesta.",
+            "error_message": "Si è verificato un errore durante l'invio della richiesta. Riprova più tardi."
         }
     },
     "Accedi": "Accedi",
