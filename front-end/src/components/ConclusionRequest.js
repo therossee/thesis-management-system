@@ -236,12 +236,12 @@ export default function ConclusionRequest({ onSubmitResult }) {
   const canSubmit = baseValid && denyValid && authorizeValid;
 
   const steps = [
-    { key: 'details', label: 'Dettagli' },
-    { key: 'authorization', label: 'Autorizzazione' },
-    { key: 'uploads', label: 'Caricamento file' },
-    { key: 'declarations', label: 'Dichiarazioni' },
-    { key: 'submit', label: 'Invio' },
-    { key: 'outcome', label: 'Esito' },
+    { key: 'details', label: t('carriera.conclusione_tesi.steps.details') },
+    { key: 'authorization', label: t('carriera.conclusione_tesi.steps.authorizations') },
+    { key: 'uploads', label: t('carriera.conclusione_tesi.steps.uploads') },
+    { key: 'declarations', label: t('carriera.conclusione_tesi.steps.declarations') },
+    { key: 'submit', label: t('carriera.conclusione_tesi.steps.submit') },
+    { key: 'outcome', label: t('carriera.conclusione_tesi.steps.outcome') },
   ];
 
   const stepValidity = [
@@ -253,11 +253,25 @@ export default function ConclusionRequest({ onSubmitResult }) {
     true, // outcome step is always valid
   ];
 
-  const stepItems = steps.map((step, index) => ({
-    label: step.label,
-    status:
-      index < currentStep ? (stepValidity[index] ? 'done' : 'in-progress') : index === currentStep ? 'current' : 'todo',
-  }));
+  const outcomeStepIndex = steps.length - 1;
+  const stepItems = steps.map((step, index) => {
+    if (index === outcomeStepIndex && currentStep === outcomeStepIndex) {
+      if (submissionOutcome === 'success') return { label: step.label, status: 'done' };
+      if (submissionOutcome === 'error') return { label: step.label, status: 'error' };
+    }
+
+    return {
+      label: step.label,
+      status:
+        index < currentStep
+          ? stepValidity[index]
+            ? 'done'
+            : 'in-progress'
+          : index === currentStep
+            ? 'current'
+            : 'todo',
+    };
+  });
 
   const goToNextStep = () => {
     setCurrentStep(prev => Math.min(prev + 1, steps.length - 1));

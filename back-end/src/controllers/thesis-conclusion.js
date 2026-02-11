@@ -1,4 +1,5 @@
 const { Op } = require('sequelize');
+const { ZodError } = require('zod');
 const fs = require('fs/promises');
 const path = require('path');
 const {
@@ -22,6 +23,8 @@ const {
 
 const selectLicenseAttributes = require('../utils/selectLicenseAttributes');
 const selectMotivationAttributes = require('../utils/selectMotivationAttributes');
+const thesisConclusionRequestSchema = require('../schemas/ThesisConclusionRequest');
+const thesisConclusionResponseSchema = require('../schemas/ThesisConclusionResponse');
 
 const parseJsonField = (value, fallback) => {
   if (value === undefined || value === null || value === '') return fallback;
@@ -73,25 +76,44 @@ const readAndValidatePdfA = async file => {
 };
 
 const sendThesisConclusionRequest = async (req, res) => {
-  const coSupervisors = parseJsonField(req.body.coSupervisors, null);
-  const sdgs = parseJsonField(req.body.sdgs, null);
-  const keywords = parseJsonField(req.body.keywords, null);
-  const licenseId = req.body.licenseId ? Number(req.body.licenseId) : null;
-  const embargo = parseJsonField(req.body.embargo, null);
-  const thesisResume = req.files?.thesisResume?.[0] || null;
-  const thesisFile = req.files?.thesisFile?.[0] || null;
-  const additionalZip = req.files?.additionalZip?.[0] || null;
-  const lang = req.body.language || 'it';
-  const title = req.body.title || null;
-  const abstract = req.body.abstract || null;
-  let titleEng = req.body.titleEng || null;
-  let abstractEng = req.body.abstractEng || null;
   const throwHttp = (status, message) => {
     const err = new Error(message);
     err.status = status;
     throw err;
   };
   try {
+    let updatedThesisId = null;
+    const thesisResume = req.files?.thesisResume?.[0] || null;
+    const thesisFile = req.files?.thesisFile?.[0] || null;
+    const additionalZip = req.files?.additionalZip?.[0] || null;
+
+    const requestData = thesisConclusionRequestSchema.parse({
+      title: req.body.title,
+      titleEng: req.body.titleEng || null,
+      abstract: req.body.abstract,
+      abstractEng: req.body.abstractEng || null,
+      language: req.body.language || 'it',
+      coSupervisors: parseJsonField(req.body.coSupervisors, null),
+      keywords: parseJsonField(req.body.keywords, null),
+      licenseId: req.body.licenseId || null,
+      sdgs: parseJsonField(req.body.sdgs, null),
+      embargo: parseJsonField(req.body.embargo, null),
+      thesisResume,
+      thesisFile,
+      additionalZip,
+    });
+
+    const coSupervisors = requestData.coSupervisors;
+    const sdgs = requestData.sdgs;
+    const keywords = requestData.keywords;
+    const licenseId = requestData.licenseId;
+    const embargo = requestData.embargo;
+    const lang = requestData.language;
+    const title = requestData.title;
+    const abstract = requestData.abstract;
+    let titleEng = requestData.titleEng;
+    let abstractEng = requestData.abstractEng;
+
     await sequelize.transaction(async transaction => {
       const logged = await LoggedStudent.findOne({ transaction });
       if (!logged) {
@@ -360,10 +382,93 @@ const sendThesisConclusionRequest = async (req, res) => {
       thesis.thesis_conclusion_request_date = new Date();
       thesis.thesis_status = 'conclusion_requested';
       await thesis.save({ transaction });
+      updatedThesisId = thesis.id;
     });
 
-    res.json({ message: 'Thesis conclusion request submitted successfully' });
+    const updatedThesis = await Thesis.findByPk(updatedThesisId);
+    if (!updatedThesis) {
+      throwHttp(404, 'Thesis not found after update');
+    }
+
+    const thesisSupervisors = await ThesisSupervisorCoSupervisor.findAll({
+      where: { thesis_id: updatedThesis.id },
+      attributes: ['teacher_id', 'is_supervisor'],
+    });
+    const thesisSdgs = await ThesisSustainableDevelopmentGoal.findAll({
+      where: { thesis_id: updatedThesis.id },
+      attributes: ['goal_id', 'sdg_level'],
+    });
+    const thesisKeywords = await ThesisKeyword.findAll({
+      where: { thesis_id: updatedThesis.id },
+      attributes: ['keyword_id', 'keyword_other'],
+    });
+    const thesisEmbargo = await ThesisEmbargo.findOne({
+      where: { thesis_id: String(updatedThesis.id) },
+      attributes: ['id', 'duration'],
+    });
+
+    let thesisEmbargoMotivations = [];
+    if (thesisEmbargo) {
+      thesisEmbargoMotivations = await ThesisEmbargoMotivation.findAll({
+        where: { thesis_embargo_id: thesisEmbargo.id },
+        attributes: ['motivation_id', 'other_motivation'],
+      });
+    }
+
+    const responsePayload = thesisConclusionResponseSchema.parse({
+      message: 'Thesis conclusion request submitted successfully',
+      thesis: {
+        id: updatedThesis.id,
+        topic: updatedThesis.topic,
+        title: updatedThesis.title,
+        title_eng: updatedThesis.title_eng,
+        language: updatedThesis.language,
+        abstract: updatedThesis.abstract,
+        abstract_eng: updatedThesis.abstract_eng,
+        thesis_file_path: updatedThesis.thesis_file_path,
+        thesis_resume_path: updatedThesis.thesis_resume_path,
+        additional_zip_path: updatedThesis.additional_zip_path,
+        license_id: updatedThesis.license_id,
+        company_id: updatedThesis.company_id,
+        student_id: updatedThesis.student_id,
+        thesis_application_id: updatedThesis.thesis_application_id,
+        thesis_status: updatedThesis.thesis_status,
+        thesis_start_date: updatedThesis.thesis_start_date.toISOString(),
+        thesis_conclusion_request_date: updatedThesis.thesis_conclusion_request_date
+          ? updatedThesis.thesis_conclusion_request_date.toISOString()
+          : null,
+        thesis_conclusion_confirmation_date: updatedThesis.thesis_conclusion_confirmation_date
+          ? updatedThesis.thesis_conclusion_confirmation_date.toISOString()
+          : null,
+        thesis_supervisor_cosupervisor: thesisSupervisors.map(item => ({
+          teacher_id: item.teacher_id,
+          is_supervisor: item.is_supervisor,
+        })),
+        thesis_sustainable_development_goal: thesisSdgs.map(item => ({
+          goal_id: item.goal_id,
+          sdg_level: item.sdg_level,
+        })),
+        thesis_keyword: thesisKeywords.map(item => ({
+          keyword_id: item.keyword_id,
+          keyword_other: item.keyword_other,
+        })),
+        thesis_embargo: thesisEmbargo
+          ? {
+              id: thesisEmbargo.id,
+              duration: thesisEmbargo.duration,
+              thesis_embargo_motivation: thesisEmbargoMotivations.map(item => ({
+                motivation_id: item.motivation_id,
+                other_motivation: item.other_motivation,
+              })),
+            }
+          : null,
+      },
+    });
+    res.json(responsePayload);
   } catch (error) {
+    if (error instanceof ZodError) {
+      return res.status(400).json({ error: error.issues.map(issue => issue.message).join(', ') });
+    }
     res.status(error.status || 500).json({ error: error.message });
   }
 };

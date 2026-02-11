@@ -218,11 +218,34 @@
             "show_more": "Show more",
             "show_less": "Show less",
             "show_deadlines": "Next deadlines",
+            "next_deadline": "Next deadline",
             "no_application": {
                 "title": "No application submitted",
                 "content": "There is currently no information available about your thesis because you have not yet submitted an application. Explore the <a href='/carriera/tesi/proposte_di_tesi'>available proposals</a> or submit a custom thesis request."
             },
             "upload_final_thesis_button": "Upload Final Thesis",
+            "no_deadlines": "No upcoming deadlines",
+            "no_deadlines_available": "No deadlines available",
+            "no_deadlines_content": "There are no upcoming deadlines for your thesis. Keep checking this section to stay updated on the next steps.",
+            "deadline_status": {
+                "overdue": "Overdue",
+                "today": "Today",
+                "soon": "Due soon",
+                "upcoming": "Scheduled"
+            },
+            "deadline_countdown": {
+                "today": "Due today",
+                "days_left": "{{count}} days left",
+                "days_short": "{{count}}d"
+            },
+            "deadlines": {
+                "thesis_request": "Thesis request submission",
+                "exams": "Exam completion deadline",
+                "conclusion_request": "Thesis conclusion request submission",
+                "ielts": "Last valid IELTS session",
+                "final_exam_registration": "Final exam registration",
+                "internship_report": "Internship report and other activities submission"
+            },
             "timeline_tooltip": "The timeline shows the main phases of your thesis."
         },
         "richiesta_tesi": {

@@ -77,8 +77,8 @@ export default function Thesis(props) {
       console.error(`Error downloading ${fileType}:`, error);
       showToast({
         success: false,
-        title: t('carriera.tesi.download_error'),
-        message: t('carriera.tesi.download_error_content'),
+        title: t('carriera.conclusione_tesi.download_error'),
+        message: t('carriera.conclusione_tesi.download_error_content'),
       });
     }
   };

@@ -209,13 +209,26 @@
             "show_more": "Mostra di più",
             "show_less": "Mostra di meno",
             "show_deadlines": "Prossime scadenze",
+            "next_deadline": "Prossima scadenza",
             "no_application": {
                 "title": "Nessuna candidatura inviata",
                 "content": "Al momento non sono disponibili informazioni sulla tua tesi, poiché non hai ancora inviato una candidatura. Esplora le <a href='/carriera/tesi/proposte_di_tesi'>proposte disponibili</a> o invia una richiesta di tesi personalizzata."
             },
             "upload_final_thesis_button": "Carica Tesi Definitiva",
             "no_deadlines": "Nessuna scadenza imminente",
+            "no_deadlines_available": "Nessuna scadenza disponibile",
             "no_deadlines_content": "Non ci sono scadenze imminenti per la tua tesi. Continua a monitorare questa sezione per rimanere aggiornato sugli step successivi.",
+            "deadline_status": {
+                "overdue": "Scaduta",
+                "today": "Oggi",
+                "soon": "In scadenza",
+                "upcoming": "Mancano"
+            },
+            "deadline_countdown": {
+                "today": "Scade oggi",
+                "days_left": "Mancano {{count}} giorni",
+                "days_short": "{{count}}g"
+            },
             "deadlines": {
                 "thesis_request": "Invio richiesta tesi",
                 "exams": "Termine superamento esami",
@@ -395,7 +408,15 @@
             "uploaded": "Documenti caricati",
             "resume": "Riassunto",
             "thesis_pdfa": "Tesi in formato PDF/A",
-            "additional": "Allegato aggiuntivo"
+            "additional": "Allegato aggiuntivo",
+            "steps": {
+                "details": "Dettagli",
+                "authorizations": "Autorizzazioni",
+                "uploads": "Caricamento file",
+                "declarations": "Dichiarazioni",
+                "submit": "Invio",
+                "outcome": "Esito"
+            }
         }
     },
     "Accedi": "Accedi",

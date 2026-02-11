@@ -22,6 +22,7 @@
     <a href="#introduction">Introduction</a>
     </li> | <a href="#project-structure">Project Structure</a>
     </li> | <a href="#setup">Setup</a>
+    </li> | <a href="#sonar-setup">Sonar Setup</a>
     </li> | <a href="#back-end-guide">Back-end Guide</a>
     </li> | <a href="#database-guide">Database Guide</a>
     </li> | <a href="#front-end-guide">Front-end Guide</a>
@@ -67,6 +68,25 @@ To run the complete system, follow these steps:
 3. **Set up the database** (see [Database Installation Guide](database/README.md#installation)).
 4. **Start the back-end** (see [Back End Installation Guide](back-end/README.md#installation)).
 5. **Launch the front-end** (see [Front End Installation Guide](front-end/README.md#installation)).
+
+## Sonar Setup
+
+The repository is already configured with:
+- `sonar-project.properties` for monorepo analysis (`back-end` + `front-end`).
+- `.github/workflows/build.yml` to run tests and Sonar analysis on `push` to `main` and pull requests.
+
+To enable Sonar in GitHub Actions:
+
+1. Create a Sonar token and add it as repository secret:
+   - `SONAR_TOKEN`
+2. Add a repository variable:
+   - `SONAR_HOST_URL`
+3. Set `SONAR_HOST_URL` based on your platform:
+   - SonarCloud: `https://sonarcloud.io`
+   - SonarQube self-hosted: your server URL (for example `https://sonarqube.mycompany.com`)
+4. Ensure project key/org in `sonar-project.properties` match your Sonar project:
+   - `sonar.projectKey`
+   - `sonar.organization` (required for SonarCloud, ignored in most SonarQube setups)
 
 ## Back End Guide
 See [Back-End Documentation](back-end/README.md) for details on how to set up and run the API.

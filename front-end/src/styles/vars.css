@@ -1,5 +1,5 @@
 :root {
-  --sidebar-bg-active: rgba(183, 225, 255, 0.5);
+  --sidebar-bg-active: rgba(187, 212, 230, 0.5);
   --sidebar-link: var(--text-700);
   --sidebar-link-hover: var(--text-700);
   --sidebar-link-active: var(--primary-700);

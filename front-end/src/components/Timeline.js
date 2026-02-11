@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useRef, useState } from 'react';
+import React, { useContext, useEffect, useMemo, useRef, useState } from 'react';
 
 import { Button, Card, Modal } from 'react-bootstrap';
 import { useTranslation } from 'react-i18next';
@@ -48,6 +48,17 @@ export default function Timeline({
   const isDisabled = hasNoData;
   const [show, setShow] = useState(false);
   const timelineScrollRef = useRef(null);
+  const sortedDeadlines = useMemo(() => {
+    if (!Array.isArray(deadlines) || deadlines.length === 0) return [];
+    return [...deadlines]
+      .map(deadline => {
+        const date = moment.utc(deadline.deadline_date).startOf('day');
+        const daysLeft = date.diff(moment.utc().startOf('day'), 'days');
+        return { ...deadline, daysLeft };
+      })
+      .sort((a, b) => moment.utc(a.deadline_date).valueOf() - moment.utc(b.deadline_date).valueOf());
+  }, [deadlines]);
+  const nextDeadline = useMemo(() => sortedDeadlines.find(deadline => deadline.daysLeft >= 0), [sortedDeadlines]);
 
   const getHistoryForStatus = targetStatus => {
     if (!statusHistory || statusHistory.length === 0) return null;
@@ -304,6 +315,35 @@ export default function Timeline({
     );
   };
 
+  const getDeadlineSeverity = daysLeft => {
+    if (daysLeft < 0) {
+      return {
+        className: 'deadline-status-overdue',
+        label: t('carriera.tesi.deadline_status.overdue'),
+        icon: 'fa-solid fa-triangle-exclamation',
+      };
+    }
+    if (daysLeft === 0) {
+      return {
+        className: 'deadline-status-today',
+        label: t('carriera.tesi.deadline_status.today'),
+        icon: 'fa-solid fa-clock',
+      };
+    }
+    if (daysLeft <= 7) {
+      return {
+        className: 'deadline-status-soon',
+        label: t('carriera.tesi.deadline_status.soon'),
+        icon: 'fa-solid fa-bell',
+      };
+    }
+    return {
+      className: 'deadline-status-upcoming',
+      label: t('carriera.tesi.deadline_status.upcoming'),
+      icon: 'fa-solid fa-calendar-days',
+    };
+  };
+
   return (
     <>
       <Card className={`mb-3 roundCard py-2${isDisabled ? ' timeline-disabled' : ''}`}>
@@ -343,16 +383,48 @@ export default function Timeline({
               : t('carriera.tesi.no_deadlines_available')}
           </Modal.Title>
         </Modal.Header>
-        <Modal.Body>
-          {deadlines && deadlines.length > 0 ? (
-            <ul>
-              {deadlines.map(deadline => (
-                <li key={deadline.deadline_type}>
-                  <strong>{t(`carriera.tesi.deadlines.${deadline.deadline_type}`)}:</strong>{' '}
-                  {moment(deadline.deadline_date).format('DD/MM/YYYY')}
-                </li>
-              ))}
-            </ul>
+        <Modal.Body className="deadline-modal-body">
+          {sortedDeadlines.length > 0 ? (
+            <div className="deadline-list">
+              {nextDeadline && (
+                <div className="next-deadline-card">
+                  <div className="next-deadline-header">{t('carriera.tesi.next_deadline')}</div>
+                  <div className="next-deadline-title">
+                    {t(`carriera.tesi.deadlines.${nextDeadline.deadline_type}`)}
+                  </div>
+                  <div className="next-deadline-meta">
+                    <span>{moment.utc(nextDeadline.deadline_date).format('DD/MM/YYYY')}</span>
+                    <span className="next-deadline-separator">•</span>
+                    <span>
+                      {nextDeadline.daysLeft === 0
+                        ? t('carriera.tesi.deadline_countdown.today')
+                        : t('carriera.tesi.deadline_countdown.days_left', { count: nextDeadline.daysLeft })}
+                    </span>
+                  </div>
+                </div>
+              )}
+
+              {sortedDeadlines.map(deadline => {
+                const severity = getDeadlineSeverity(deadline.daysLeft);
+                return (
+                  <div key={deadline.deadline_type} className="deadline-row">
+                    <div className="deadline-row-main">
+                      <div className="deadline-row-title">{t(`carriera.tesi.deadlines.${deadline.deadline_type}`)}</div>
+                      <div className="deadline-row-date">{moment.utc(deadline.deadline_date).format('DD/MM/YYYY')}</div>
+                    </div>
+                    <div className={`deadline-status ${severity.className}`}>
+                      <i className={`${severity.icon} me-1`} />
+                      {severity.label}
+                      {deadline.daysLeft > 0 && (
+                        <span className="deadline-status-days">
+                          {t('carriera.tesi.deadline_countdown.days_short', { count: deadline.daysLeft })}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           ) : (
             <p>{t('carriera.tesi.no_deadlines_available')}</p>
           )}
