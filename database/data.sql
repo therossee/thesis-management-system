@@ -4564,7 +4564,7 @@ VALUES
         NULL,
         "Silvestro Roatta, silvestro.roatta@unito.it\r\nDaniel Pacheco QuiNULLs, daniel.pacheco@polito.it\r\nMaria Paterna, maria.paterna@polito.it",
         "2024-02-03",
-        "2027-02-03 23:59:59", 
+        "2025-02-03 23:59:59", 
         1,
         0,
         "CL009", 

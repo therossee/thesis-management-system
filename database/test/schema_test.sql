@@ -1,8 +1,8 @@
 /**------------------------------------------------------------------------------------------------------------------------------------
  * ?                                             Portale-PoliTO MySQL Schema (MySQL 8.4.3)
  * @createdOn       :   09 November 2024
- * @lastModifiedOn  :   21 January 2026
- * @description     :   SQL Schema for the Portale-PoliTO Database. Designed for MySQL 8.4.3
+ * @lastModifiedOn  :   16 January 2026
+ * @thesis_proposaldescription     :   SQL Schema for the Portale-PoliTO Database. Designed for MySQL 8.4.3
  * @note            :   [1681] Integer display width is deprecated and will be removed in a future release.
                         Therefore, we have removed the display width from the INT data type in the provided original schema as well.
                         Also, remember that BOOLEAN data type is treated as an alias for TINYINT(1) since version 5.0 of MySQL.
@@ -27,6 +27,19 @@ DROP TABLE IF EXISTS student;
 DROP TABLE IF EXISTS degree_programme;
 DROP TABLE IF EXISTS degree_programme_container;
 DROP TABLE IF EXISTS collegio;
+DROP TABLE IF EXISTS thesis_conclusion_supervisor_cosupervisor;
+DROP TABLE IF EXISTS thesis_conclusion_keyword;
+DROP TABLE IF EXISTS thesis_conclusion;
+DROP TABLE IF EXISTS embargo;
+DROP TABLE IF EXISTS embargo_motivation;
+DROP TABLE IF EXISTS license;
+DROP TABLE IF EXISTS thesis_supervisor_cosupervisor;
+DROP TABLE IF EXISTS thesis;
+DROP TABLE IF EXISTS thesis_application_status_history;
+DROP TABLE IF EXISTS thesis_application_supervisor_cosupervisor;
+DROP TABLE IF EXISTS thesis_application;
+DROP TABLE IF EXISTS company;
+
 
 -- Table for storing collegi data
 CREATE TABLE IF NOT EXISTS collegio (
@@ -58,7 +71,6 @@ CREATE TABLE IF NOT EXISTS company (
     id INT AUTO_INCREMENT PRIMARY KEY,
     corporate_name VARCHAR(100) NOT NULL
 );
-
 
 -- Table for storing students' data 
 CREATE TABLE IF NOT EXISTS student (
@@ -148,7 +160,6 @@ CREATE TABLE IF NOT EXISTS thesis_proposal_type (
     FOREIGN KEY (type_id) REFERENCES type(id) ON DELETE CASCADE
 );
 
--- Table for linking thesis proposals with companies
 CREATE TABLE IF NOT EXISTS thesis_proposal_company (
     thesis_proposal_id INT NOT NULL,
     company_id INT NOT NULL,
@@ -199,8 +210,8 @@ CREATE TABLE IF NOT EXISTS thesis_application_supervisor_cosupervisor(
 CREATE TABLE IF NOT EXISTS thesis_application_status_history(
     id INT AUTO_INCREMENT NOT NULL,
     thesis_application_id INT NOT NULL,
-    old_status ENUM('pending', 'approved', 'rejected', 'cancelled'),
-    new_status ENUM('pending', 'approved', 'rejected', 'cancelled') NOT NULL,
+    old_status ENUM('pending', 'approved', 'rejected', 'cancelled', 'ongoing', 'conclusion_requested', 'conclusion_approved', 'conclusion_rejected', 'almalaurea', 'compiled_questionnaire', 'final_exam', 'final_thesis', 'done'),
+    new_status ENUM('pending', 'approved', 'rejected', 'cancelled', 'ongoing', 'conclusion_requested', 'conclusion_approved', 'conclusion_rejected', 'almalaurea', 'compiled_questionnaire', 'final_exam', 'final_thesis', 'done') NOT NULL,
     change_date DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (id),
     FOREIGN KEY (thesis_application_id) REFERENCES thesis_application(id) ON DELETE CASCADE
@@ -209,9 +220,10 @@ CREATE TABLE IF NOT EXISTS thesis_application_status_history(
 CREATE TABLE IF NOT EXISTS license(
     id INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(100) NOT NULL,
-    description TEXT NOT NULL
+    name_en VARCHAR(100) NOT NULL,
+    description TEXT NOT NULL,
+    description_en TEXT NOT NULL
 );
-
 
 
 CREATE TABLE IF NOT EXISTS thesis(
@@ -225,13 +237,17 @@ CREATE TABLE IF NOT EXISTS thesis(
     thesis_application_id INT NOT NULL,
     abstract TEXT,
     abstract_eng TEXT,
-    thesis_file BLOB,
+    thesis_file LONGBLOB,
+    thesis_file_path VARCHAR(1024),
     thesis_resume BLOB,
+    additional_zip LONGBLOB,
+    thesis_resume_path VARCHAR(1024),
+    additional_zip_path VARCHAR(1024),
     license_id INT,
-    status ENUM ('ongoing', 'conclusion_requested', 'conclusion_approved', 'conclusion_rejected', 'almalaurea_done', 'enrolled_final_exam', 'confirmed_final_exam') NOT NULL DEFAULT 'ongoing',
     thesis_start_date DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     thesis_conclusion_request_date DATETIME,
     thesis_conclusion_confirmation_date DATETIME,
+    status ENUM('ongoing', 'conclusion_requested', 'conclusion_approved', 'conclusion_rejected', 'almalaurea', 'compiled_questionnaire', 'final_exam', 'final_thesis', 'done') NOT NULL DEFAULT 'ongoing',
     FOREIGN KEY (company_id) REFERENCES company(id) ON DELETE RESTRICT, -- RESTRICT policy in order to pay attention to the deletion of a company
     FOREIGN KEY (student_id) REFERENCES student(id) ON DELETE RESTRICT, -- RESTRICT policy because why should you delete a student?
     FOREIGN KEY (thesis_application_id) REFERENCES thesis_application(id) ON DELETE CASCADE, -- CASCADE policy to delete the thesis if the application is deleted
@@ -252,39 +268,72 @@ CREATE TABLE IF NOT EXISTS thesis_supervisor_cosupervisor(
 CREATE TABLE IF NOT EXISTS thesis_keyword(
     id INT AUTO_INCREMENT PRIMARY KEY,
     thesis_id INT NOT NULL,
-    keyword_id INT NOT NULL,
+    keyword_id INT,
+    keyword_other VARCHAR(50),
     FOREIGN KEY (keyword_id) REFERENCES keyword(id) ON DELETE CASCADE,
     FOREIGN KEY (thesis_id) REFERENCES thesis(id) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS embargo_motivation(
     id INT AUTO_INCREMENT PRIMARY KEY,
-    motivation VARCHAR(100) NOT NULL
+    motivation VARCHAR(255) NOT NULL,
+    motivation_en VARCHAR(255) NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS thesis_embargo(
+    id INT AUTO_INCREMENT NOT NULL,
     thesis_id INT NOT NULL,
-    motivation_id INT,
+    duration ENUM('12_months', '18_months', '36_months', 'after_explicit_consent') NOT NULL,
+    PRIMARY KEY (id, thesis_id),
+    FOREIGN KEY (thesis_id) REFERENCES thesis(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS thesis_embargo_motivation(
+    thesis_embargo_id INT NOT NULL,
+    motivation_id INT NOT NULL,
     other_motivation VARCHAR(255),
-    duration ENUM('6_months', '12_months', '24_months') NOT NULL,
-    PRIMARY KEY (thesis_id, motivation_id, other_motivation, duration),
-    FOREIGN KEY (thesis_id) REFERENCES thesis(id) ON DELETE CASCADE,
-    FOREIGN KEY (motivation_id) REFERENCES embargo_motivation(id) ON DELETE SET NULL
+    PRIMARY KEY (thesis_embargo_id, motivation_id),
+    FOREIGN KEY (thesis_embargo_id) REFERENCES thesis_embargo(id) ON DELETE CASCADE,
+    FOREIGN KEY (motivation_id) REFERENCES embargo_motivation(id) ON DELETE CASCADE
 );
 
-CREATE TABLE IF NOT EXISTS sustainable_development_goals(
+CREATE TABLE IF NOT EXISTS sustainable_development_goal(
     id INT AUTO_INCREMENT PRIMARY KEY,
-    goal VARCHAR(100) NOT NULL,
+    goal VARCHAR(100) NOT NULL
 );
 
-CREATE TABLE IF NOT EXISTS thesis_sustainable_development_goals(
+CREATE TABLE IF NOT EXISTS thesis_sustainable_development_goal(
     thesis_id INT NOT NULL,
     goal_id INT NOT NULL,
-    level ENUM ('primary', 'secondary') NOT NULL,
+    sdg_level ENUM ('primary', 'secondary') NOT NULL,
     PRIMARY KEY (thesis_id, goal_id),
     FOREIGN KEY (thesis_id) REFERENCES thesis(id) ON DELETE CASCADE,
-    FOREIGN KEY (goal_id) REFERENCES sustainable_development_goals(id) ON DELETE CASCADE
+    FOREIGN KEY (goal_id) REFERENCES sustainable_development_goal(id) ON DELETE CASCADE
 );
+
+CREATE TABLE IF NOT EXISTS graduation_session(
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    session_name VARCHAR(50) NOT NULL,
+    session_name_en VARCHAR(50) NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS deadline(
+    id INT AUTO_INCREMENT,
+    deadline_type ENUM(
+        'thesis_request', 
+        'exams', 
+        'internship_report', 
+        'conclusion_request', 
+        'final_exam_registration',
+        'ielts'
+    ) NOT NULL,
+    graduation_session_id INT NOT NULL,
+    deadline_date DATETIME NOT NULL,
+    PRIMARY KEY (id, deadline_type, graduation_session_id),
+    FOREIGN KEY (graduation_session_id) REFERENCES graduation_session(id) ON DELETE RESTRICT
+);
+
+
 
 
 

@@ -3020,7 +3020,7 @@ VALUES
         NULL,
         NULL,
         "2022-12-07",
-        "2023-12-07",
+        "2000-12-07",
         1,
         0,
         "CL003",
@@ -3040,7 +3040,7 @@ VALUES
         NULL,
         NULL,
         "2024-11-11",
-        "2027-11-11",
+        "2099-11-11",
         1,
         0,
         "CL003",
@@ -3060,7 +3060,7 @@ VALUES
         NULL,
         "Domenico De Guglielmo",
         "2024-09-05",
-        "2027-09-05",
+        "2099-09-05",
         1,
         0,
         "CL003",
@@ -3080,7 +3080,7 @@ VALUES
         NULL,
         NULL,
         "2028-01-09",
-        "2024-01-09",
+        "2000-01-09",
         0,
         0,
         "CL003",
@@ -3106,7 +3106,7 @@ VALUES
         NULL,
         NULL,
         "2024-02-26",
-        "2028-02-26",
+        "2099-02-26",
         0,
         1,
         "CL003",
@@ -3126,7 +3126,7 @@ VALUES
         NULL,
         NULL,
         "2024-10-16",
-        "2027-10-16",
+        "2099-10-16",
         1,
         0,
         "CL003",
@@ -3146,7 +3146,7 @@ VALUES
         NULL,
         NULL,
         "2024-05-31",
-        "2027-10-31",
+        "2099-10-31",
         1,
         0,
         "CL003",
@@ -3172,7 +3172,7 @@ VALUES
         NULL,
         "Edgar Pironti - innoactive.io",
         "2023-10-31",
-        "2024-10-31",
+        "2000-10-31",
         0,
         0,
         "CL003",
@@ -3192,7 +3192,7 @@ VALUES
         NULL,
         NULL,
         "2024-09-03",
-        "2027-09-03",
+        "2099-09-03",
         0, /* Discrepancy with real value */
         0,
         "CL003",
@@ -3212,7 +3212,7 @@ VALUES
         NULL,
         NULL,
         "2024-09-30",
-        "2027-09-30",
+        "2099-09-30",
         0,
         0,
         "CL003",
@@ -3491,25 +3491,8 @@ VALUES
     "Privacy (the content of the thesis concerns a person still alive or recently deceased for whom there is a fear of violating the right to privacy)");
 
 
---- ------------------------------------------------------------
--- ↓ sustainable development goals table ↓
 -- ------------------------------------------------------------
-INSER INTO sustainable_development_goals (goal)
-VALUES
-    ("No Poverty"),
-    ("Zero Hunger"),
-    ("Good Health and Well-being"),
-    ("Quality Education"),
-    ("Gender Equality"),
-    ("Clean Water and Sanitation"),
-    ("Affordable and Clean Energy"),
-    ("Decent Work and Economic Growth"),
-    ("Industry, Innovation and Infrastructure"),
-    ("Reduced Inequalities"),
-    ("Sustainable Cities and Communities"),
-    ("Responsible Consumption and Production"),
-    ("Climate Action"),
-    ("Life Below Water"),
-    ("Life On Land"),
-    ("Peace, Justice and Strong Institutions"),
-    ("Partnerships for the Goals");
+-- NOTE:
+-- The test schema does not define `sustainable_development_goals`.
+-- Keep this seed file limited to entities used by backend unit/integration tests.
+-- ------------------------------------------------------------
