@@ -1,8 +1,16 @@
 /// <reference types="cypress" />
 
+const visitWithLightTheme = url => {
+  cy.visit(url, {
+    onBeforeLoad: win => {
+      win.localStorage.setItem('theme', 'light');
+    },
+  });
+};
+
 describe('Thesis proposal details page', () => {
   beforeEach(() => {
-    cy.visit('http://localhost:3000');
+    visitWithLightTheme('http://localhost:3000');
     cy.viewport(1920, 1080);
   });
 
@@ -125,7 +133,7 @@ describe('Thesis proposal details page - responsiveness', () => {
   beforeEach(() => {
     // Reduce the viewport to mobile sizes
     cy.viewport('iphone-x');
-    cy.visit('http://localhost:3000');
+    visitWithLightTheme('http://localhost:3000');
   });
 
   it('should see thesis proposal details page on mobile', () => {
