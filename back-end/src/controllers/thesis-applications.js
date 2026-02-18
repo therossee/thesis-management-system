@@ -19,10 +19,6 @@ const thesisApplicationStatusHistorySchema = require('../schemas/ThesisApplicati
 const thesisApplicationSchema = require('../schemas/ThesisApplication');
 const toSnakeCase = require('../utils/snakeCase');
 
-// ==========================================
-// CONTROLLERS
-// ==========================================
-
 const createThesisApplication = async (req, res) => {
   try {
     await sequelize.transaction(async t => {
