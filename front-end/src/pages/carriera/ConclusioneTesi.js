@@ -15,6 +15,7 @@ export default function ConclusioneTesi() {
   const navigate = useNavigate();
   const { showToast } = useContext(ToastContext);
   const [requestSubmittedSuccess, setRequestSubmittedSuccess] = useState(false);
+  const [saveDraftTrigger, setSaveDraftTrigger] = useState(0);
 
   const handleConclusionRequestResult = success => {
     setRequestSubmittedSuccess(success);
@@ -33,6 +34,14 @@ export default function ConclusioneTesi() {
     }
   };
 
+  const handleSaveDraftResult = success => {
+    showToast({
+      success,
+      title: t('carriera.conclusione_tesi.save_draft'),
+      message: success ? t('carriera.conclusione_tesi.draft_saved') : t('carriera.conclusione_tesi.draft_save_failed'),
+    });
+  };
+
   return (
     <>
       <CustomBreadcrumb />
@@ -40,14 +49,22 @@ export default function ConclusioneTesi() {
         <CustomHeader title={t('carriera.conclusione_tesi.title')} action={() => navigate(-1)} />
         {!requestSubmittedSuccess && (
           <div className="tesi-header-actions">
-            <Button className="btn-outlined-light tesi-header-action-btn d-flex align-items-center" type="button">
+            <Button
+              className="btn-outlined-light tesi-header-action-btn d-flex align-items-center"
+              type="button"
+              onClick={() => setSaveDraftTrigger(prev => prev + 1)}
+            >
               <i className="fa-regular fa-floppy-disk me-2" />
               {t('carriera.conclusione_tesi.save_draft')}
             </Button>
           </div>
         )}
       </div>
-      <ConclusionRequest onSubmitResult={handleConclusionRequestResult} />
+      <ConclusionRequest
+        onSubmitResult={handleConclusionRequestResult}
+        saveDraftTrigger={saveDraftTrigger}
+        onSaveDraftResult={handleSaveDraftResult}
+      />
     </>
   );
 }

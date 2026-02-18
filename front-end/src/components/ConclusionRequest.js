@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 
 import { Button, Card, Col, Form } from 'react-bootstrap';
 import { useTranslation } from 'react-i18next';
@@ -6,7 +6,7 @@ import { useTranslation } from 'react-i18next';
 import PropTypes from 'prop-types';
 
 import API from '../API';
-import { LoggedStudentContext, ThemeContext } from '../App';
+import { LoggedStudentContext, ThemeContext, ToastContext } from '../App';
 import '../styles/conclusion-process.css';
 import { getSystemTheme } from '../utils/utils';
 import CustomModal from './CustomModal';
@@ -21,10 +21,11 @@ import StepOutcome from './conclusion-request-steps/StepOutcome';
 import StepSubmit from './conclusion-request-steps/StepSubmit';
 import StepUploads from './conclusion-request-steps/StepUploads';
 
-export default function ConclusionRequest({ onSubmitResult }) {
+export default function ConclusionRequest({ onSubmitResult, saveDraftTrigger = 0, onSaveDraftResult }) {
   const { t, i18n } = useTranslation();
   const { theme } = useContext(ThemeContext);
   const { loggedStudent } = useContext(LoggedStudentContext);
+  const { showToast } = useContext(ToastContext);
   const appliedTheme = theme === 'auto' ? getSystemTheme() : theme;
 
   const [error, setError] = useState('');
@@ -58,6 +59,16 @@ export default function ConclusionRequest({ onSubmitResult }) {
   const [resumePdf, setResumePdf] = useState(null);
   const [pdfFile, setPdfFile] = useState(null);
   const [supplementaryZip, setSupplementaryZip] = useState(null);
+  const [draftUploadedFiles, setDraftUploadedFiles] = useState({
+    thesis: null,
+    resume: null,
+    additional: null,
+  });
+  const [draftFilesToRemove, setDraftFilesToRemove] = useState({
+    thesis: false,
+    resume: false,
+    additional: false,
+  });
   const [decl, setDecl] = useState({
     decl1: false,
     decl2: false,
@@ -79,13 +90,87 @@ export default function ConclusionRequest({ onSubmitResult }) {
   const formBodyRef = useRef(null);
   const prevButtonRef = useRef(null);
   const nextButtonRef = useRef(null);
+  const lastHandledDraftTriggerRef = useRef(0);
 
   const toOption = teacher => ({
+    id: teacher.id,
     value: teacher.id,
+    firstName: teacher.firstName,
+    lastName: teacher.lastName,
     label: `${teacher.lastName} ${teacher.firstName}`,
     email: teacher.email,
     variant: 'teacher',
   });
+
+  const toTeacherOverviewPayload = useCallback(
+    coSupervisor => {
+      const teacherId = coSupervisor?.value ?? coSupervisor?.id ?? coSupervisor;
+      const teacher = teachers.find(item => item.id === teacherId);
+      if (!teacher) {
+        if (
+          coSupervisor &&
+          Number.isInteger(Number(coSupervisor.id ?? coSupervisor.value)) &&
+          coSupervisor.firstName &&
+          coSupervisor.lastName
+        ) {
+          return {
+            id: Number(coSupervisor.id ?? coSupervisor.value),
+            firstName: coSupervisor.firstName,
+            lastName: coSupervisor.lastName,
+            email: coSupervisor.email ?? undefined,
+          };
+        }
+        return null;
+      }
+      return {
+        id: teacher.id,
+        firstName: teacher.firstName,
+        lastName: teacher.lastName,
+        email: teacher.email ?? undefined,
+      };
+    },
+    [teachers],
+  );
+
+  const toKeywordPayload = useCallback(keyword => {
+    if (typeof keyword === 'string') {
+      const trimmed = keyword.trim();
+      return trimmed.length > 0 ? trimmed : null;
+    }
+    if (!keyword || typeof keyword !== 'object') return null;
+
+    const keywordId = Number(keyword.id ?? keyword.value);
+    const keywordText = keyword.keyword ?? keyword.label ?? (typeof keyword.value === 'string' ? keyword.value : null);
+
+    if (
+      Number.isInteger(keywordId) &&
+      keywordId > 0 &&
+      typeof keywordText === 'string' &&
+      keywordText.trim().length > 0
+    ) {
+      return {
+        id: keywordId,
+        keyword: keywordText.trim(),
+      };
+    }
+
+    if (typeof keywordText === 'string' && keywordText.trim().length > 0) {
+      return keywordText.trim();
+    }
+
+    return null;
+  }, []);
+
+  const toDraftFileInfo = useCallback((filePath, fileType) => {
+    if (!filePath) return null;
+    const fileName = String(filePath).split('/').pop();
+    if (!fileName) return null;
+    return {
+      fileType,
+      fileName,
+      canPreview: fileType !== 'additional',
+    };
+  }, []);
 
   const languageOptions = [
     { value: 'it', label: t('carriera.conclusione_tesi.languages.it') },
@@ -122,6 +207,7 @@ export default function ConclusionRequest({ onSubmitResult }) {
       API.getEmbargoMotivations(i18n.language),
       API.getThesisProposalsKeywords(i18n.language),
       API.getRequiredResumeForLoggedStudent(),
+      API.getThesisConclusionDraft().catch(() => null),
     ])
       .then(
         ([
@@ -132,6 +218,7 @@ export default function ConclusionRequest({ onSubmitResult }) {
           embargoMotivationsData,
           keywordsData,
           requiredResumeData,
+          draftData,
         ]) => {
           if (teachersData) setTeachers(teachersData);
 
@@ -141,6 +228,46 @@ export default function ConclusionRequest({ onSubmitResult }) {
             setAbstractText(thesisData.topic || '');
             const coSup = thesisData.coSupervisors || thesisData.co_supervisors || [];
             setCoSupervisors(coSup.map(toOption));
+          }
+
+          if (draftData) {
+            setTitleText(draftData.title || '');
+            setTitleEngText(draftData.titleEng || '');
+            setAbstractText(draftData.abstract || thesisData?.topic || '');
+            setAbstractEngText(draftData.abstractEng || '');
+            if (draftData.language) setLang(draftData.language);
+            if (draftData.licenseId) setLicenseChoice(draftData.licenseId);
+            if (Array.isArray(draftData.coSupervisors)) {
+              setCoSupervisors(draftData.coSupervisors.map(toOption));
+            }
+            if (Array.isArray(draftData.sdgs)) {
+              const normalizedDraftSdgs = draftData.sdgs
+                .map(sdg => ({
+                  goalId: Number(sdg?.goalId ?? sdg?.goal_id),
+                  level: sdg?.level ?? sdg?.sdgLevel ?? sdg?.sdg_level ?? null,
+                }))
+                .filter(sdg => Number.isFinite(sdg.goalId));
+
+              const primaryGoal = normalizedDraftSdgs.find(sdg => sdg.level === 'primary') || normalizedDraftSdgs[0];
+              const secondaryGoals = normalizedDraftSdgs.filter(sdg => sdg.level === 'secondary');
+              const fallbackSecondaryGoals = normalizedDraftSdgs.filter(sdg => sdg.goalId !== primaryGoal?.goalId);
+              const resolvedSecondaryGoals =
+                secondaryGoals.length > 0 ? secondaryGoals : fallbackSecondaryGoals.slice(0, 2);
+
+              setPrimarySdg(primaryGoal ? primaryGoal.goalId : '');
+              setSecondarySdg1(resolvedSecondaryGoals[0] ? resolvedSecondaryGoals[0].goalId : '');
+              setSecondarySdg2(resolvedSecondaryGoals[1] ? resolvedSecondaryGoals[1].goalId : '');
+            }
+            setDraftUploadedFiles({
+              thesis: toDraftFileInfo(draftData.thesisFilePath, 'thesis'),
+              resume: toDraftFileInfo(draftData.thesisResumePath, 'resume'),
+              additional: toDraftFileInfo(draftData.additionalZipPath, 'additional'),
+            });
+            setDraftFilesToRemove({
+              thesis: false,
+              resume: false,
+              additional: false,
+            });
           }
           if (licensesData) {
             setLicenses(licensesData);
@@ -165,7 +292,7 @@ export default function ConclusionRequest({ onSubmitResult }) {
         console.error(error);
       })
       .finally(() => setIsLoading(false));
-  }, [i18n.language, loggedStudent?.id]);
+  }, [i18n.language, loggedStudent?.id, toDraftFileInfo]);
 
   const sdgOptions = useMemo(() => {
     return (sdgs || []).map(sdg => ({
@@ -305,6 +432,93 @@ export default function ConclusionRequest({ onSubmitResult }) {
     return () => window.removeEventListener('resize', calculateButtonsWidth);
   }, [currentStep, submissionOutcome, i18n.language, isSubmitting, shouldSyncNavButtonsWidth]);
 
+  const buildConclusionFormData = useCallback(
+    isDraft => {
+      const formData = new FormData();
+      const alignedTitleEng =
+        lang === 'en' ? titleText : isDraft ? titleEngText : titleEngText === '' ? titleText : titleEngText;
+      const alignedAbstractEng =
+        lang === 'en'
+          ? abstractText
+          : isDraft
+            ? abstractEngText
+            : abstractEngText === ''
+              ? abstractText
+              : abstractEngText;
+      formData.append('title', titleText);
+      formData.append('titleEng', alignedTitleEng);
+      formData.append('abstract', abstractText);
+      formData.append('abstractEng', alignedAbstractEng);
+      formData.append('language', lang);
+      if (supervisor?.id) formData.append('supervisor', supervisor.id);
+
+      if (coSupervisors?.length) {
+        const coSupervisorsPayload = coSupervisors.map(toTeacherOverviewPayload).filter(Boolean);
+        formData.append('coSupervisors', JSON.stringify(coSupervisorsPayload));
+      }
+      if (keywords?.length) {
+        const keywordPayload = keywords.map(toKeywordPayload).filter(Boolean);
+        formData.append('keywords', JSON.stringify(keywordPayload));
+      }
+      if (authorization === 'authorize') {
+        formData.append('licenseId', licenseChoice);
+      }
+      if (primarySdg || secondarySdg1 || secondarySdg2) {
+        formData.append(
+          'sdgs',
+          JSON.stringify([
+            ...(primarySdg ? [{ goalId: primarySdg, level: 'primary' }] : []),
+            ...(secondarySdg1 ? [{ goalId: secondarySdg1, level: 'secondary' }] : []),
+            ...(secondarySdg2 ? [{ goalId: secondarySdg2, level: 'secondary' }] : []),
+          ]),
+        );
+      }
+      if (authorization === 'deny') {
+        formData.append(
+          'embargo',
+          JSON.stringify({
+            duration: embargoPeriod,
+            motivations: embargoMotivations.map(m => ({
+              motivationId: m,
+              otherMotivation: m === 7 ? otherEmbargoReason : undefined,
+            })),
+          }),
+        );
+      }
+      if (resumePdf) formData.append('thesisResume', resumePdf);
+      if (pdfFile) formData.append('thesisFile', pdfFile);
+      if (supplementaryZip) formData.append('additionalZip', supplementaryZip);
+      if (isDraft && draftFilesToRemove.resume) formData.append('removeThesisResume', 'true');
+      if (isDraft && draftFilesToRemove.thesis) formData.append('removeThesisFile', 'true');
+      if (isDraft && draftFilesToRemove.additional) formData.append('removeAdditionalZip', 'true');
+      return formData;
+    },
+    [
+      abstractEngText,
+      abstractText,
+      authorization,
+      coSupervisors,
+      embargoMotivations,
+      embargoPeriod,
+      keywords,
+      lang,
+      licenseChoice,
+      otherEmbargoReason,
+      pdfFile,
+      primarySdg,
+      resumePdf,
+      secondarySdg1,
+      secondarySdg2,
+      supplementaryZip,
+      supervisor,
+      draftFilesToRemove,
+      toKeywordPayload,
+      toTeacherOverviewPayload,
+      titleEngText,
+      titleText,
+    ],
+  );
+
   const handleUpload = async () => {
     setError('');
     if (!canSubmit) {
@@ -315,49 +529,7 @@ export default function ConclusionRequest({ onSubmitResult }) {
     setIsSubmitting(true);
     try {
       setShowConfirmationModal(false);
-      const formData = new FormData();
-      formData.append('title', titleText);
-      formData.append('titleEng', titleEngText === '' ? titleText : titleEngText);
-      formData.append('abstract', abstractText);
-      formData.append('abstractEng', abstractEngText === '' ? abstractText : abstractEngText);
-      formData.append('language', lang);
-      if (supervisor?.id) formData.append('supervisor', supervisor.id);
-      if (coSupervisors?.length) {
-        formData.append('coSupervisors', JSON.stringify(coSupervisors.map(cs => ({ id: cs.value ?? cs.id ?? cs }))));
-      }
-      if (keywords?.length) {
-        const keywordPayload = keywords.map(k => k?.id ?? k?.value ?? k);
-        formData.append('keywords', JSON.stringify(keywordPayload));
-      }
-      if (authorization === 'authorize') {
-        formData.append('licenseId', licenseChoice);
-      }
-      if (primarySdg || secondarySdg1 || secondarySdg2) {
-        formData.append(
-          'sdgs',
-          JSON.stringify([
-            ...(primarySdg ? [{ id: primarySdg, level: 'primary' }] : []),
-            ...(secondarySdg1 ? [{ id: secondarySdg1, level: 'secondary' }] : []),
-            ...(secondarySdg2 ? [{ id: secondarySdg2, level: 'secondary' }] : []),
-          ]),
-        );
-      }
-      if (authorization === 'deny') {
-        formData.append(
-          'embargo',
-          JSON.stringify({
-            duration: embargoPeriod,
-            motivations: embargoMotivations.map(m => ({
-              id: m,
-              other: m === 7 ? otherEmbargoReason : undefined,
-            })),
-          }),
-        );
-      }
-      if (resumePdf) formData.append('thesisResume', resumePdf);
-      if (pdfFile) formData.append('thesisFile', pdfFile);
-      if (supplementaryZip) formData.append('additionalZip', supplementaryZip);
-
+      const formData = buildConclusionFormData(false);
       await API.sendThesisConclusionRequest(formData);
 
       setSubmissionOutcome('success');
@@ -374,6 +546,116 @@ export default function ConclusionRequest({ onSubmitResult }) {
       setIsSubmitting(false);
     }
   };
+
+  const handleSaveDraft = useCallback(async () => {
+    setError('');
+    setIsSubmitting(true);
+    try {
+      const formData = buildConclusionFormData(true);
+      await API.saveThesisConclusionDraft(formData);
+      setDraftUploadedFiles(prev => ({
+        thesis: draftFilesToRemove.thesis
+          ? null
+          : pdfFile
+            ? {
+                fileType: 'thesis',
+                fileName: pdfFile.name,
+                canPreview: true,
+              }
+            : prev.thesis,
+        resume: draftFilesToRemove.resume
+          ? null
+          : resumePdf
+            ? {
+                fileType: 'resume',
+                fileName: resumePdf.name,
+                canPreview: true,
+              }
+            : prev.resume,
+        additional: draftFilesToRemove.additional
+          ? null
+          : supplementaryZip
+            ? {
+                fileType: 'additional',
+                fileName: supplementaryZip.name,
+                canPreview: false,
+              }
+            : prev.additional,
+      }));
+      setDraftFilesToRemove({
+        thesis: false,
+        resume: false,
+        additional: false,
+      });
+      if (onSaveDraftResult) onSaveDraftResult(true);
+    } catch (err) {
+      console.error(err);
+      if (onSaveDraftResult) onSaveDraftResult(false);
+    } finally {
+      setIsSubmitting(false);
+    }
+  }, [buildConclusionFormData, draftFilesToRemove, onSaveDraftResult, pdfFile, resumePdf, supplementaryZip]);
+
+  const removeDraftUploadedFile = useCallback(fileType => {
+    const keyByType = {
+      thesis: 'thesis',
+      resume: 'resume',
+      additional: 'additional',
+    };
+    const key = keyByType[fileType];
+    if (!key) return;
+
+    setDraftUploadedFiles(prev => ({
+      ...prev,
+      [key]: null,
+    }));
+    setDraftFilesToRemove(prev => ({
+      ...prev,
+      [key]: true,
+    }));
+  }, []);
+
+  const handleDraftFileAction = useCallback(
+    async (fileType, fileName, openInNewTab = false) => {
+      if (!thesis?.id) return;
+      try {
+        const response = await API.getThesisFile(thesis.id, fileType);
+        const contentType = response.headers?.['content-type'];
+        const blob = response.data instanceof Blob ? response.data : new Blob([response.data], { type: contentType });
+        const objectUrl = window.URL.createObjectURL(blob);
+
+        if (openInNewTab) {
+          window.open(objectUrl, '_blank', 'noopener,noreferrer');
+          setTimeout(() => window.URL.revokeObjectURL(objectUrl), 60000);
+          return;
+        }
+
+        const link = document.createElement('a');
+        link.href = objectUrl;
+        link.download = fileName || `draft_${fileType}`;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        setTimeout(() => window.URL.revokeObjectURL(objectUrl), 1000);
+      } catch (err) {
+        console.error('Error fetching draft file:', err);
+        if (showToast) {
+          showToast({
+            success: false,
+            title: t('carriera.conclusione_tesi.download_error'),
+            message: t('carriera.conclusione_tesi.download_error_content'),
+          });
+        }
+      }
+    },
+    [showToast, t, thesis?.id],
+  );
+
+  useEffect(() => {
+    if (!saveDraftTrigger || saveDraftTrigger === lastHandledDraftTriggerRef.current) return;
+    lastHandledDraftTriggerRef.current = saveDraftTrigger;
+    handleSaveDraft();
+  }, [handleSaveDraft, saveDraftTrigger]);
 
   const checkRecommendedLicense = license => {
     return license.name ? license.name.includes('CC BY-NC-ND') : license.name_en.includes('CC BY-NC-ND');
@@ -457,6 +739,9 @@ export default function ConclusionRequest({ onSubmitResult }) {
       setPdfFile,
       supplementaryZip,
       setSupplementaryZip,
+      draftUploadedFiles,
+      handleDraftFileAction,
+      removeDraftUploadedFile,
       removeFileText,
       decl,
       setDecl,
@@ -504,6 +789,9 @@ export default function ConclusionRequest({ onSubmitResult }) {
       resumePdf,
       pdfFile,
       supplementaryZip,
+      draftUploadedFiles,
+      handleDraftFileAction,
+      removeDraftUploadedFile,
       removeFileText,
       decl,
       selectedLanguageLabel,
@@ -619,4 +907,6 @@ export default function ConclusionRequest({ onSubmitResult }) {
 
 ConclusionRequest.propTypes = {
   onSubmitResult: PropTypes.func.isRequired,
+  saveDraftTrigger: PropTypes.number,
+  onSaveDraftResult: PropTypes.func,
 };

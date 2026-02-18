@@ -5,6 +5,8 @@ const path = require('path');
 const router = express.Router();
 const {
   sendThesisConclusionRequest,
+  saveThesisConclusionRequestDraft,
+  getThesisConclusionRequestDraft,
   getSustainableDevelopmentGoals,
   getAvailableLicenses,
   getEmbargoMotivations,
@@ -34,6 +36,16 @@ router.post(
   ]),
   sendThesisConclusionRequest,
 );
+router.post(
+  '/draft',
+  upload.fields([
+    { name: 'thesisResume', maxCount: 1 },
+    { name: 'thesisFile', maxCount: 1 },
+    { name: 'additionalZip', maxCount: 1 },
+  ]),
+  saveThesisConclusionRequestDraft,
+);
+router.get('/draft', getThesisConclusionRequestDraft);
 router.get('/sdgs', getSustainableDevelopmentGoals);
 router.get('/licenses', getAvailableLicenses);
 router.get('/embargo-motivations', getEmbargoMotivations);

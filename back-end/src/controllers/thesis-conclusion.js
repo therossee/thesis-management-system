@@ -25,8 +25,12 @@ const {
 
 const selectLicenseAttributes = require('../utils/selectLicenseAttributes');
 const selectMotivationAttributes = require('../utils/selectMotivationAttributes');
+const selectTeacherAttributes = require('../utils/selectTeacherAttributes');
+const toSnakeCase = require('../utils/snakeCase');
 const thesisConclusionRequestSchema = require('../schemas/ThesisConclusionRequest');
+const thesisConclusionDraftSchema = require('../schemas/ThesisConclusionDraft');
 const thesisConclusionResponseSchema = require('../schemas/ThesisConclusionResponse');
+const teacherOverviewSchema = require('../schemas/TeacherOverview');
 
 const parseJsonField = (value, fallback) => {
   if (value === undefined || value === null || value === '') return fallback;
@@ -43,6 +47,23 @@ const parseJsonField = (value, fallback) => {
 
 const ensureDir = async dirPath => {
   await fs.mkdir(dirPath, { recursive: true });
+};
+
+const normalizePathSeparators = filePath => String(filePath || '').replace(/\\/g, '/');
+
+const resolveValidDraftFilePath = async (filePath, studentId) => {
+  if (!filePath) return null;
+  const normalized = normalizePathSeparators(filePath);
+  const expectedPrefix = `uploads/thesis_conclusion_draft/${studentId}/`;
+  if (!normalized.startsWith(expectedPrefix)) return null;
+
+  const absolutePath = path.join(__dirname, '..', '..', normalized);
+  try {
+    await fs.access(absolutePath);
+    return normalized;
+  } catch {
+    return null;
+  }
 };
 
 const moveFile = async (fromPath, toPath) => {
@@ -95,11 +116,11 @@ const sendThesisConclusionRequest = async (req, res) => {
       abstract: req.body.abstract,
       abstractEng: req.body.abstractEng || null,
       language: req.body.language || 'it',
-      coSupervisors: parseJsonField(req.body.coSupervisors, null),
+      coSupervisors: toSnakeCase(parseJsonField(req.body.coSupervisors, null)),
       keywords: parseJsonField(req.body.keywords, null),
       licenseId: req.body.licenseId || null,
-      sdgs: parseJsonField(req.body.sdgs, null),
-      embargo: parseJsonField(req.body.embargo, null),
+      sdgs: toSnakeCase(parseJsonField(req.body.sdgs, null)),
+      embargo: toSnakeCase(parseJsonField(req.body.embargo, null)),
       thesisResume,
       thesisFile,
       additionalZip,
@@ -186,6 +207,7 @@ const sendThesisConclusionRequest = async (req, res) => {
           where: {
             thesis_id: thesis.id,
             is_supervisor: false,
+            scope: 'live',
           },
           transaction,
         });
@@ -202,6 +224,7 @@ const sendThesisConclusionRequest = async (req, res) => {
             where: {
               thesis_id: thesis.id,
               is_supervisor: false,
+              scope: 'live',
             },
             transaction,
           });
@@ -222,6 +245,7 @@ const sendThesisConclusionRequest = async (req, res) => {
                 thesis_id: thesis.id,
                 teacher_id: coSup.id,
                 is_supervisor: false,
+                scope: 'live',
               },
               { transaction },
             );
@@ -232,7 +256,7 @@ const sendThesisConclusionRequest = async (req, res) => {
       if (sdgs) {
         const normalizedSdgs = sdgs
           .map(goal => ({
-            id: typeof goal === 'object' ? goal.id : goal,
+            id: typeof goal === 'object' ? (goal.goalId ?? goal.id) : goal,
             level: typeof goal === 'object' ? goal.level : null,
           }))
           .filter(goal => Number.isFinite(Number(goal.id)));
@@ -360,7 +384,9 @@ const sendThesisConclusionRequest = async (req, res) => {
         );
 
         const normalizedMotivations = motivationsRaw.map(m =>
-          typeof m === 'object' ? { id: m.id, other: m.other } : { id: m, other: null },
+          typeof m === 'object'
+            ? { id: m.motivationId ?? m.id, other: m.otherMotivation ?? m.other }
+            : { id: m, other: null },
         );
         const motivationIds = normalizedMotivations.map(m => Number(m?.id)).filter(id => Number.isFinite(id));
         const existingMotivations = motivationIds.length
@@ -407,6 +433,15 @@ const sendThesisConclusionRequest = async (req, res) => {
         },
         { transaction },
       );
+      await ThesisSupervisorCoSupervisor.destroy({
+        where: {
+          thesis_id: thesis.id,
+          is_supervisor: false,
+          scope: 'draft',
+        },
+        transaction,
+      });
+      thesis.thesis_draft_date = null;
       thesis.thesis_conclusion_request_date = new Date();
       thesis.status = 'conclusion_requested';
       await thesis.save({ transaction });
@@ -419,7 +454,7 @@ const sendThesisConclusionRequest = async (req, res) => {
     }
 
     const thesisSupervisors = await ThesisSupervisorCoSupervisor.findAll({
-      where: { thesis_id: updatedThesis.id },
+      where: { thesis_id: updatedThesis.id, scope: 'live' },
       attributes: ['teacher_id', 'is_supervisor'],
     });
     const thesisSdgs = await ThesisSustainableDevelopmentGoal.findAll({
@@ -761,8 +796,316 @@ const uploadFinalThesis = async (req, res) => {
   }
 };
 
+const saveThesisConclusionRequestDraft = async (req, res) => {
+  const thesisResume = req.files?.thesisResume?.[0] || null;
+  const thesisFile = req.files?.thesisFile?.[0] || null;
+  const additionalZip = req.files?.additionalZip?.[0] || null;
+  try {
+    const draftData = thesisConclusionDraftSchema.parse({
+      title: req.body.title,
+      titleEng: req.body.titleEng,
+      abstract: req.body.abstract,
+      abstractEng: req.body.abstractEng,
+      language: req.body.language,
+      coSupervisors: toSnakeCase(parseJsonField(req.body.coSupervisors, undefined)),
+      keywords: parseJsonField(req.body.keywords, undefined),
+      licenseId: req.body.licenseId,
+      sdgs: toSnakeCase(parseJsonField(req.body.sdgs, undefined)),
+      embargo: toSnakeCase(parseJsonField(req.body.embargo, undefined)),
+      thesisResume,
+      thesisFile,
+      additionalZip,
+      removeThesisResume: req.body.removeThesisResume,
+      removeThesisFile: req.body.removeThesisFile,
+      removeAdditionalZip: req.body.removeAdditionalZip,
+    });
+
+    const logged = await LoggedStudent.findOne();
+    if (!logged) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+    const loggedStudent = await Student.findByPk(logged.student_id);
+    if (!loggedStudent) {
+      return res.status(404).json({ error: 'Student not found' });
+    }
+
+    const baseUploadDir = path.join(__dirname, '..', '..');
+    const draftUploadDir = path.join(baseUploadDir, 'uploads', 'thesis_conclusion_draft', String(loggedStudent.id));
+
+    await sequelize.transaction(async transaction => {
+      const thesis = await Thesis.findOne({
+        where: { student_id: loggedStudent.id },
+        transaction,
+      });
+      if (!thesis) {
+        const err = new Error('Thesis not found');
+        err.status = 404;
+        throw err;
+      }
+      if (!['ongoing', 'conclusion_rejected'].includes(thesis.status)) {
+        const err = new Error('No draft can be saved for current thesis status');
+        err.status = 400;
+        throw err;
+      }
+
+      const fieldsToSave = [];
+      const setField = (field, value) => {
+        if (value === undefined) return;
+        thesis[field] = value;
+        fieldsToSave.push(field);
+      };
+
+      const alignIfEnglish = value => (value === undefined ? undefined : (value ?? null));
+      const normalizedTitle =
+        draftData.language === 'en'
+          ? alignIfEnglish(draftData.title ?? draftData.titleEng)
+          : alignIfEnglish(draftData.title);
+      const normalizedTitleEng =
+        draftData.language === 'en'
+          ? alignIfEnglish(draftData.title ?? draftData.titleEng)
+          : alignIfEnglish(draftData.titleEng);
+      const normalizedAbstract =
+        draftData.language === 'en'
+          ? alignIfEnglish(draftData.abstract ?? draftData.abstractEng)
+          : alignIfEnglish(draftData.abstract);
+      const normalizedAbstractEng =
+        draftData.language === 'en'
+          ? alignIfEnglish(draftData.abstract ?? draftData.abstractEng)
+          : alignIfEnglish(draftData.abstractEng);
+
+      setField('title', normalizedTitle);
+      setField('title_eng', normalizedTitleEng);
+      setField('abstract', normalizedAbstract);
+      setField('abstract_eng', normalizedAbstractEng);
+      setField('language', draftData.language);
+      if (draftData.licenseId !== undefined) {
+        setField('license_id', draftData.licenseId);
+      }
+      setField('thesis_draft_date', new Date());
+
+      const removeStoredDraftFile = async thesisPathField => {
+        if (!thesis[thesisPathField]) return;
+        const storedRelativePath = await resolveValidDraftFilePath(thesis[thesisPathField], loggedStudent.id);
+        if (!storedRelativePath) return;
+        const storedAbsolutePath = path.join(baseUploadDir, storedRelativePath);
+        await fs.unlink(storedAbsolutePath).catch(() => {});
+        setField(thesisPathField, null);
+      };
+
+      const moveDraftFile = async (file, thesisPathField) => {
+        if (!file?.path) return;
+        await ensureDir(draftUploadDir);
+        const safeName = path.basename(file.originalname || file.path);
+        const destination = path.join(draftUploadDir, safeName);
+        const storedRelativePath = await resolveValidDraftFilePath(thesis[thesisPathField], loggedStudent.id);
+        if (storedRelativePath) {
+          const storedAbsolutePath = path.join(baseUploadDir, storedRelativePath);
+          if (path.resolve(storedAbsolutePath) !== path.resolve(destination)) {
+            await fs.unlink(storedAbsolutePath).catch(() => {});
+          }
+        }
+        await moveFile(file.path, destination);
+        setField(thesisPathField, path.relative(baseUploadDir, destination));
+      };
+
+      if (draftData.removeThesisResume && !thesisResume) {
+        await removeStoredDraftFile('thesis_resume_path');
+      }
+      if (draftData.removeThesisFile && !thesisFile) {
+        await removeStoredDraftFile('thesis_file_path');
+      }
+      if (draftData.removeAdditionalZip && !additionalZip) {
+        await removeStoredDraftFile('additional_zip_path');
+      }
+
+      await moveDraftFile(thesisResume, 'thesis_resume_path');
+      await moveDraftFile(thesisFile, 'thesis_file_path');
+      await moveDraftFile(additionalZip, 'additional_zip_path');
+
+      if (fieldsToSave.length > 0) {
+        await thesis.save({ transaction, fields: [...new Set(fieldsToSave)] });
+      }
+
+      if (draftData.coSupervisors !== undefined) {
+        await ThesisSupervisorCoSupervisor.destroy({
+          where: {
+            thesis_id: thesis.id,
+            is_supervisor: false,
+            scope: 'draft',
+          },
+          transaction,
+        });
+
+        const draftCoSupervisorIds = (draftData.coSupervisors || [])
+          .map(coSup => (typeof coSup === 'object' ? coSup.id : coSup))
+          .filter(id => id !== null && id !== undefined);
+
+        if (draftCoSupervisorIds.length > 0) {
+          const teachers = await Teacher.findAll({
+            where: { id: { [Op.in]: draftCoSupervisorIds } },
+            transaction,
+          });
+          if (teachers.length !== draftCoSupervisorIds.length) {
+            const err = new Error('One or more co-supervisors not found');
+            err.status = 400;
+            throw err;
+          }
+          await ThesisSupervisorCoSupervisor.bulkCreate(
+            draftCoSupervisorIds.map(teacherId => ({
+              thesis_id: thesis.id,
+              teacher_id: teacherId,
+              scope: 'draft',
+              is_supervisor: false,
+            })),
+            { transaction },
+          );
+        }
+      }
+
+      if (draftData.sdgs !== undefined) {
+        const normalizedSdgs = (draftData.sdgs || [])
+          .map(goal => ({
+            id: typeof goal === 'object' ? (goal.goalId ?? goal.id) : goal,
+            level: typeof goal === 'object' ? goal.level : null,
+          }))
+          .filter(goal => Number.isFinite(Number(goal.id)));
+
+        const uniqueGoalIds = [...new Set(normalizedSdgs.map(goal => Number(goal.id)))];
+        if (uniqueGoalIds.length > 0) {
+          const existingGoals = await SustainableDevelopmentGoal.findAll({
+            where: { id: { [Op.in]: uniqueGoalIds } },
+            transaction,
+          });
+          if (existingGoals.length !== uniqueGoalIds.length) {
+            const err = new Error('One or more sustainable development goals not found');
+            err.status = 400;
+            throw err;
+          }
+        }
+
+        await ThesisSustainableDevelopmentGoal.destroy({
+          where: { thesis_id: thesis.id },
+          transaction,
+        });
+
+        const dedupedByGoalId = new Map();
+        for (const goal of normalizedSdgs) {
+          const id = Number(goal.id);
+          const previous = dedupedByGoalId.get(id);
+          if (!previous || goal.level === 'primary') {
+            dedupedByGoalId.set(id, {
+              id,
+              level: goal.level || 'secondary',
+            });
+          }
+        }
+
+        if (dedupedByGoalId.size > 0) {
+          await ThesisSustainableDevelopmentGoal.bulkCreate(
+            [...dedupedByGoalId.values()].map(goal => ({
+              thesis_id: thesis.id,
+              goal_id: goal.id,
+              sdg_level: goal.level,
+            })),
+            { transaction },
+          );
+        }
+      }
+    });
+
+    return res.status(200).json({ message: 'Draft saved successfully' });
+  } catch (error) {
+    if (thesisResume?.path) await fs.unlink(thesisResume.path).catch(() => {});
+    if (thesisFile?.path) await fs.unlink(thesisFile.path).catch(() => {});
+    if (additionalZip?.path) await fs.unlink(additionalZip.path).catch(() => {});
+    if (error instanceof ZodError) {
+      return res.status(400).json({ error: error.issues.map(issue => issue.message).join(', ') });
+    }
+    return res.status(error.status || 500).json({ error: error.message });
+  }
+};
+
+const getThesisConclusionRequestDraft = async (req, res) => {
+  try {
+    const logged = await LoggedStudent.findOne();
+    if (!logged) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+    const loggedStudent = await Student.findByPk(logged.student_id);
+    if (!loggedStudent) {
+      return res.status(404).json({ error: 'Student not found' });
+    }
+    const thesis = await Thesis.findOne({
+      where: { student_id: loggedStudent.id },
+    });
+    if (!thesis) {
+      return res.status(404).json({ error: 'Thesis not found' });
+    }
+
+    const draftCoSupervisors = await ThesisSupervisorCoSupervisor.findAll({
+      where: {
+        thesis_id: thesis.id,
+        is_supervisor: false,
+        scope: 'draft',
+      },
+      attributes: ['teacher_id'],
+    });
+
+    const draftCoSupervisorIds = draftCoSupervisors.map(item => item.teacher_id);
+    const draftCoSupervisorTeachers =
+      draftCoSupervisorIds.length > 0
+        ? await Teacher.findAll({
+            where: {
+              id: {
+                [Op.in]: draftCoSupervisorIds,
+              },
+            },
+            attributes: selectTeacherAttributes(),
+          })
+        : [];
+
+    const teacherById = new Map(draftCoSupervisorTeachers.map(teacher => [teacher.id, teacher]));
+    const draftCoSupervisorsOverview = draftCoSupervisorIds
+      .map(teacherId => teacherById.get(teacherId))
+      .filter(Boolean)
+      .map(teacher => teacherOverviewSchema.parse(teacher));
+
+    const [draftThesisFilePath, draftResumePath, draftAdditionalPath] = await Promise.all([
+      resolveValidDraftFilePath(thesis.thesis_file_path, loggedStudent.id),
+      resolveValidDraftFilePath(thesis.thesis_resume_path, loggedStudent.id),
+      resolveValidDraftFilePath(thesis.additional_zip_path, loggedStudent.id),
+    ]);
+    const draftSdgs = await ThesisSustainableDevelopmentGoal.findAll({
+      where: { thesis_id: thesis.id },
+      attributes: ['goal_id', 'sdg_level'],
+    });
+
+    return res.status(200).json({
+      title: thesis.title ?? null,
+      titleEng: thesis.title_eng ?? null,
+      abstract: thesis.abstract ?? null,
+      abstractEng: thesis.abstract_eng ?? null,
+      language: thesis.language ?? null,
+      licenseId: thesis.license_id ?? null,
+      thesisFilePath: draftThesisFilePath,
+      thesisResumePath: draftResumePath,
+      additionalZipPath: draftAdditionalPath,
+      thesisDraftDate: thesis.thesis_draft_date ? thesis.thesis_draft_date.toISOString() : null,
+      coSupervisors: draftCoSupervisorsOverview,
+      sdgs: draftSdgs.map(sdg => ({
+        goalId: sdg.goal_id,
+        level: sdg.sdg_level,
+      })),
+    });
+  } catch (error) {
+    return res.status(error.status || 500).json({ error: error.message });
+  }
+};
+
 module.exports = {
   sendThesisConclusionRequest,
+  saveThesisConclusionRequestDraft,
+  getThesisConclusionRequestDraft,
   getSustainableDevelopmentGoals,
   getAvailableLicenses,
   getEmbargoMotivations,

@@ -201,8 +201,10 @@ export default function StepDetails() {
                   setSelected={setKeywords}
                   placeholder={t('carriera.conclusione_tesi.select_keywords_placeholder')}
                   options={keywordsList.map(kw => ({
-                    value: kw.keyword,
+                    value: kw.id,
                     label: kw.keyword,
+                    id: kw.id,
+                    keyword: kw.keyword,
                     variant: 'keyword',
                   }))}
                   isMulti={true}

@@ -274,6 +274,31 @@ const sendThesisConclusionRequest = async conclusionData => {
   }
 };
 
+const saveThesisConclusionDraft = async draftData => {
+  try {
+    const isFormData = draftData instanceof FormData;
+    const response = await axios.post(
+      `${URL}/thesis-conclusion/draft`,
+      draftData,
+      isFormData ? undefined : { headers: { 'Content-Type': 'multipart/form-data' } },
+    );
+    return response.data;
+  } catch (error) {
+    console.error('Error saving thesis conclusion draft:', error);
+    throw error;
+  }
+};
+
+const getThesisConclusionDraft = async () => {
+  try {
+    const response = await axios.get(`${URL}/thesis-conclusion/draft`);
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching thesis conclusion draft:', error);
+    throw error;
+  }
+};
+
 const getSessionDeadlines = async type => {
   try {
     const response = await axios.get(`${URL}/thesis-conclusion/deadlines`, { params: { type } });
@@ -414,6 +439,8 @@ const API = {
   getAvailableLicenses,
   getEmbargoMotivations,
   sendThesisConclusionRequest,
+  saveThesisConclusionDraft,
+  getThesisConclusionDraft,
   getSessionDeadlines,
   updateThesisConclusionStatus,
   getAllTheses,

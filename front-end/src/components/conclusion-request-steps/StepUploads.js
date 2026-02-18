@@ -1,11 +1,61 @@
 import React, { useRef } from 'react';
 
-import { Button, Col, Form, Row } from 'react-bootstrap';
+import { Button, Col, Form, OverlayTrigger, Row, Tooltip } from 'react-bootstrap';
 
 import PropTypes from 'prop-types';
 
 import InfoTooltip from '../InfoTooltip';
 import { useConclusionRequest } from './ConclusionRequestContext';
+
+function ActionIconButton({ id, tooltipText, onClick, disabled, iconClass, className = '' }) {
+  return (
+    <OverlayTrigger placement="top" overlay={<Tooltip id={`${id}-tooltip`}>{tooltipText}</Tooltip>}>
+      <span className={`d-inline-flex ${className}`.trim()}>
+        <Button
+          variant="link"
+          className="cr-file-remove p-0"
+          onClick={onClick}
+          disabled={disabled}
+          aria-label={tooltipText}
+        >
+          <i className={iconClass} />
+        </Button>
+      </span>
+    </OverlayTrigger>
+  );
+}
+
+ActionIconButton.propTypes = {
+  id: PropTypes.string.isRequired,
+  tooltipText: PropTypes.string.isRequired,
+  onClick: PropTypes.func.isRequired,
+  disabled: PropTypes.bool.isRequired,
+  iconClass: PropTypes.string.isRequired,
+  className: PropTypes.string,
+};
+
+const FILE_NAME_MAX_LENGTH = 50;
+
+const trimFileName = fileName => {
+  const safeFileName = String(fileName || '');
+  if (safeFileName.length <= FILE_NAME_MAX_LENGTH) return safeFileName;
+
+  const dotIndex = safeFileName.lastIndexOf('.');
+  const hasExtension = dotIndex > 0 && dotIndex < safeFileName.length - 1;
+  if (!hasExtension) {
+    return `${safeFileName.slice(0, FILE_NAME_MAX_LENGTH - 3)}...`;
+  }
+
+  const extension = safeFileName.slice(dotIndex);
+  const baseName = safeFileName.slice(0, dotIndex);
+  const maxBaseLength = FILE_NAME_MAX_LENGTH - extension.length - 3;
+
+  if (maxBaseLength > 0) {
+    return `${baseName.slice(0, maxBaseLength)}...${extension}`;
+  }
+
+  return `...${extension.slice(-(FILE_NAME_MAX_LENGTH - 3))}`;
+};
 
 function UploadCard({
   t,
@@ -20,6 +70,10 @@ function UploadCard({
   appliedTheme,
   isSubmitting,
   tooltipText,
+  draftFile,
+  onOpenDraft,
+  onDownloadDraft,
+  onRemoveDraft,
 }) {
   const fileInputRef = useRef(null);
 
@@ -55,18 +109,51 @@ function UploadCard({
             {t('carriera.conclusione_tesi.select_file')}
           </Form.Label>
           <div className="text-muted cr-file-name-line">
-            <span className="cr-file-name">{file ? file.name : t('carriera.conclusione_tesi.no_file_selected')}</span>
+            <span className="cr-file-name">
+              {file
+                ? trimFileName(file.name)
+                : draftFile?.fileName
+                  ? trimFileName(draftFile.fileName)
+                  : t('carriera.conclusione_tesi.no_file_selected')}
+            </span>
             {file && (
-              <Button
-                variant="link"
-                className="cr-file-remove p-0"
+              <ActionIconButton
+                id={`${id}-remove-local`}
+                tooltipText={removeFileText}
                 onClick={handleRemove}
                 disabled={isSubmitting}
-                title={removeFileText}
-                aria-label={removeFileText}
-              >
-                <i className="fa-regular fa-trash-can" />
-              </Button>
+                iconClass="fa-regular fa-trash-can"
+              />
+            )}
+            {!file && draftFile && (
+              <>
+                {draftFile.canPreview && (
+                  <ActionIconButton
+                    id={`${id}-open-draft`}
+                    className="ms-2"
+                    tooltipText={t('carriera.conclusione_tesi.open_file')}
+                    onClick={onOpenDraft}
+                    disabled={isSubmitting}
+                    iconClass="fa-regular fa-eye"
+                  />
+                )}
+                <ActionIconButton
+                  id={`${id}-download-draft`}
+                  className="ms-2"
+                  tooltipText={t('carriera.conclusione_tesi.download_file')}
+                  onClick={onDownloadDraft}
+                  disabled={isSubmitting}
+                  iconClass="fa-regular fa-download"
+                />
+                <ActionIconButton
+                  id={`${id}-remove-draft`}
+                  className="ms-2"
+                  tooltipText={removeFileText}
+                  onClick={onRemoveDraft}
+                  disabled={isSubmitting}
+                  iconClass="fa-regular fa-trash-can"
+                />
+              </>
             )}
           </div>
         </div>
@@ -88,6 +175,14 @@ UploadCard.propTypes = {
   appliedTheme: PropTypes.string.isRequired,
   isSubmitting: PropTypes.bool.isRequired,
   tooltipText: PropTypes.string,
+  draftFile: PropTypes.shape({
+    fileType: PropTypes.oneOf(['thesis', 'resume', 'additional']).isRequired,
+    fileName: PropTypes.string.isRequired,
+    canPreview: PropTypes.bool.isRequired,
+  }),
+  onOpenDraft: PropTypes.func,
+  onDownloadDraft: PropTypes.func,
+  onRemoveDraft: PropTypes.func,
 };
 
 export default function StepUploads() {
@@ -99,6 +194,9 @@ export default function StepUploads() {
     setPdfFile,
     supplementaryZip,
     setSupplementaryZip,
+    draftUploadedFiles,
+    handleDraftFileAction,
+    removeDraftUploadedFile,
     removeFileText,
     appliedTheme,
     isSubmitting,
@@ -145,6 +243,14 @@ export default function StepUploads() {
                 appliedTheme={appliedTheme}
                 isSubmitting={isSubmitting}
                 tooltipText={t('carriera.conclusione_tesi.summary_for_committee_subtext')}
+                draftFile={draftUploadedFiles.resume}
+                onOpenDraft={() =>
+                  handleDraftFileAction(draftUploadedFiles.resume?.fileType, draftUploadedFiles.resume?.fileName, true)
+                }
+                onDownloadDraft={() =>
+                  handleDraftFileAction(draftUploadedFiles.resume?.fileType, draftUploadedFiles.resume?.fileName)
+                }
+                onRemoveDraft={() => removeDraftUploadedFile('resume')}
               />
             </Col>
           )}
@@ -161,6 +267,14 @@ export default function StepUploads() {
               removeFileText={removeFileText}
               appliedTheme={appliedTheme}
               isSubmitting={isSubmitting}
+              draftFile={draftUploadedFiles.thesis}
+              onOpenDraft={() =>
+                handleDraftFileAction(draftUploadedFiles.thesis?.fileType, draftUploadedFiles.thesis?.fileName, true)
+              }
+              onDownloadDraft={() =>
+                handleDraftFileAction(draftUploadedFiles.thesis?.fileType, draftUploadedFiles.thesis?.fileName)
+              }
+              onRemoveDraft={() => removeDraftUploadedFile('thesis')}
             />
           </Col>
 
@@ -177,6 +291,11 @@ export default function StepUploads() {
               removeFileText={removeFileText}
               appliedTheme={appliedTheme}
               isSubmitting={isSubmitting}
+              draftFile={draftUploadedFiles.additional}
+              onDownloadDraft={() =>
+                handleDraftFileAction(draftUploadedFiles.additional?.fileType, draftUploadedFiles.additional?.fileName)
+              }
+              onRemoveDraft={() => removeDraftUploadedFile('additional')}
             />
           </Col>
         </Row>

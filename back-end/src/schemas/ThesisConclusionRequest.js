@@ -1,18 +1,9 @@
 const { z } = require('zod');
 
-const coSupervisorSchema = z.object({
-  id: z.coerce.number().int().positive(),
-});
-
-const sdgSchema = z.object({
-  id: z.coerce.number().int().positive(),
-  level: z.enum(['primary', 'secondary']).nullable().optional(),
-});
-
-const embargoMotivationSchema = z.object({
-  id: z.coerce.number().int().positive(),
-  other: z.string().trim().nullable().optional(),
-});
+const teacherOverviewSchema = require('./TeacherOverview');
+const thesisKeywordInputSchema = require('./ThesisKeywordInput');
+const thesisSdgSchema = require('./ThesisSdg');
+const thesisEmbargoMotivationSchema = require('./ThesisEmbargoMotivation');
 
 const uploadedFileSchema = z.object({
   path: z.string().min(1),
@@ -20,22 +11,23 @@ const uploadedFileSchema = z.object({
   originalname: z.string().min(1),
 });
 
-const keywordSchema = z.union([z.coerce.number().int().positive(), z.string().trim().min(1)]);
-
 const thesisConclusionRequestSchema = z.object({
   title: z.string().trim().min(1).max(255),
   titleEng: z.string().trim().min(1).max(255).nullable().optional(),
   abstract: z.string().trim().min(1).max(3550),
   abstractEng: z.string().trim().min(1).max(3550).nullable().optional(),
   language: z.enum(['it', 'en']).default('it'),
-  coSupervisors: z.array(coSupervisorSchema).nullable().optional(),
-  keywords: z.array(keywordSchema).nullable().optional(),
-  licenseId: z.coerce.number().int().positive(),
-  sdgs: z.array(sdgSchema).nullable().optional(),
+  coSupervisors: z.array(teacherOverviewSchema).nullable().optional(),
+  keywords: z.array(thesisKeywordInputSchema).nullable().optional(),
+  licenseId: z.preprocess(value => {
+    if (value === undefined || value === null || value === '') return null;
+    return value;
+  }, z.coerce.number().int().positive().nullable().optional()),
+  sdgs: z.array(thesisSdgSchema).nullable().optional(),
   embargo: z
     .object({
       duration: z.string().trim().min(1),
-      motivations: z.array(embargoMotivationSchema).min(1),
+      motivations: z.array(thesisEmbargoMotivationSchema).min(1),
     })
     .nullable()
     .optional(),

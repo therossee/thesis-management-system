@@ -18,6 +18,12 @@ module.exports = (sequelize, DataTypes) => {
           key: 'id',
         },
       },
+      scope: {
+        type: DataTypes.ENUM('live', 'draft'),
+        primaryKey: true,
+        allowNull: false,
+        defaultValue: 'live',
+      },
       is_supervisor: {
         type: DataTypes.BOOLEAN,
         allowNull: false,

@@ -34,7 +34,7 @@ const getLoggedStudentThesis = async (req, res) => {
 
     // Fetch supervisor and co-supervisors
     const supervisorLinks = await ThesisSupervisorCoSupervisor.findAll({
-      where: { thesis_id: thesisData.id },
+      where: { thesis_id: thesisData.id, scope: 'live' },
     });
 
     const selectTeacherAttributes = require('../utils/selectTeacherAttributes');
@@ -89,6 +89,7 @@ const getLoggedStudentThesis = async (req, res) => {
       thesis_conclusion_confirmation_date: thesisData.thesis_conclusion_confirmation_date
         ? thesisData.thesis_conclusion_confirmation_date.toISOString()
         : null,
+      thesis_draft_date: thesisData.thesis_draft_date ? thesisData.thesis_draft_date.toISOString() : null,
       thesis_file_path: thesisData.thesis_file_path,
       thesis_resume_path: thesisData.thesis_resume_path,
       additional_zip_path: thesisData.additional_zip_path,
@@ -129,6 +130,7 @@ const createStudentThesis = async (req, res) => {
     const supervisorEntry = {
       thesis_id: newThesis.id,
       teacher_id: thesis_data.supervisor.id,
+      scope: 'live',
       is_supervisor: true,
     };
     await ThesisSupervisorCoSupervisor.create(supervisorEntry, { transaction: t });
@@ -138,6 +140,7 @@ const createStudentThesis = async (req, res) => {
         const coSupervisorEntry = {
           thesis_id: newThesis.id,
           teacher_id: coSupervisor.id,
+          scope: 'live',
           is_supervisor: false,
         };
         await ThesisSupervisorCoSupervisor.create(coSupervisorEntry, { transaction: t });
@@ -151,7 +154,7 @@ const createStudentThesis = async (req, res) => {
 
     // Fetch supervisor and co-supervisors
     const supervisorLinks = await ThesisSupervisorCoSupervisor.findAll({
-      where: { thesis_id: newThesis.id },
+      where: { thesis_id: newThesis.id, scope: 'live' },
     });
 
     const selectTeacherAttributes = require('../utils/selectTeacherAttributes');
@@ -185,6 +188,7 @@ const createStudentThesis = async (req, res) => {
       thesis_start_date: completeThesis.thesis_start_date.toISOString(),
       thesis_conclusion_request_date: completeThesis.thesis_conclusion_request_date,
       thesis_conclusion_confirmation_date: completeThesis.thesis_conclusion_confirmation_date,
+      thesis_draft_date: completeThesis.thesis_draft_date,
     };
 
     const thesisResponse = thesisSchema.parse(responsePayload);

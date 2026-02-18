@@ -191,7 +191,7 @@ export default function StepSubmit() {
               {keywords.length > 0 ? (
                 <CustomBadge
                   variant="keyword"
-                  content={keywords.map(k => (typeof k === 'string' ? k : k.label || k.value || ''))}
+                  content={keywords.map(k => (typeof k === 'string' ? k : k.label || k.keyword || k.value || ''))}
                 />
               ) : (
                 '-'

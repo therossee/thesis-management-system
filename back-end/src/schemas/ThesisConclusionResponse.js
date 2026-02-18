@@ -29,7 +29,7 @@ const thesisConclusionResponseSchema = z
     thesis_sustainable_development_goal: z.array(
       z.object({
         goal_id: z.number(),
-        sdg_level: z.enum(['primary', 'secondary']),
+        sdg_level: z.enum(['primary', 'secondary']).nullable(),
       }),
     ),
     thesis_keyword: z.array(

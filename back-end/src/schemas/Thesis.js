@@ -28,6 +28,7 @@ const thesisSchema = z
     thesis_start_date: z.string().datetime(),
     thesis_conclusion_request_date: z.string().datetime().nullable().optional(),
     thesis_conclusion_confirmation_date: z.string().datetime().nullable().optional(),
+    thesis_draft_date: z.string().datetime().nullable().optional(),
   })
   .transform(thesis => ({
     id: thesis.id,
@@ -50,6 +51,7 @@ const thesisSchema = z
     thesisStartDate: thesis.thesis_start_date,
     thesisConclusionRequestDate: thesis.thesis_conclusion_request_date,
     thesisConclusionConfirmationDate: thesis.thesis_conclusion_confirmation_date,
+    thesisDraftDate: thesis.thesis_draft_date,
   }));
 
 module.exports = thesisSchema;

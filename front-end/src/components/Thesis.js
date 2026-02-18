@@ -267,11 +267,11 @@ export default function Thesis(props) {
                     )}
                   </Card.Body>
                 </Card>
-                <Card className="mb-3 roundCard py-2 ">
+                <Card className="mb-3 roundCard py-2 d-flex justify-content-center align-items-center">
                   <Card.Header className="border-0 d-flex justify-content-center align-items-center">
                     <h3 className="thesis-topic">{t('carriera.tesi.information.title')}</h3>
                   </Card.Header>
-                  <Card.Body className="pt-2 pb-0">
+                  <Card.Body className="pt-2 pb-2">
                     <ul style={{ fontSize: 'var(--font-size-sm)' }} className="mb-0">
                       <li>{t('carriera.tesi.information.line_1')}</li>
                       <li>{t('carriera.tesi.information.line_2')}</li>

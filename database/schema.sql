@@ -231,16 +231,14 @@ CREATE TABLE IF NOT EXISTS thesis(
     thesis_application_id INT NOT NULL,
     abstract TEXT,
     abstract_eng TEXT,
-    thesis_file LONGBLOB,
     thesis_file_path VARCHAR(1024),
-    thesis_resume BLOB,
-    additional_zip LONGBLOB,
     thesis_resume_path VARCHAR(1024),
     additional_zip_path VARCHAR(1024),
     license_id INT,
     thesis_start_date DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     thesis_conclusion_request_date DATETIME,
     thesis_conclusion_confirmation_date DATETIME,
+    thesis_draft_date DATETIME,
     status ENUM('ongoing', 'conclusion_requested', 'conclusion_approved', 'conclusion_rejected', 'almalaurea', 'compiled_questionnaire', 'final_exam', 'final_thesis', 'done') NOT NULL DEFAULT 'ongoing',
     FOREIGN KEY (company_id) REFERENCES company(id) ON DELETE RESTRICT, -- RESTRICT policy in order to pay attention to the deletion of a company
     FOREIGN KEY (student_id) REFERENCES student(id) ON DELETE RESTRICT, -- RESTRICT policy because why should you delete a student?
@@ -252,12 +250,12 @@ CREATE TABLE IF NOT EXISTS thesis(
 CREATE TABLE IF NOT EXISTS thesis_supervisor_cosupervisor(
     thesis_id INT NOT NULL,
     teacher_id INT NOT NULL,
+    scope ENUM('live', 'draft') NOT NULL DEFAULT 'live', -- live rows are effective; draft rows are pending changes
     is_supervisor BOOLEAN NOT NULL, -- if true then supervisor, else cosupervisor
-    PRIMARY KEY (thesis_id, teacher_id),
+    PRIMARY KEY (thesis_id, teacher_id, scope),
     FOREIGN KEY (thesis_id) REFERENCES thesis(id) ON DELETE CASCADE,
     FOREIGN KEY (teacher_id) REFERENCES teacher(id) ON DELETE RESTRICT -- RESTRICT policy because why should you delete a teacher?
 );
-
 
 CREATE TABLE IF NOT EXISTS thesis_keyword(
     id INT AUTO_INCREMENT PRIMARY KEY,
