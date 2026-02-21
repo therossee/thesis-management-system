@@ -2,7 +2,6 @@
 <h1> Portale-PoliTO </h1>
 <p>
     <img src="https://forthebadge.com/images/badges/not-a-bug-a-feature.svg" alt="Not a Bug a Feature" height="30">
-    <img src="https://forthebadge.com/images/featured/featured-built-with-love.svg" alt="Built with love" height="30">
 </p>
 <p>
     <img src="./images/Carriera.png" alt="Carriera" height="350">
@@ -82,7 +81,8 @@ See [Front-End Documentation](front-end/README.md) for details on running the Re
 <div id="contributors" align="left">
     <p>
       <a href="https://github.com/Sylvie-Molinatto">Sylvie Molinatto</a>
-      </li> | <a href="https://github.com/lucabubi">Barbato Luca</a>
       </li> | <a href="https://github.com/therossee">De Rossi Daniele</a>
+      </li> | <a href="https://github.com/lucabubi">Barbato Luca</a>
+
     </p>
 </div>
