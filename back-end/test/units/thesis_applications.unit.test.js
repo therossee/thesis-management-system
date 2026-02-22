@@ -27,6 +27,7 @@ jest.mock('../../src/models', () => ({
   },
   Teacher: {
     findByPk: jest.fn(),
+    findAll: jest.fn(),
   },
   LoggedStudent: {
     findOne: jest.fn(),
@@ -38,9 +39,11 @@ jest.mock('../../src/models', () => ({
   },
   Company: {
     findByPk: jest.fn(),
+    findAll: jest.fn(),
   },
   ThesisProposal: {
     findByPk: jest.fn(),
+    findAll: jest.fn(),
   },
   ThesisApplication: {
     create: jest.fn(),
@@ -632,13 +635,13 @@ describe('getAllThesisApplications', () => {
         status: 'pending',
       },
     ]);
-    ThesisProposal.findByPk.mockResolvedValue({ id: 10, toJSON: () => ({ id: 10 }) });
+    ThesisProposal.findAll.mockResolvedValue([{ id: 10, toJSON: () => ({ id: 10 }) }]);
     ThesisApplicationSupervisorCoSupervisor.findAll.mockResolvedValue([
-      { teacher_id: 1, is_supervisor: true },
-      { teacher_id: 2, is_supervisor: false },
+      { thesis_application_id: 1, teacher_id: 1, is_supervisor: true },
+      { thesis_application_id: 1, teacher_id: 2, is_supervisor: false },
     ]);
-    Teacher.findByPk.mockImplementation(id => Promise.resolve({ id }));
-    Company.findByPk.mockResolvedValue({ id: 99 });
+    Teacher.findAll.mockResolvedValue([{ id: 1 }, { id: 2 }]);
+    Company.findAll.mockResolvedValue([{ id: 99 }]);
 
     await getAllThesisApplications(req, res);
 
@@ -660,7 +663,7 @@ describe('getAllThesisApplications', () => {
         status: 'pending',
       },
     ]);
-    ThesisProposal.findByPk.mockResolvedValue(null);
+    ThesisProposal.findAll.mockResolvedValue([]);
 
     await getAllThesisApplications(req, res);
 
@@ -682,8 +685,10 @@ describe('getAllThesisApplications', () => {
         status: 'pending',
       },
     ]);
-    ThesisApplicationSupervisorCoSupervisor.findAll.mockResolvedValue([{ teacher_id: 99, is_supervisor: true }]);
-    Teacher.findByPk.mockResolvedValue(null);
+    ThesisApplicationSupervisorCoSupervisor.findAll.mockResolvedValue([
+      { thesis_application_id: 1, teacher_id: 99, is_supervisor: true },
+    ]);
+    Teacher.findAll.mockResolvedValue([]);
 
     await getAllThesisApplications(req, res);
 
@@ -707,7 +712,7 @@ describe('getAllThesisApplications', () => {
       },
     ]);
     ThesisApplicationSupervisorCoSupervisor.findAll.mockResolvedValue([]);
-    Company.findByPk.mockResolvedValue(null);
+    Company.findAll.mockResolvedValue([]);
 
     await getAllThesisApplications(req, res);
 
@@ -726,7 +731,7 @@ describe('getAllThesisApplications', () => {
     expect(res.status).toHaveBeenCalledWith(500);
   });
 
-  test('returns 500 if Teacher.findByPk throws', async () => {
+  test('returns 500 if Teacher.findAll throws', async () => {
     const req = {};
     const res = mockRes();
 
@@ -740,8 +745,10 @@ describe('getAllThesisApplications', () => {
         status: 'pending',
       },
     ]);
-    ThesisApplicationSupervisorCoSupervisor.findAll.mockResolvedValue([{ teacher_id: 1, is_supervisor: true }]);
-    Teacher.findByPk.mockRejectedValue(new Error('Teacher crash'));
+    ThesisApplicationSupervisorCoSupervisor.findAll.mockResolvedValue([
+      { thesis_application_id: 1, teacher_id: 1, is_supervisor: true },
+    ]);
+    Teacher.findAll.mockRejectedValue(new Error('Teacher crash'));
 
     await getAllThesisApplications(req, res);
 
@@ -765,7 +772,6 @@ describe('getAllThesisApplications', () => {
       },
     ]);
     ThesisApplicationSupervisorCoSupervisor.findAll.mockResolvedValue([]);
-    Teacher.findByPk.mockResolvedValue(null);
 
     await getAllThesisApplications(req, res);
 
@@ -789,7 +795,6 @@ describe('getAllThesisApplications', () => {
       },
     ]);
     ThesisApplicationSupervisorCoSupervisor.findAll.mockResolvedValue([]);
-    Teacher.findByPk.mockResolvedValue(null);
 
     await getAllThesisApplications(req, res);
 
@@ -813,7 +818,6 @@ describe('getAllThesisApplications', () => {
       },
     ]);
     ThesisApplicationSupervisorCoSupervisor.findAll.mockResolvedValue([]);
-    Teacher.findByPk.mockResolvedValue(null);
 
     await getAllThesisApplications(req, res);
 
