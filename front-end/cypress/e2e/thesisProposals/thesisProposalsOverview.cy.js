@@ -279,9 +279,8 @@ describe('Thesis proposals overview page', () => {
             .should('be.visible');
         });
       } else {
-        cy.get('.proposals-container')
-          .contains(/nessuna proposta|no proposals|not found/i)
-          .should('be.visible');
+        cy.get('.proposals-container .card-container .roundCard').should('have.length', 0);
+        cy.get('.proposals-container .roundCard').should('have.length.greaterThan', 1);
       }
     });
 
