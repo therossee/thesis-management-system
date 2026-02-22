@@ -629,7 +629,6 @@ Timeline.propTypes = {
       changeDate: PropTypes.string.isRequired,
     }),
   ),
-  startDate: PropTypes.string,
   session: PropTypes.shape({
     graduationSession: PropTypes.shape({
       id: PropTypes.number,

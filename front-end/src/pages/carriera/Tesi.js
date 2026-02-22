@@ -237,7 +237,7 @@ export default function Tesi({ initialActiveTab }) {
 
   return (
     <>
-      <CustomBreadcrumb activeTab={tabs.filter(tab => tab.key === activeTab)[0].label} />
+      <CustomBreadcrumb activeTab={tabs.find(tab => tab.key === activeTab).label} />
       <div className="proposal-container justify-content-between d-flex tesi-header-bar">
         <CustomHeader title={t('carriera.tesi.title')} action={() => navigate('/carriera')} />
         {thesis && activeTab === 'thesis' && thesis.status === 'ongoing' && (

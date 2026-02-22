@@ -157,7 +157,7 @@ export default function CustomBadge({ variant, content, type, filters, applyFilt
     return (
       <div className={`custom-badge badge ${getApplicationStatusBadgeType(content)}_${appliedTheme} pe-2`}>
         <div className="custom-badge-icon">{renderIcon(content)}</div>
-        {renderTranslatedContent(content)}
+        {renderTranslatedContent()}
       </div>
     );
   };

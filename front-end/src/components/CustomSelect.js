@@ -120,7 +120,7 @@ export default function CustomSelect({
   menuOutside = false,
 }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const menuPortalTarget = typeof document !== 'undefined' ? document.body : null;
+  const menuPortalTarget = typeof document === 'undefined' ? null : document.body;
 
   const commonStyles = useMemo(
     () => ({

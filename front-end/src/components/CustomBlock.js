@@ -16,7 +16,7 @@ function CustomBlock({ icon, title, children, ignoreMoreLines }) {
     const element = contentRef.current;
     if (element) {
       const computedStyle = globalThis.getComputedStyle(element);
-      const lineHeight = parseFloat(computedStyle.lineHeight);
+      const lineHeight = Number.parseFloat(computedStyle.lineHeight);
       const lines = element.offsetHeight / lineHeight;
 
       setMoreLines(lines > 1);

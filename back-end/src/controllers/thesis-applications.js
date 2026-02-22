@@ -25,7 +25,7 @@ const createThesisApplication = async (req, res) => {
     await sequelize.transaction(async t => {
       // 0. Get logged student
       const logged = await LoggedStudent.findOne();
-      if (!logged || !logged.student_id) {
+      if (!logged?.student_id) {
         return res.status(401).json({ error: 'No logged-in student found' });
       }
 
@@ -142,7 +142,7 @@ const createThesisApplication = async (req, res) => {
 const checkStudentEligibility = async (req, res) => {
   try {
     const logged = await LoggedStudent.findOne();
-    if (!logged || !logged.student_id) {
+    if (!logged?.student_id) {
       return res.status(401).json({ error: 'No logged-in student found' });
     }
     const student = await Student.findByPk(logged.student_id);
@@ -283,73 +283,105 @@ const getStatusHistoryApplication = async (req, res) => {
 
 const getAllThesisApplications = async (req, res) => {
   try {
-    const students = await Student.findAll();
-    const allApplications = await ThesisApplication.findAll({
-      order: [['submission_date', 'DESC']],
-    });
+    const [students, allApplications] = await Promise.all([
+      Student.findAll(),
+      ThesisApplication.findAll({
+        order: [['submission_date', 'DESC']],
+      }),
+    ]);
+
+    const studentById = new Map(students.map(student => [student.id, student]));
+    const applicationIds = allApplications.map(app => app.id);
+    const proposalIds = [...new Set(allApplications.map(app => app.thesis_proposal_id).filter(Boolean))];
+    const companyIds = [...new Set(allApplications.map(app => app.company_id).filter(Boolean))];
+
+    const [proposals, supervisorLinks, companies] = await Promise.all([
+      proposalIds.length
+        ? ThesisProposal.findAll({
+            where: { id: { [Op.in]: proposalIds } },
+          })
+        : [],
+      applicationIds.length
+        ? ThesisApplicationSupervisorCoSupervisor.findAll({
+            where: { thesis_application_id: { [Op.in]: applicationIds } },
+          })
+        : [],
+      companyIds.length
+        ? Company.findAll({
+            where: { id: { [Op.in]: companyIds } },
+          })
+        : [],
+    ]);
+
+    const proposalById = new Map(proposals.map(proposal => [proposal.id, proposal]));
+    const companyById = new Map(companies.map(company => [company.id, company]));
+
+    const teacherIds = [...new Set(supervisorLinks.map(link => link.teacher_id))];
+    const teachers = teacherIds.length
+      ? await Teacher.findAll({
+          where: { id: { [Op.in]: teacherIds } },
+          attributes: selectTeacherAttributes(true),
+        })
+      : [];
+    const teacherById = new Map(teachers.map(teacher => [teacher.id, teacher]));
+
+    const linksByApplicationId = new Map();
+    for (const link of supervisorLinks) {
+      if (!linksByApplicationId.has(link.thesis_application_id)) {
+        linksByApplicationId.set(link.thesis_application_id, []);
+      }
+      linksByApplicationId.get(link.thesis_application_id).push(link);
+    }
 
     const applicationsResponse = [];
 
     for (const app of allApplications) {
-      // Fetch proposal if exists
       let proposalData = null;
       if (app.thesis_proposal_id) {
-        const proposal = await ThesisProposal.findByPk(app.thesis_proposal_id);
-        if (proposal) {
-          proposalData = proposal.toJSON();
-        } else {
+        const proposal = proposalById.get(app.thesis_proposal_id);
+        if (!proposal) {
           return res.status(400).json({ error: `Thesis proposal with id ${app.thesis_proposal_id} not found` });
         }
+        proposalData = proposal.toJSON();
       }
 
-      // Fetch supervisor and co-supervisors
-      const supervisorLinks = await ThesisApplicationSupervisorCoSupervisor.findAll({
-        where: { thesis_application_id: app.id },
-      });
+      const company = app.company_id ? companyById.get(app.company_id) : null;
+      if (app.company_id && !company) {
+        return res.status(400).json({ error: `Company with id ${app.company_id} not found` });
+      }
+
+      const links = linksByApplicationId.get(app.id) || [];
       let supervisorData = null;
       const coSupervisorsData = [];
-      for (const link of supervisorLinks) {
-        const teacher = await Teacher.findByPk(link.teacher_id, {
-          attributes: selectTeacherAttributes(true),
-        });
-        if (teacher) {
-          if (link.is_supervisor) {
-            supervisorData = teacher;
-          } else {
-            coSupervisorsData.push(teacher);
-          }
-        } else {
+
+      for (const link of links) {
+        const teacher = teacherById.get(link.teacher_id);
+        if (!teacher) {
           return res.status(400).json({ error: `Teacher with id ${link.teacher_id} not found` });
         }
-      }
-
-      if (app.company_id) {
-        const company = await Company.findByPk(app.company_id);
-        if (!company) {
-          return res.status(400).json({ error: `Company with id ${app.company_id} not found` });
-        }
+        if (link.is_supervisor) supervisorData = teacher;
+        else coSupervisorsData.push(teacher);
       }
 
       const responsePayload = {
         id: app.id,
         topic: app.topic,
-        student: students.find(s => s.id === app.student_id) || null,
+        student: studentById.get(app.student_id) || null,
         supervisor: supervisorData,
         co_supervisors: coSupervisorsData,
-        company: app.company || null,
+        company: company || null,
         thesis_proposal: proposalData,
         submission_date: app.submission_date.toISOString(),
         status: app.status || 'pending',
       };
 
-      const appJson = thesisApplicationSchema.parse(responsePayload);
-      applicationsResponse.push(appJson);
+      applicationsResponse.push(thesisApplicationSchema.parse(responsePayload));
     }
 
-    res.status(200).json(applicationsResponse);
+    return res.status(200).json(applicationsResponse);
   } catch (error) {
     console.error('Error fetching all thesis applications:', error);
-    res.status(500).json({ error: error.message });
+    return res.status(500).json({ error: error.message });
   }
 };
 
