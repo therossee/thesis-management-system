@@ -23,6 +23,12 @@ export default function SortDropdown({ sorting, applySorting }) {
   const [isOpen, setIsOpen] = useState(false);
   const [selectedSorting, setSelectedSorting] = useState(sorting || '');
   const sortFields = ['topic', 'description', 'creationDate', 'expirationDate'];
+  const sortI18nKeyByField = {
+    topic: 'topic',
+    description: 'description',
+    creationDate: 'creation_date',
+    expirationDate: 'expiration_date',
+  };
 
   const { t } = useTranslation();
   const { theme } = useContext(ThemeContext);
@@ -89,7 +95,7 @@ export default function SortDropdown({ sorting, applySorting }) {
                 <div style={{ width: '1.5em' }}>
                   {selectedSorting.sortBy === sortBy && <FontAwesomeIcon icon={faCheck} />}
                 </div>
-                {t(`carriera.proposte_di_tesi.${sortBy}`)}
+                {t(`carriera.proposte_di_tesi.${sortI18nKeyByField[sortBy] || sortBy}`)}
               </div>
             </Dropdown.Item>
           ))}

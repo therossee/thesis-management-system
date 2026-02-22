@@ -82,7 +82,8 @@
             "apply": "Applica",
             "reset": "Resetta",
             "reset_filters": "Resetta i filtri",
-            "sort_by": "Ordina per"
+            "sort_by": "Ordina per",
+            "description": "Descrizione"
         },
         "proposta_di_tesi": {
             "dettagli_proposta_di_tesi": "Dettagli proposta",

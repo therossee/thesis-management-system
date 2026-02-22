@@ -82,7 +82,8 @@
             "apply": "Apply",
             "reset": "Reset",
             "reset_filters": "Reset filters",
-            "sort_by": "Sort by"
+            "sort_by": "Sort by",
+            "description": "Description"
         },
         "proposta_di_tesi": {
             "dettagli_proposta_di_tesi": "Proposal details",
@@ -475,9 +476,17 @@
             "error_title": "Error submitting the request.",
             "error_message": "An error occurred while submitting the request. Please try again later.",
             "uploaded": "Uploaded documents",
-            "resume": "Riassunto",
-            "thesis_pdfa": "Tesi in formato PDF/A",
-            "additional": "Allegato aggiuntivo"
+            "resume": "Resume",
+            "thesis_pdfa": "Thesis in PDF/A format",
+            "additional": "Additional attachment",
+            "steps": {
+                "details": "Details",
+                "authorizations": "Authorizations",
+                "uploads": "File uploads",
+                "declarations": "Declarations",
+                "submit": "Submit",
+                "outcome": "Outcome"
+            }
         }
     },
     "Accedi": "Login",

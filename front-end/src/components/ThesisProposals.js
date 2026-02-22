@@ -23,6 +23,12 @@ import ThesisRequestModal from './ThesisRequestModal';
 
 export default function ThesisProposals({ showRequestModal, setShowRequestModal }) {
   const { t } = useTranslation();
+  const sortI18nKeyByField = {
+    topic: 'topic',
+    description: 'description',
+    creationDate: 'creation_date',
+    expirationDate: 'expiration_date',
+  };
   const {
     count,
     pageProposals,
@@ -85,7 +91,9 @@ export default function ThesisProposals({ showRequestModal, setShowRequestModal 
             variant={'sorting-' + state.sorting.orderBy}
             content={{
               content:
-                t('carriera.proposte_di_tesi.sort_by') + ': ' + t('carriera.proposte_di_tesi.' + state.sorting.sortBy),
+                t('carriera.proposte_di_tesi.sort_by') +
+                ': ' +
+                t('carriera.proposte_di_tesi.' + (sortI18nKeyByField[state.sorting.sortBy] || state.sorting.sortBy)),
             }}
             type="reset"
             resetSorting={() => applySorting({ sortBy: 'id', orderBy: 'ASC' })}
