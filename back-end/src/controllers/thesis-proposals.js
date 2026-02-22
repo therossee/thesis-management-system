@@ -19,7 +19,7 @@ const selectKeywordAttributes = require('../utils/selectKeywordAttributes');
 const selectTeacherAttributes = require('../utils/selectTeacherAttributes');
 const teacherOverviewSchema = require('../schemas/TeacherOverview');
 
-const camelToSnakeCase = str => str.replace(/([A-Z])/g, '_$1').toLowerCase();
+const camelToSnakeCase = str => str.replaceAll(/([A-Z])/g, '_$1').toLowerCase();
 
 const fetchThesisProposals = async (where, includes, lang, pagination) => {
   const { limit, offset, orderBy, sortBy } = pagination;

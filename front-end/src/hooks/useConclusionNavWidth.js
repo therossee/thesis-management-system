@@ -28,8 +28,8 @@ export default function useConclusionNavWidth({
     };
 
     calc();
-    window.addEventListener('resize', calc);
-    return () => window.removeEventListener('resize', calc);
+    globalThis.addEventListener('resize', calc);
+    return () => globalThis.removeEventListener('resize', calc);
   }, [
     currentStep,
     stepsLength,

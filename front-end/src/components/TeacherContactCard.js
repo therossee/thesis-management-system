@@ -17,7 +17,7 @@ export default function TeacherContactCard({ supervisor, coSupervisors }) {
   // Determina il tema effettivo considerando anche "auto"
   const getEffectiveTheme = () => {
     if (theme === 'auto') {
-      return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+      return globalThis.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
     }
     return theme;
   };

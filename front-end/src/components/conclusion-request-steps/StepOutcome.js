@@ -32,7 +32,7 @@ export default function StepOutcome() {
           <p>{message}</p>
         </div>
 
-        <Button className={`btn-${appliedTheme}`} size="sm" onClick={() => window.history.back()}>
+        <Button className={`btn-${appliedTheme}`} size="sm" onClick={() => globalThis.history.back()}>
           <FaArrowLeft size={16} className="me-2" />
           {t('carriera.conclusione_tesi.go_back')}
         </Button>

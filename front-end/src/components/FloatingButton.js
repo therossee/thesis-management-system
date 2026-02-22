@@ -14,14 +14,14 @@ function FloatingButton() {
   const appliedTheme = theme === 'auto' ? getSystemTheme() : theme;
 
   const handleScroll = () => {
-    if (window.scrollY > 100) setIsVisible(true);
+    if (globalThis.scrollY > 100) setIsVisible(true);
     else setIsVisible(false);
   };
 
   useEffect(() => {
-    window.addEventListener('scroll', handleScroll);
+    globalThis.addEventListener('scroll', handleScroll);
     return () => {
-      window.removeEventListener('scroll', handleScroll);
+      globalThis.removeEventListener('scroll', handleScroll);
     };
   }, []);
 

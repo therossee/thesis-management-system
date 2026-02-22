@@ -130,7 +130,7 @@ export default function useThesisProposalsState() {
           ...prevState,
           currentPage: pageNumber,
         }));
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        globalThis.scrollTo({ top: 0, behavior: 'smooth' });
       }
     },
     [state.currentPage],
@@ -143,7 +143,7 @@ export default function useThesisProposalsState() {
       currentPage: 1,
       proposalsPerPage: value,
     }));
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    globalThis.scrollTo({ top: 0, behavior: 'smooth' });
   }, []);
 
   const handleSearchbarChange = useCallback(event => {

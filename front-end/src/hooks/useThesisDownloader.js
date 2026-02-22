@@ -6,7 +6,7 @@ export default function useThesisDownloader({ API, showToast, t }) {
       const response = await API.getThesisFile(thesisId, fileType);
       const blob = response.data;
 
-      const url = window.URL.createObjectURL(blob);
+      const url = globalThis.URL.createObjectURL(blob);
       const link = document.createElement('a');
 
       const contentDisposition = response.headers?.['content-disposition'] || '';
@@ -20,7 +20,7 @@ export default function useThesisDownloader({ API, showToast, t }) {
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
+      globalThis.URL.revokeObjectURL(url);
     } catch (error) {
       console.error(`Error downloading ${fileType}:`, error);
       showToast({

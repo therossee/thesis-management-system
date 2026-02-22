@@ -3,7 +3,7 @@ import { useContext } from 'react';
 import { ThemeContext } from '../App';
 
 export const getSystemTheme = () => {
-  if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) return 'dark';
+  if (globalThis.matchMedia && globalThis.matchMedia('(prefers-color-scheme: dark)').matches) return 'dark';
   return 'light';
 };
 
@@ -14,5 +14,5 @@ export const useLogo = (logoDark, logoLight) => {
 };
 
 export function scrollTop() {
-  window.scrollTo(0, 0);
+  globalThis.scrollTo(0, 0);
 }

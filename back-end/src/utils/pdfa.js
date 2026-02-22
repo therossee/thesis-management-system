@@ -1,4 +1,4 @@
-const fs = require('fs/promises');
+const fs = require('node:fs/promises');
 const { httpError } = require('./httpError');
 
 // Heuristic only: checks XMP pdfaid identification (NOT a full PDF/A validation)

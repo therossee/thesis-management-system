@@ -21,7 +21,7 @@ export default function NotEligible() {
         <div className="mb-3 mt-2 text-center" style={{ color: 'var(--text)' }}>
           <p> {t('carriera.conclusione_tesi.not_eligible_message')} </p>
         </div>
-        <Button className={`btn-${appliedTheme}`} size="sm" onClick={() => window.history.back()}>
+        <Button className={`btn-${appliedTheme}`} size="sm" onClick={() => globalThis.history.back()}>
           <FaArrowLeft size={16} />
           {t('carriera.conclusione_tesi.go_back')}{' '}
         </Button>

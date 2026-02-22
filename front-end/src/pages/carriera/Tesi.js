@@ -140,7 +140,7 @@ export default function Tesi({ initialActiveTab }) {
   };
 
   const openExternalInBlank = url => {
-    const newWindow = window.open(url, '_blank', 'noopener,noreferrer');
+    const newWindow = globalThis.open(url, '_blank', 'noopener,noreferrer');
     if (newWindow) {
       newWindow.opener = null;
     }

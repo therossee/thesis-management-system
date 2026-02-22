@@ -698,6 +698,97 @@ const saveDraftSdgs = async ({ thesisId, sdgs, transaction }) => {
   );
 };
 
+const parseDraftRequestData = (req, files) =>
+  thesisConclusionDraftSchema.parse({
+    title: req.body.title,
+    titleEng: req.body.titleEng,
+    abstract: req.body.abstract,
+    abstractEng: req.body.abstractEng,
+    language: req.body.language,
+    coSupervisors: toSnakeCase(parseJsonField(req.body.coSupervisors, undefined)),
+    keywords: parseJsonField(req.body.keywords, undefined),
+    licenseId: req.body.licenseId,
+    sdgs: toSnakeCase(parseJsonField(req.body.sdgs, undefined)),
+    embargo: toSnakeCase(parseJsonField(req.body.embargo, undefined)),
+    thesisResume: files.thesisResume,
+    thesisFile: files.thesisFile,
+    additionalZip: files.additionalZip,
+    removeThesisResume: req.body.removeThesisResume,
+    removeThesisFile: req.body.removeThesisFile,
+    removeAdditionalZip: req.body.removeAdditionalZip,
+  });
+
+const getLoggedStudentOrThrow = async () => {
+  const logged = await LoggedStudent.findOne();
+  if (!logged) throw httpError(401, 'Unauthorized');
+
+  const loggedStudent = await Student.findByPk(logged.student_id);
+  if (!loggedStudent) throw httpError(404, 'Student not found');
+
+  return loggedStudent;
+};
+
+const saveDraftTransaction = async ({
+  loggedStudent,
+  draftData,
+  files,
+  baseUploadDir,
+  draftUploadDir,
+  transaction,
+}) => {
+  const thesis = await Thesis.findOne({ where: { student_id: loggedStudent.id }, transaction });
+  if (!thesis) throw httpError(404, 'Thesis not found');
+  if (thesis.status !== 'ongoing') {
+    throw httpError(400, 'No draft can be saved for current thesis status');
+  }
+
+  const fieldsToSave = [];
+  const setField = (field, value) => {
+    if (value === undefined) return;
+    thesis[field] = value;
+    fieldsToSave.push(field);
+  };
+
+  const normalizedTexts = normalizeDraftTextFields(draftData);
+  setField('title', normalizedTexts.title);
+  setField('title_eng', normalizedTexts.titleEng);
+  setField('abstract', normalizedTexts.abstract);
+  setField('abstract_eng', normalizedTexts.abstractEng);
+  setField('language', draftData.language);
+  if (draftData.licenseId !== undefined) setField('license_id', draftData.licenseId);
+  setField('thesis_draft_date', new Date());
+
+  await saveDraftFiles({
+    thesis,
+    loggedStudentId: loggedStudent.id,
+    baseUploadDir,
+    draftUploadDir,
+    files,
+    removeFlags: {
+      removeThesisResume: draftData.removeThesisResume,
+      removeThesisFile: draftData.removeThesisFile,
+      removeAdditionalZip: draftData.removeAdditionalZip,
+    },
+    setField,
+  });
+
+  if (fieldsToSave.length) {
+    await thesis.save({ transaction, fields: [...new Set(fieldsToSave)] });
+  }
+
+  await saveDraftCoSupervisors({
+    thesisId: thesis.id,
+    coSupervisors: draftData.coSupervisors,
+    transaction,
+  });
+
+  await saveDraftSdgs({
+    thesisId: thesis.id,
+    sdgs: draftData.sdgs,
+    transaction,
+  });
+};
+
 const uploadFinalThesis = async (req, res) => {
   try {
     const thesisFile = req.files?.thesisFile?.[0] || null;
@@ -800,89 +891,24 @@ const saveThesisConclusionRequestDraft = async (req, res) => {
   const thesisResume = req.files?.thesisResume?.[0] || null;
   const thesisFile = req.files?.thesisFile?.[0] || null;
   const additionalZip = req.files?.additionalZip?.[0] || null;
+  const files = { thesisResume, thesisFile, additionalZip };
 
   try {
-    const draftData = thesisConclusionDraftSchema.parse({
-      title: req.body.title,
-      titleEng: req.body.titleEng,
-      abstract: req.body.abstract,
-      abstractEng: req.body.abstractEng,
-      language: req.body.language,
-      coSupervisors: toSnakeCase(parseJsonField(req.body.coSupervisors, undefined)),
-      keywords: parseJsonField(req.body.keywords, undefined),
-      licenseId: req.body.licenseId,
-      sdgs: toSnakeCase(parseJsonField(req.body.sdgs, undefined)),
-      embargo: toSnakeCase(parseJsonField(req.body.embargo, undefined)),
-      thesisResume,
-      thesisFile,
-      additionalZip,
-      removeThesisResume: req.body.removeThesisResume,
-      removeThesisFile: req.body.removeThesisFile,
-      removeAdditionalZip: req.body.removeAdditionalZip,
-    });
-
-    const logged = await LoggedStudent.findOne();
-    if (!logged) return res.status(401).json({ error: 'Unauthorized' });
-
-    const loggedStudent = await Student.findByPk(logged.student_id);
-    if (!loggedStudent) return res.status(404).json({ error: 'Student not found' });
-
+    const draftData = parseDraftRequestData(req, files);
+    const loggedStudent = await getLoggedStudentOrThrow();
     const baseUploadDir = path.join(__dirname, '..', '..');
     const draftUploadDir = path.join(baseUploadDir, 'uploads', 'thesis_conclusion_draft', String(loggedStudent.id));
 
-    await sequelize.transaction(async transaction => {
-      const thesis = await Thesis.findOne({ where: { student_id: loggedStudent.id }, transaction });
-      if (!thesis) throw httpError(404, 'Thesis not found');
-      if (thesis.status !== 'ongoing') {
-        throw httpError(400, 'No draft can be saved for current thesis status');
-      }
-
-      const fieldsToSave = [];
-      const setField = (field, value) => {
-        if (value === undefined) return;
-        thesis[field] = value;
-        fieldsToSave.push(field);
-      };
-
-      const normalizedTexts = normalizeDraftTextFields(draftData);
-      setField('title', normalizedTexts.title);
-      setField('title_eng', normalizedTexts.titleEng);
-      setField('abstract', normalizedTexts.abstract);
-      setField('abstract_eng', normalizedTexts.abstractEng);
-      setField('language', draftData.language);
-      if (draftData.licenseId !== undefined) setField('license_id', draftData.licenseId);
-      setField('thesis_draft_date', new Date());
-
-      await saveDraftFiles({
-        thesis,
-        loggedStudentId: loggedStudent.id,
+    await sequelize.transaction(transaction =>
+      saveDraftTransaction({
+        loggedStudent,
+        draftData,
+        files,
         baseUploadDir,
         draftUploadDir,
-        files: { thesisResume, thesisFile, additionalZip },
-        removeFlags: {
-          removeThesisResume: draftData.removeThesisResume,
-          removeThesisFile: draftData.removeThesisFile,
-          removeAdditionalZip: draftData.removeAdditionalZip,
-        },
-        setField,
-      });
-
-      if (fieldsToSave.length) {
-        await thesis.save({ transaction, fields: [...new Set(fieldsToSave)] });
-      }
-
-      await saveDraftCoSupervisors({
-        thesisId: thesis.id,
-        coSupervisors: draftData.coSupervisors,
         transaction,
-      });
-
-      await saveDraftSdgs({
-        thesisId: thesis.id,
-        sdgs: draftData.sdgs,
-        transaction,
-      });
-    });
+      }),
+    );
 
     return res.status(200).json({ message: 'Draft saved successfully' });
   } catch (error) {

@@ -297,11 +297,11 @@ export default function ConclusionRequest({ onSubmitResult, saveDraftTrigger = 0
         const response = await API.getThesisFile(thesis.id, fileType);
         const contentType = response.headers?.['content-type'];
         const blob = response.data instanceof Blob ? response.data : new Blob([response.data], { type: contentType });
-        const objectUrl = window.URL.createObjectURL(blob);
+        const objectUrl = globalThis.URL.createObjectURL(blob);
 
         if (openInNewTab) {
-          window.open(objectUrl, '_blank', 'noopener,noreferrer');
-          setTimeout(() => window.URL.revokeObjectURL(objectUrl), 60000);
+          globalThis.open(objectUrl, '_blank', 'noopener,noreferrer');
+          setTimeout(() => globalThis.URL.revokeObjectURL(objectUrl), 60000);
           return;
         }
 
@@ -311,7 +311,7 @@ export default function ConclusionRequest({ onSubmitResult, saveDraftTrigger = 0
         document.body.appendChild(link);
         link.click();
         link.remove();
-        setTimeout(() => window.URL.revokeObjectURL(objectUrl), 1000);
+        setTimeout(() => globalThis.URL.revokeObjectURL(objectUrl), 1000);
       } catch (err) {
         console.error('Error fetching draft file:', err);
         showToast?.({
