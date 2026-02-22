@@ -7,6 +7,7 @@ const {
 } = require('../models');
 
 const updateThesisApplicationStatus = async (req, res) => {
+  let t;
   try {
     const { id, new_status } = req.body;
 
@@ -23,7 +24,7 @@ const updateThesisApplicationStatus = async (req, res) => {
     ) {
       return res.status(400).json({ error: 'Cannot update a closed application' });
     }
-    const t = await sequelize.transaction();
+    t = await sequelize.transaction();
     await ThesisApplicationStatusHistory.create(
       {
         thesis_application_id: id,
@@ -34,8 +35,9 @@ const updateThesisApplicationStatus = async (req, res) => {
     );
     application.status = new_status;
     await application.save({ transaction: t });
+
+    let payload = application;
     if (new_status === 'approved') {
-      await application.save({ transaction: t });
       const application_supervisors = await ThesisApplicationSupervisorCoSupervisor.findAll({
         where: { thesis_application_id: id },
       });
@@ -69,14 +71,21 @@ const updateThesisApplicationStatus = async (req, res) => {
           await ThesisSupervisorCoSupervisor.create(coSupervisorEntry, { transaction: t });
         }
       }
-      res.status(200).json(newThesis);
-    } else {
-      res.status(200).json(application);
+      payload = newThesis;
     }
+
     await t.commit();
+    return res.status(200).json(payload);
   } catch (error) {
+    if (t) {
+      try {
+        await t.rollback();
+      } catch (rollbackError) {
+        console.error('Error rolling back thesis application status transaction:', rollbackError);
+      }
+    }
     console.error('Error updating thesis application status:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    return res.status(500).json({ error: 'Internal server error' });
   }
 };
 
