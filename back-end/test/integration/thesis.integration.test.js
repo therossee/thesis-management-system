@@ -208,7 +208,7 @@ describe('GET /api/thesis/:id/:fileType', () => {
   });
 
   test('Should return 404 when requested file path is missing', async () => {
-    const response = await request(server).get(`/api/thesis/${TEMP_DOWNLOAD_THESIS_ID}/resume`);
+    const response = await request(server).get(`/api/thesis/${TEMP_DOWNLOAD_THESIS_ID}/summary`);
     expect(response.status).toBe(404);
     expect(response.body).toEqual({ error: 'Requested file not found for this thesis' });
   });

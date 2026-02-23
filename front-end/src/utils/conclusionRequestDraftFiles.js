@@ -11,12 +11,12 @@ export const toDraftFileInfo = (filePath, fileType) => {
 
 export const emptyDraftFiles = {
   thesis: null,
-  resume: null,
+  summary: null,
   additional: null,
 };
 
 export const emptyDraftFilesToRemove = {
   thesis: false,
-  resume: false,
+  summary: false,
   additional: false,
 };

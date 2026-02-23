@@ -6,7 +6,7 @@ const {
   getStudents,
   getLoggedStudent,
   updateLoggedStudent,
-  getRequiredResumeForLoggedStudent,
+  getRequiredSummaryForLoggedStudent,
 } = require('../../src/controllers/students');
 
 jest.mock('../../src/models', () => ({
@@ -310,7 +310,7 @@ describe('updateLoggedStudent', () => {
   });
 });
 
-describe('getRequiredResumeForLoggedStudent', () => {
+describe('getRequiredSummaryForLoggedStudent', () => {
   test('should return 404 if logged student is not found', async () => {
     LoggedStudent.findOne.mockResolvedValueOnce(null);
 
@@ -319,7 +319,7 @@ describe('getRequiredResumeForLoggedStudent', () => {
       status: jest.fn(() => res),
     };
 
-    await getRequiredResumeForLoggedStudent({}, res);
+    await getRequiredSummaryForLoggedStudent({}, res);
 
     expect(res.status).toHaveBeenCalledWith(404);
     expect(res.json).toHaveBeenCalledWith({ error: 'Logged student not found' });
@@ -334,7 +334,7 @@ describe('getRequiredResumeForLoggedStudent', () => {
       status: jest.fn(() => res),
     };
 
-    await getRequiredResumeForLoggedStudent({}, res);
+    await getRequiredSummaryForLoggedStudent({}, res);
 
     expect(res.status).toHaveBeenCalledWith(404);
     expect(res.json).toHaveBeenCalledWith({ error: 'Student not found' });
@@ -350,13 +350,13 @@ describe('getRequiredResumeForLoggedStudent', () => {
       status: jest.fn(() => res),
     };
 
-    await getRequiredResumeForLoggedStudent({}, res);
+    await getRequiredSummaryForLoggedStudent({}, res);
 
     expect(res.status).toHaveBeenCalledWith(404);
     expect(res.json).toHaveBeenCalledWith({ error: 'Degree programme not found' });
   });
 
-  test('should return requiredResume true for collegio CL003', async () => {
+  test('should return requiredSummary true for collegio CL003', async () => {
     LoggedStudent.findOne.mockResolvedValueOnce({ student_id: '1' });
     Student.findOne.mockResolvedValueOnce({ id: '1', degree_id: '37-18' });
     sequelize.query.mockResolvedValueOnce([{ collegioId: 'CL003' }]);
@@ -366,13 +366,13 @@ describe('getRequiredResumeForLoggedStudent', () => {
       status: jest.fn(() => res),
     };
 
-    await getRequiredResumeForLoggedStudent({}, res);
+    await getRequiredSummaryForLoggedStudent({}, res);
 
     expect(res.status).toHaveBeenCalledWith(200);
-    expect(res.json).toHaveBeenCalledWith({ requiredResume: true });
+    expect(res.json).toHaveBeenCalledWith({ requiredSummary: true });
   });
 
-  test('should return requiredResume false for non-required collegio', async () => {
+  test('should return requiredSummary false for non-required collegio', async () => {
     LoggedStudent.findOne.mockResolvedValueOnce({ student_id: '1' });
     Student.findOne.mockResolvedValueOnce({ id: '1', degree_id: '32-1' });
     sequelize.query.mockResolvedValueOnce([{ collegioId: 'CL009' }]);
@@ -382,10 +382,10 @@ describe('getRequiredResumeForLoggedStudent', () => {
       status: jest.fn(() => res),
     };
 
-    await getRequiredResumeForLoggedStudent({}, res);
+    await getRequiredSummaryForLoggedStudent({}, res);
 
     expect(res.status).toHaveBeenCalledWith(200);
-    expect(res.json).toHaveBeenCalledWith({ requiredResume: false });
+    expect(res.json).toHaveBeenCalledWith({ requiredSummary: false });
   });
 
   test('should return 404 on student data not found error branch', async () => {
@@ -396,7 +396,7 @@ describe('getRequiredResumeForLoggedStudent', () => {
       status: jest.fn(() => res),
     };
 
-    await getRequiredResumeForLoggedStudent({}, res);
+    await getRequiredSummaryForLoggedStudent({}, res);
 
     expect(res.status).toHaveBeenCalledWith(404);
     expect(res.json).toHaveBeenCalledWith({ error: 'Student data not found' });
@@ -412,7 +412,7 @@ describe('getRequiredResumeForLoggedStudent', () => {
       status: jest.fn(() => res),
     };
 
-    await getRequiredResumeForLoggedStudent({}, res);
+    await getRequiredSummaryForLoggedStudent({}, res);
 
     expect(res.status).toHaveBeenCalledWith(500);
     expect(res.json).toHaveBeenCalledWith({ error: 'Unexpected error' });

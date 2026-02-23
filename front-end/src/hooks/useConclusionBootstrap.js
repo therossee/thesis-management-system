@@ -20,7 +20,7 @@ export default function useConclusionBootstrap({
   setSdgs,
   setEmbargoMotivationsList,
   setKeywordsList,
-  setRequiredResume,
+  setRequiredSummary,
 
   // draft -> form setters
   setTitleText,
@@ -55,7 +55,7 @@ export default function useConclusionBootstrap({
       API.getSustainableDevelopmentGoals(),
       API.getEmbargoMotivations(i18nLanguage),
       API.getThesisProposalsKeywords(i18nLanguage),
-      API.getRequiredResumeForLoggedStudent(),
+      API.getRequiredSummaryForLoggedStudent(),
       API.getThesisConclusionDraft().catch(() => null),
     ])
       .then(
@@ -66,7 +66,7 @@ export default function useConclusionBootstrap({
           sdgsData,
           embargoMotivationsData,
           keywordsData,
-          requiredResumeData,
+          requiredSummaryData,
           draftData,
         ]) => {
           if (cancelled) return;
@@ -117,18 +117,18 @@ export default function useConclusionBootstrap({
 
             setDraftUploadedFiles({
               thesis: toDraftFileInfo(draftData.thesisFilePath, 'thesis'),
-              resume: toDraftFileInfo(draftData.thesisResumePath, 'resume'),
+              summary: toDraftFileInfo(draftData.thesisSummaryPath, 'summary'),
               additional: toDraftFileInfo(draftData.additionalZipPath, 'additional'),
             });
 
-            setDraftFilesToRemove({ thesis: false, resume: false, additional: false });
+            setDraftFilesToRemove({ thesis: false, summary: false, additional: false });
           }
 
           if (licensesData) setLicenses(licensesData);
           if (sdgsData) setSdgs(sdgsData);
           if (embargoMotivationsData) setEmbargoMotivationsList(embargoMotivationsData);
           if (keywordsData) setKeywordsList(keywordsData);
-          if (requiredResumeData) setRequiredResume(Boolean(requiredResumeData.requiredResume));
+          if (requiredSummaryData) setRequiredSummary(Boolean(requiredSummaryData.requiredSummary));
         },
       )
       .catch(err => {

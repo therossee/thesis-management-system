@@ -10,7 +10,6 @@ import API from '../API';
 import { LoggedStudentContext, ThemeContext, ToastContext } from '../App';
 import useConclusionBootstrap from '../hooks/useConclusionBootstrap';
 import useConclusionDraft from '../hooks/useConclusionDraft';
-import useConclusionNavWidth from '../hooks/useConclusionNavWidth';
 import useConclusionValidation from '../hooks/useConclusionValidation';
 import '../styles/conclusion-process.css';
 import { emptyDraftFiles, emptyDraftFilesToRemove } from '../utils/conclusionRequestDraftFiles';
@@ -66,8 +65,8 @@ export default function ConclusionRequest({ onSubmitResult, saveDraftTrigger = 0
   const [embargoMotivations, setEmbargoMotivations] = useState([]);
   const [otherEmbargoReason, setOtherEmbargoReason] = useState('');
 
-  const [requiredResume, setRequiredResume] = useState(false);
-  const [resumePdf, setResumePdf] = useState(null);
+  const [requiredSummary, setRequiredSummary] = useState(false);
+  const [summaryPdf, setSummaryPdf] = useState(null);
   const [pdfFile, setPdfFile] = useState(null);
   const [supplementaryZip, setSupplementaryZip] = useState(null);
 
@@ -92,8 +91,6 @@ export default function ConclusionRequest({ onSubmitResult, saveDraftTrigger = 0
   const [submissionOutcome, setSubmissionOutcome] = useState(null);
 
   const formBodyRef = useRef(null);
-  const prevButtonRef = useRef(null);
-  const nextButtonRef = useRef(null);
 
   // bootstrap data (ex useEffect gigante)
   useConclusionBootstrap({
@@ -112,7 +109,7 @@ export default function ConclusionRequest({ onSubmitResult, saveDraftTrigger = 0
     setSdgs,
     setEmbargoMotivationsList,
     setKeywordsList,
-    setRequiredResume,
+    setRequiredSummary,
 
     setTitleText,
     setTitleEngText,
@@ -177,7 +174,7 @@ export default function ConclusionRequest({ onSubmitResult, saveDraftTrigger = 0
     needsEnglishTranslation,
     detailsValid,
     allDeclarationsChecked,
-    resumeValid,
+    summaryValid,
     canSubmit,
     denyValid,
     authorizeValid,
@@ -198,8 +195,8 @@ export default function ConclusionRequest({ onSubmitResult, saveDraftTrigger = 0
     embargoPeriod,
     otherEmbargoReason,
     licenseChoice,
-    requiredResume,
-    resumePdf,
+    requiredSummary,
+    summaryPdf,
     pdfFile,
   });
 
@@ -223,7 +220,7 @@ export default function ConclusionRequest({ onSubmitResult, saveDraftTrigger = 0
     () => [
       detailsValid,
       authorizationSelected && denyValid && authorizeValid,
-      !!pdfFile && resumeValid,
+      !!pdfFile && summaryValid,
       allDeclarationsChecked(),
       canSubmit,
     ],
@@ -233,7 +230,7 @@ export default function ConclusionRequest({ onSubmitResult, saveDraftTrigger = 0
       denyValid,
       authorizeValid,
       pdfFile,
-      resumeValid,
+      summaryValid,
       allDeclarationsChecked,
       canSubmit,
     ],
@@ -264,17 +261,6 @@ export default function ConclusionRequest({ onSubmitResult, saveDraftTrigger = 0
     [steps, submitStepIndex, currentStep, submissionOutcome, stepValidity],
   );
 
-  // nav buttons width
-  const { navButtonsWidth, shouldSyncNavButtonsWidth } = useConclusionNavWidth({
-    currentStep,
-    stepsLength: steps.length,
-    submissionOutcome,
-    i18nLanguage: i18n.language,
-    isSubmitting,
-    prevButtonRef,
-    nextButtonRef,
-  });
-
   // scroll top on step
   React.useEffect(() => {
     if (formBodyRef.current) formBodyRef.current.scrollTo({ top: 0, behavior: 'auto' });
@@ -282,7 +268,7 @@ export default function ConclusionRequest({ onSubmitResult, saveDraftTrigger = 0
 
   // draft helpers
   const removeDraftUploadedFile = useCallback(fileType => {
-    const keyByType = { thesis: 'thesis', resume: 'resume', additional: 'additional' };
+    const keyByType = { thesis: 'thesis', summary: 'summary', additional: 'additional' };
     const key = keyByType[fileType];
     if (!key) return;
 
@@ -392,11 +378,11 @@ export default function ConclusionRequest({ onSubmitResult, saveDraftTrigger = 0
         );
       }
 
-      if (resumePdf) formData.append('thesisResume', resumePdf);
+      if (summaryPdf) formData.append('thesisSummary', summaryPdf);
       if (pdfFile) formData.append('thesisFile', pdfFile);
       if (supplementaryZip) formData.append('additionalZip', supplementaryZip);
 
-      if (isDraft && draftFilesToRemove.resume) formData.append('removeThesisResume', 'true');
+      if (isDraft && draftFilesToRemove.summary) formData.append('removeThesisSummary', 'true');
       if (isDraft && draftFilesToRemove.thesis) formData.append('removeThesisFile', 'true');
       if (isDraft && draftFilesToRemove.additional) formData.append('removeAdditionalZip', 'true');
 
@@ -415,7 +401,7 @@ export default function ConclusionRequest({ onSubmitResult, saveDraftTrigger = 0
       otherEmbargoReason,
       pdfFile,
       primarySdg,
-      resumePdf,
+      summaryPdf,
       secondarySdg1,
       secondarySdg2,
       supplementaryZip,
@@ -435,7 +421,7 @@ export default function ConclusionRequest({ onSubmitResult, saveDraftTrigger = 0
     buildConclusionFormData,
     draftFilesToRemove,
     pdfFile,
-    resumePdf,
+    summaryPdf,
     supplementaryZip,
     setDraftUploadedFiles,
     setDraftFilesToRemove,
@@ -540,8 +526,8 @@ export default function ConclusionRequest({ onSubmitResult, saveDraftTrigger = 0
       setLicenseChoice,
       checkRecommendedLicense,
 
-      resumePdf,
-      setResumePdf,
+      summaryPdf,
+      setSummaryPdf,
       pdfFile,
       setPdfFile,
       supplementaryZip,
@@ -557,7 +543,7 @@ export default function ConclusionRequest({ onSubmitResult, saveDraftTrigger = 0
       allDeclarationsChecked,
 
       submissionOutcome,
-      requiredResume,
+      requiredSummary,
     }),
     [
       t,
@@ -591,7 +577,7 @@ export default function ConclusionRequest({ onSubmitResult, saveDraftTrigger = 0
       licenses,
       licenseChoice,
       checkRecommendedLicense,
-      resumePdf,
+      summaryPdf,
       pdfFile,
       supplementaryZip,
       draftUploadedFiles,
@@ -601,7 +587,7 @@ export default function ConclusionRequest({ onSubmitResult, saveDraftTrigger = 0
       decl,
       allDeclarationsChecked,
       submissionOutcome,
-      requiredResume,
+      requiredSummary,
     ],
   );
 
@@ -620,7 +606,6 @@ export default function ConclusionRequest({ onSubmitResult, saveDraftTrigger = 0
                 <>
                   <div className="cr-steps-actions cr-steps-actions-left">
                     <Button
-                      ref={prevButtonRef}
                       className={`btn-outlined-${appliedTheme} cr-steps-nav-btn`}
                       size="md"
                       onClick={goToPreviousStep}
@@ -628,7 +613,6 @@ export default function ConclusionRequest({ onSubmitResult, saveDraftTrigger = 0
                       aria-hidden={currentStep === 0}
                       tabIndex={currentStep === 0 ? -1 : undefined}
                       style={{
-                        ...(shouldSyncNavButtonsWidth && navButtonsWidth ? { width: `${navButtonsWidth}px` } : {}),
                         ...(currentStep === 0 ? { visibility: 'hidden', pointerEvents: 'none' } : {}),
                       }}
                     >
@@ -642,19 +626,14 @@ export default function ConclusionRequest({ onSubmitResult, saveDraftTrigger = 0
                   <div className="cr-steps-actions cr-steps-actions-right">
                     {currentStep < steps.length - 1 ? (
                       <Button
-                        ref={nextButtonRef}
                         className={`btn-primary-${appliedTheme} cr-steps-nav-btn`}
                         onClick={goToNextStep}
                         disabled={isSubmitting || !stepValidity[currentStep]}
-                        style={
-                          shouldSyncNavButtonsWidth && navButtonsWidth ? { width: `${navButtonsWidth}px` } : undefined
-                        }
                       >
                         {t('carriera.conclusione_tesi.next_step')} <i className="fa-solid fa-arrow-right ps-2" />
                       </Button>
                     ) : (
                       <Button
-                        ref={nextButtonRef}
                         className={`btn-primary-${appliedTheme} cr-steps-nav-btn`}
                         onClick={() => setShowConfirmationModal(true)}
                         disabled={!canSubmit || isSubmitting}

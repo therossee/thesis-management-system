@@ -10,7 +10,7 @@ import InfoTooltip from '../InfoTooltip';
 export default function ThesisSummaryCard({
   t,
   thesis,
-  requiredResume,
+  requiredSummary,
   showFullAbstract,
   setShowFullAbstract,
   onDownload,
@@ -80,8 +80,8 @@ export default function ThesisSummaryCard({
 
         <div className="mt-3 mb-2 fw-semibold">{t('carriera.conclusione_tesi.uploaded')}</div>
         <div className="d-flex flex-wrap align-items-center gap-3 mb-3">
-          {requiredResume &&
-            renderDocumentLink('file-pdf', t('carriera.conclusione_tesi.resume'), thesis.thesisResumePath, 'resume')}
+          {requiredSummary &&
+            renderDocumentLink('file-pdf', t('carriera.conclusione_tesi.summary'), thesis.thesisSummaryPath, 'summary')}
           {renderDocumentLink(
             'file-circle-check',
             t('carriera.conclusione_tesi.thesis_pdfa'),
@@ -103,7 +103,7 @@ export default function ThesisSummaryCard({
 ThesisSummaryCard.propTypes = {
   t: PropTypes.func.isRequired,
   thesis: PropTypes.object.isRequired,
-  requiredResume: PropTypes.bool.isRequired,
+  requiredSummary: PropTypes.bool.isRequired,
   showFullAbstract: PropTypes.bool.isRequired,
   setShowFullAbstract: PropTypes.func.isRequired,
   onDownload: PropTypes.func.isRequired,

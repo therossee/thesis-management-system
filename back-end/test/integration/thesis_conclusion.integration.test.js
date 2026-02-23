@@ -127,8 +127,8 @@ describe('POST /api/thesis-conclusion/*', () => {
         filename: 'final file?.pdf',
         contentType: 'application/pdf',
       })
-      .attach('thesisResume', Buffer.from('%PDF-1.4\nresume-placeholder'), {
-        filename: 'resume file?.pdf',
+      .attach('thesisSummary', Buffer.from('%PDF-1.4\nsummary-placeholder'), {
+        filename: 'summary file?.pdf',
         contentType: 'application/pdf',
       });
 

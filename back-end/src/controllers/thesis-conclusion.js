@@ -33,7 +33,7 @@ const {
   safeUnlink,
 } = require('../utils/uploads');
 const { writeValidatedPdf } = require('../utils/pdfa');
-const { isResumeRequiredForStudent } = require('../utils/requiredResume');
+const { isSummaryRequiredForStudent } = require('../utils/requiredSummary');
 const {
   parseDraftRequestData,
   getLoggedStudentOrThrow,
@@ -48,7 +48,7 @@ const {
 const sendThesisConclusionRequest = async (req, res) => {
   try {
     const files = {
-      thesisResume: req.files?.thesisResume?.[0] || null,
+      thesisSummary: req.files?.thesisSummary?.[0] || null,
       thesisFile: req.files?.thesisFile?.[0] || null,
       additionalZip: req.files?.additionalZip?.[0] || null,
     };
@@ -68,7 +68,7 @@ const sendThesisConclusionRequest = async (req, res) => {
   } catch (error) {
     await cleanupUploads(
       req.files?.thesisFile?.[0] || null,
-      req.files?.thesisResume?.[0] || null,
+      req.files?.thesisSummary?.[0] || null,
       req.files?.additionalZip?.[0] || null,
     );
     if (error instanceof ZodError) {
@@ -185,27 +185,27 @@ const getSessionDeadlines = async (req, res) => {
 const uploadFinalThesis = async (req, res) => {
   try {
     const thesisFile = req.files?.thesisFile?.[0] || null;
-    const thesisResume = req.files?.thesisResume?.[0] || null;
+    const thesisSummary = req.files?.thesisSummary?.[0] || null;
     const additionalZip = req.files?.additionalZip?.[0] || null;
 
     if (!thesisFile) return res.status(400).json({ error: 'Missing thesis file' });
 
     const logged = await LoggedStudent.findOne();
     if (!logged) {
-      await cleanupUploads(thesisFile, thesisResume, additionalZip);
+      await cleanupUploads(thesisFile, thesisSummary, additionalZip);
       return res.status(401).json({ error: 'Unauthorized' });
     }
 
     const loggedStudent = await Student.findByPk(logged.student_id);
     if (!loggedStudent) {
-      await cleanupUploads(thesisFile, thesisResume, additionalZip);
+      await cleanupUploads(thesisFile, thesisSummary, additionalZip);
       return res.status(404).json({ error: 'Student not found' });
     }
 
-    const requiredResume = await isResumeRequiredForStudent(loggedStudent);
-    if (requiredResume && !thesisResume) {
+    const requiredSummary = await isSummaryRequiredForStudent(loggedStudent);
+    if (requiredSummary && !thesisSummary) {
       await cleanupUploads(thesisFile, additionalZip);
-      return res.status(400).json({ error: 'Missing thesis resume file' });
+      return res.status(400).json({ error: 'Missing thesis summary file' });
     }
 
     const uploadBaseDir = path.join(__dirname, '..', '..', 'uploads', 'final_thesis', String(loggedStudent.id));
@@ -216,14 +216,14 @@ const uploadFinalThesis = async (req, res) => {
     try {
       await writeValidatedPdf({ file: thesisFile, destinationPath: thesisPdfPath, safeUnlink });
     } catch (error) {
-      await cleanupUploads(thesisResume, additionalZip);
+      await cleanupUploads(thesisSummary, additionalZip);
       return res.status(error.status || 500).json({ error: error.message });
     }
 
-    if (thesisResume?.path) {
-      const resumePdfPath = path.join(uploadBaseDir, `final_resume_${loggedStudent.id}.pdf`);
+    if (thesisSummary?.path) {
+      const summaryPdfPath = path.join(uploadBaseDir, `final_summary_${loggedStudent.id}.pdf`);
       try {
-        await writeValidatedPdf({ file: thesisResume, destinationPath: resumePdfPath, safeUnlink });
+        await writeValidatedPdf({ file: thesisSummary, destinationPath: summaryPdfPath, safeUnlink });
       } catch (error) {
         await cleanupUploads(additionalZip);
         return res.status(error.status || 500).json({ error: error.message });
@@ -256,10 +256,10 @@ const uploadFinalThesis = async (req, res) => {
       thesis.thesis_file = null;
       thesis.thesis_file_path = path.relative(path.join(__dirname, '..', '..'), thesisPdfPath);
 
-      if (thesisResume?.path || requiredResume) {
-        const resumePdfPath = path.join(uploadBaseDir, `final_resume_${loggedStudent.id}.pdf`);
-        thesis.thesis_resume = null;
-        thesis.thesis_resume_path = path.relative(path.join(__dirname, '..', '..'), resumePdfPath);
+      if (thesisSummary?.path || requiredSummary) {
+        const summaryPdfPath = path.join(uploadBaseDir, `final_summary_${loggedStudent.id}.pdf`);
+        thesis.thesis_summary = null;
+        thesis.thesis_summary_path = path.relative(path.join(__dirname, '..', '..'), summaryPdfPath);
       }
 
       if (additionalZip?.path) {
@@ -281,10 +281,10 @@ const uploadFinalThesis = async (req, res) => {
 };
 
 const saveThesisConclusionRequestDraft = async (req, res) => {
-  const thesisResume = req.files?.thesisResume?.[0] || null;
+  const thesisSummary = req.files?.thesisSummary?.[0] || null;
   const thesisFile = req.files?.thesisFile?.[0] || null;
   const additionalZip = req.files?.additionalZip?.[0] || null;
-  const files = { thesisResume, thesisFile, additionalZip };
+  const files = { thesisSummary, thesisFile, additionalZip };
 
   try {
     const draftData = parseDraftRequestData(req, files);
@@ -305,7 +305,7 @@ const saveThesisConclusionRequestDraft = async (req, res) => {
 
     return res.status(200).json({ message: 'Draft saved successfully' });
   } catch (error) {
-    await cleanupUploads(thesisResume, thesisFile, additionalZip);
+    await cleanupUploads(thesisSummary, thesisFile, additionalZip);
     if (error instanceof ZodError) {
       return res.status(400).json({ error: error.issues.map(issue => issue.message).join(', ') });
     }
@@ -348,9 +348,9 @@ const getThesisConclusionRequestDraft = async (req, res) => {
       .filter(Boolean)
       .map(t => teacherOverviewSchema.parse(t));
 
-    const [draftThesisFilePath, draftResumePath, draftAdditionalPath] = await Promise.all([
+    const [draftThesisFilePath, draftSummaryPath, draftAdditionalPath] = await Promise.all([
       resolveValidDraftFilePath(thesis.thesis_file_path, loggedStudent.id, baseUploadDir),
-      resolveValidDraftFilePath(thesis.thesis_resume_path, loggedStudent.id, baseUploadDir),
+      resolveValidDraftFilePath(thesis.thesis_summary_path, loggedStudent.id, baseUploadDir),
       resolveValidDraftFilePath(thesis.additional_zip_path, loggedStudent.id, baseUploadDir),
     ]);
 
@@ -367,7 +367,7 @@ const getThesisConclusionRequestDraft = async (req, res) => {
       language: thesis.language ?? null,
       licenseId: thesis.license_id ?? null,
       thesisFilePath: draftThesisFilePath,
-      thesisResumePath: draftResumePath,
+      thesisSummaryPath: draftSummaryPath,
       additionalZipPath: draftAdditionalPath,
       thesisDraftDate: thesis.thesis_draft_date ? thesis.thesis_draft_date.toISOString() : null,
       coSupervisors,

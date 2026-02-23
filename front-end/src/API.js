@@ -326,11 +326,11 @@ const updateThesisConclusionStatus = async updateData => {
   }
 };
 
-const uploadFinalThesis = async (thesisFile, thesisResume = null, additionalZip = null) => {
+const uploadFinalThesis = async (thesisFile, thesisSummary = null, additionalZip = null) => {
   try {
     const formData = new FormData();
     formData.append('thesisFile', thesisFile);
-    if (thesisResume) formData.append('thesisResume', thesisResume);
+    if (thesisSummary) formData.append('thesisSummary', thesisSummary);
     if (additionalZip) formData.append('additionalZip', additionalZip);
 
     const response = await axios.post(`${URL}/thesis-conclusion/upload-final-thesis`, formData, {
@@ -356,12 +356,12 @@ const getThesisFile = async (thesisId, fileType) => {
   }
 };
 
-const getRequiredResumeForLoggedStudent = async () => {
+const getRequiredSummaryForLoggedStudent = async () => {
   try {
-    const response = await axios.get(`${URL}/students/required-resume`);
+    const response = await axios.get(`${URL}/students/required-summary`);
     return response.data;
   } catch (error) {
-    console.error('Error fetching required resume for logged student:', error);
+    console.error('Error fetching required summary for logged student:', error);
   }
 };
 
@@ -455,7 +455,7 @@ const API = {
   updateThesisConclusionStatus,
   getAllTheses,
   uploadFinalThesis,
-  getRequiredResumeForLoggedStudent,
+  getRequiredSummaryForLoggedStudent,
   getThesisFile,
   requestThesisCancelation,
 };

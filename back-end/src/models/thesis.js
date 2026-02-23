@@ -35,7 +35,7 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.STRING(1024),
         allowNull: true,
       },
-      thesis_resume_path: {
+      thesis_summary_path: {
         type: DataTypes.STRING(1024),
         allowNull: true,
       },

@@ -88,7 +88,7 @@ const getLoggedStudentThesis = async (req, res) => {
         : null,
       thesis_draft_date: thesisData.thesis_draft_date ? thesisData.thesis_draft_date.toISOString() : null,
       thesis_file_path: thesisData.thesis_file_path,
-      thesis_resume_path: thesisData.thesis_resume_path,
+      thesis_summary_path: thesisData.thesis_summary_path,
       additional_zip_path: thesisData.additional_zip_path,
     };
 
@@ -210,8 +210,8 @@ const getThesisFile = async (req, res) => {
     let filePath;
     if (fileType === 'thesis') {
       filePath = thesis.thesis_file_path;
-    } else if (fileType === 'resume') {
-      filePath = thesis.thesis_resume_path;
+    } else if (fileType === 'summary') {
+      filePath = thesis.thesis_summary_path;
     } else if (fileType === 'additional') {
       filePath = thesis.additional_zip_path;
     } else {

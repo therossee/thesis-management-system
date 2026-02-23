@@ -9,7 +9,7 @@ export default function useConclusionDraft({
   buildConclusionFormData,
   draftFilesToRemove,
   pdfFile,
-  resumePdf,
+  summaryPdf,
   supplementaryZip,
   setDraftUploadedFiles,
   setDraftFilesToRemove,
@@ -28,11 +28,11 @@ export default function useConclusionDraft({
           : pdfFile
             ? { fileType: 'thesis', fileName: pdfFile.name, canPreview: true }
             : prev.thesis,
-        resume: draftFilesToRemove.resume
+        summary: draftFilesToRemove.summary
           ? null
-          : resumePdf
-            ? { fileType: 'resume', fileName: resumePdf.name, canPreview: true }
-            : prev.resume,
+          : summaryPdf
+            ? { fileType: 'summary', fileName: summaryPdf.name, canPreview: true }
+            : prev.summary,
         additional: draftFilesToRemove.additional
           ? null
           : supplementaryZip
@@ -40,7 +40,7 @@ export default function useConclusionDraft({
             : prev.additional,
       }));
 
-      setDraftFilesToRemove({ thesis: false, resume: false, additional: false });
+      setDraftFilesToRemove({ thesis: false, summary: false, additional: false });
 
       if (onSaveDraftResult) onSaveDraftResult(true);
       return true;
@@ -57,7 +57,7 @@ export default function useConclusionDraft({
     draftFilesToRemove,
     onSaveDraftResult,
     pdfFile,
-    resumePdf,
+    summaryPdf,
     supplementaryZip,
     setDraftUploadedFiles,
     setDraftFilesToRemove,

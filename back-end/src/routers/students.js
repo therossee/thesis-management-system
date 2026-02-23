@@ -4,12 +4,12 @@ const {
   getStudents,
   getLoggedStudent,
   updateLoggedStudent,
-  getRequiredResumeForLoggedStudent,
+  getRequiredSummaryForLoggedStudent,
 } = require('../controllers/students');
 
 router.get('/', getStudents);
 router.get('/logged-student', getLoggedStudent);
-router.get('/required-resume', getRequiredResumeForLoggedStudent);
+router.get('/required-summary', getRequiredSummaryForLoggedStudent);
 router.put('/logged-student', updateLoggedStudent);
 
 module.exports = router;

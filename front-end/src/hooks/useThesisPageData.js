@@ -4,7 +4,7 @@ export default function useThesisPageData({ thesis, thesisApplication, dataId, A
   const [isLoading, setIsLoading] = useState(false);
   const [sessionDeadlines, setSessionDeadlines] = useState({ graduationSession: null, deadlines: [] });
   const [isEligible, setIsEligible] = useState(true);
-  const [requiredResume, setRequiredResume] = useState(false);
+  const [requiredSummary, setRequiredSummary] = useState(false);
   const [appStatusHistory, setAppStatusHistory] = useState(thesis ? thesis.applicationStatusHistory : []);
 
   useEffect(() => {
@@ -17,7 +17,7 @@ export default function useThesisPageData({ thesis, thesisApplication, dataId, A
     const safeSetIsLoading = safe(setIsLoading);
     const safeSetSessionDeadlines = safe(setSessionDeadlines);
     const safeSetIsEligible = safe(setIsEligible);
-    const safeSetRequiredResume = safe(setRequiredResume);
+    const safeSetRequiredSummary = safe(setRequiredSummary);
     const safeSetAppStatusHistory = safe(setAppStatusHistory);
 
     async function run() {
@@ -28,13 +28,13 @@ export default function useThesisPageData({ thesis, thesisApplication, dataId, A
         safeSetIsEligible(Boolean(eligibilityRes?.eligible));
 
         if (thesis) {
-          const [deadlinesRes, requiredResumeRes] = await Promise.all([
+          const [deadlinesRes, requiredSummaryRes] = await Promise.all([
             API.getSessionDeadlines('thesis'),
-            API.getRequiredResumeForLoggedStudent(),
+            API.getRequiredSummaryForLoggedStudent(),
           ]);
 
           safeSetSessionDeadlines(deadlinesRes);
-          safeSetRequiredResume(Boolean(requiredResumeRes?.requiredResume));
+          safeSetRequiredSummary(Boolean(requiredSummaryRes?.requiredSummary));
           safeSetAppStatusHistory(thesis.applicationStatusHistory || []);
           return;
         }
@@ -71,7 +71,7 @@ export default function useThesisPageData({ thesis, thesisApplication, dataId, A
     isLoading,
     sessionDeadlines,
     isEligible,
-    requiredResume,
+    requiredSummary,
     appStatusHistory,
     setAppStatusHistory,
   };

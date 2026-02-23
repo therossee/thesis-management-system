@@ -232,7 +232,7 @@ CREATE TABLE IF NOT EXISTS thesis(
     abstract TEXT,
     abstract_eng TEXT,
     thesis_file_path VARCHAR(1024),
-    thesis_resume_path VARCHAR(1024),
+    thesis_summary_path VARCHAR(1024),
     additional_zip_path VARCHAR(1024),
     license_id INT,
     thesis_start_date DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,

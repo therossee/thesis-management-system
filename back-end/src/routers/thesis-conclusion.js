@@ -30,7 +30,7 @@ const upload = multer({
 router.post(
   '/',
   upload.fields([
-    { name: 'thesisResume', maxCount: 1 },
+    { name: 'thesisSummary', maxCount: 1 },
     { name: 'thesisFile', maxCount: 1 },
     { name: 'additionalZip', maxCount: 1 },
   ]),
@@ -39,7 +39,7 @@ router.post(
 router.post(
   '/draft',
   upload.fields([
-    { name: 'thesisResume', maxCount: 1 },
+    { name: 'thesisSummary', maxCount: 1 },
     { name: 'thesisFile', maxCount: 1 },
     { name: 'additionalZip', maxCount: 1 },
   ]),
@@ -54,7 +54,7 @@ router.post(
   '/upload-final-thesis',
   upload.fields([
     { name: 'thesisFile', maxCount: 1 },
-    { name: 'thesisResume', maxCount: 1 },
+    { name: 'thesisSummary', maxCount: 1 },
     { name: 'additionalZip', maxCount: 1 },
   ]),
   uploadFinalThesis,

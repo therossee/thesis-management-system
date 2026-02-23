@@ -22,7 +22,7 @@ const toSnakeCase = require('./snakeCase');
 const { parseJsonField } = require('./parseJson');
 const { ensureDirExists, moveFile, safeUnlink } = require('./uploads');
 const { writeValidatedPdf } = require('./pdfa');
-const { isResumeRequiredForStudent } = require('./requiredResume');
+const { isSummaryRequiredForStudent } = require('./requiredSummary');
 const thesisConclusionRequestSchema = require('../schemas/ThesisConclusionRequest');
 const thesisConclusionResponseSchema = require('../schemas/ThesisConclusionResponse');
 
@@ -38,7 +38,7 @@ const parseConclusionRequestData = (req, files) =>
     licenseId: req.body.licenseId || null,
     sdgs: toSnakeCase(parseJsonField(req.body.sdgs, null)),
     embargo: toSnakeCase(parseJsonField(req.body.embargo, null)),
-    thesisResume: files.thesisResume,
+    thesisSummary: files.thesisSummary,
     thesisFile: files.thesisFile,
     additionalZip: files.additionalZip,
   });
@@ -202,9 +202,9 @@ const executeConclusionRequestTransaction = async ({ requestData, files, transac
   const { title, abstract, language, coSupervisors, sdgs, keywords, licenseId, embargo } = requestData;
   if (!title || !abstract) throw httpError(400, 'Missing thesis title or abstract');
 
-  const requiredResume = await isResumeRequiredForStudent(loggedStudent);
+  const requiredSummary = await isSummaryRequiredForStudent(loggedStudent);
   if (!files.thesisFile) throw httpError(400, 'Missing thesis file');
-  if (requiredResume && !files.thesisResume) throw httpError(400, 'Missing thesis resume');
+  if (requiredSummary && !files.thesisSummary) throw httpError(400, 'Missing thesis summary');
 
   const titleEng = language === 'en' ? title : requestData.titleEng;
   const abstractEng = language === 'en' ? abstract : requestData.abstractEng;
@@ -224,14 +224,14 @@ const executeConclusionRequestTransaction = async ({ requestData, files, transac
   thesis.thesis_file = null;
   thesis.thesis_file_path = path.relative(baseUploadDir, thesisPdfPath);
 
-  if (files.thesisResume) {
-    const resumePath = path.join(uploadBaseDir, `resume_${loggedStudent.id}.pdf`);
-    await moveFile(files.thesisResume.path, resumePath);
-    thesis.thesis_resume = null;
-    thesis.thesis_resume_path = path.relative(baseUploadDir, resumePath);
+  if (files.thesisSummary) {
+    const summaryPath = path.join(uploadBaseDir, `summary_${loggedStudent.id}.pdf`);
+    await moveFile(files.thesisSummary.path, summaryPath);
+    thesis.thesis_summary = null;
+    thesis.thesis_summary_path = path.relative(baseUploadDir, summaryPath);
   } else {
-    thesis.thesis_resume = null;
-    thesis.thesis_resume_path = null;
+    thesis.thesis_summary = null;
+    thesis.thesis_summary_path = null;
   }
 
   if (files.additionalZip) {
@@ -312,7 +312,7 @@ const buildConclusionResponse = async updatedThesisId => {
     abstract: updatedThesis.abstract,
     abstract_eng: updatedThesis.abstract_eng,
     thesis_file_path: updatedThesis.thesis_file_path,
-    thesis_resume_path: updatedThesis.thesis_resume_path,
+    thesis_summary_path: updatedThesis.thesis_summary_path,
     additional_zip_path: updatedThesis.additional_zip_path,
     license_id: updatedThesis.license_id,
     company_id: updatedThesis.company_id,

@@ -17,8 +17,8 @@ export default function useConclusionValidation({
   embargoPeriod,
   otherEmbargoReason,
   licenseChoice,
-  requiredResume,
-  resumePdf,
+  requiredSummary,
+  summaryPdf,
   pdfFile,
 }) {
   const needsEnglishTranslation = lang !== 'en';
@@ -61,8 +61,8 @@ export default function useConclusionValidation({
     }
   };
 
-  const resumeValid = !requiredResume || !!resumePdf;
-  const baseValid = detailsValid && allDeclarationsChecked() && !!pdfFile && resumeValid;
+  const summaryValid = !requiredSummary || !!summaryPdf;
+  const baseValid = detailsValid && allDeclarationsChecked() && !!pdfFile && summaryValid;
 
   const denyValid =
     authorization !== 'deny'
@@ -80,7 +80,7 @@ export default function useConclusionValidation({
     needsEnglishTranslation,
     detailsValid,
     allDeclarationsChecked,
-    resumeValid,
+    summaryValid,
     canSubmit,
     denyValid,
     authorizeValid,

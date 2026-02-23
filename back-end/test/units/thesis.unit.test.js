@@ -382,9 +382,9 @@ describe('Student Thesis Controllers', () => {
     });
 
     test('should return 404 if requested file path is missing', async () => {
-      req = { params: { id: 123, fileType: 'resume' } };
+      req = { params: { id: 123, fileType: 'summary' } };
       res = { status: jest.fn().mockReturnThis(), json: jest.fn(), download: jest.fn() };
-      Thesis.findByPk.mockResolvedValue({ id: 123, thesis_resume_path: null });
+      Thesis.findByPk.mockResolvedValue({ id: 123, thesis_summary_path: null });
 
       await getThesisFile(req, res);
 

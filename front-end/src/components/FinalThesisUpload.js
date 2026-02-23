@@ -95,46 +95,46 @@ UploadCard.propTypes = {
 
 function FinalThesisUpload({ show, setShow, onSubmitResult }) {
   const [showConfirmationModal, setShowConfirmationModal] = useState(false);
-  const [resumePdf, setResumePdf] = useState(null);
+  const [summaryPdf, setSummaryPdf] = useState(null);
   const [pdfFile, setPdfFile] = useState(null);
   const [additionalZip, setAdditionalZip] = useState(null);
   const { t, i18n } = useTranslation();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { theme } = useContext(ThemeContext);
   const appliedTheme = theme === 'auto' ? getSystemTheme() : theme;
-  const [requiredResume, setRequiredResume] = useState(false);
-  const resumeInputRef = useRef(null);
+  const [requiredSummary, setRequiredSummary] = useState(false);
+  const summaryInputRef = useRef(null);
   const thesisInputRef = useRef(null);
   const additionalZipInputRef = useRef(null);
 
   const resetForm = () => {
-    setResumePdf(null);
+    setSummaryPdf(null);
     setPdfFile(null);
     setAdditionalZip(null);
-    if (resumeInputRef.current) resumeInputRef.current.value = '';
+    if (summaryInputRef.current) summaryInputRef.current.value = '';
     if (thesisInputRef.current) thesisInputRef.current.value = '';
     if (additionalZipInputRef.current) additionalZipInputRef.current.value = '';
   };
 
   useEffect(() => {
-    API.getRequiredResumeForLoggedStudent()
-      .then(requiredResumeData => {
-        if (requiredResumeData) {
-          setRequiredResume(Boolean(requiredResumeData.requiredResume));
+    API.getRequiredSummaryForLoggedStudent()
+      .then(requiredSummaryData => {
+        if (requiredSummaryData) {
+          setRequiredSummary(Boolean(requiredSummaryData.requiredSummary));
         }
       })
       .catch(error => {
-        console.error('Error fetching required resume data:', error);
+        console.error('Error fetching required summary data:', error);
       });
   }, []);
 
   const handleUpload = async () => {
-    if (!pdfFile || (requiredResume && !resumePdf)) return;
+    if (!pdfFile || (requiredSummary && !summaryPdf)) return;
 
     setIsSubmitting(true);
     setShow(false);
     setShowConfirmationModal(false);
-    API.uploadFinalThesis(pdfFile, requiredResume ? resumePdf : null, additionalZip)
+    API.uploadFinalThesis(pdfFile, requiredSummary ? summaryPdf : null, additionalZip)
       .then(() => {
         onSubmitResult(true);
         resetForm();
@@ -149,7 +149,7 @@ function FinalThesisUpload({ show, setShow, onSubmitResult }) {
       });
   };
 
-  const canSubmit = !!pdfFile && (!requiredResume || !!resumePdf) && !isSubmitting;
+  const canSubmit = !!pdfFile && (!requiredSummary || !!summaryPdf) && !isSubmitting;
   const removeFileText = i18n.language === 'it' ? 'Rimuovi file' : 'Remove file';
 
   return (
@@ -189,29 +189,29 @@ function FinalThesisUpload({ show, setShow, onSubmitResult }) {
                 {t('carriera.conclusione_tesi.required_fields_note')}
               </div>
               <Row className="mb-2 g-3 justify-content-center final-thesis-upload-row">
-                {requiredResume && (
+                {requiredSummary && (
                   <Col md={6} lg={4}>
                     <UploadCard
                       t={t}
-                      id="final-thesis-resume-pdfa"
+                      id="final-thesis-summary-pdfa"
                       label={t('carriera.conclusione_tesi.summary_for_committee_pdfa')}
                       maxSizeKey="carriera.conclusione_tesi.max_size_20_mb"
                       accept="application/pdf"
-                      file={resumePdf}
-                      onFileChange={setResumePdf}
+                      file={summaryPdf}
+                      onFileChange={setSummaryPdf}
                       onRemove={() => {
-                        setResumePdf(null);
-                        if (resumeInputRef.current) resumeInputRef.current.value = '';
+                        setSummaryPdf(null);
+                        if (summaryInputRef.current) summaryInputRef.current.value = '';
                       }}
                       removeFileText={removeFileText}
                       appliedTheme={appliedTheme}
                       isSubmitting={isSubmitting}
-                      inputRef={resumeInputRef}
+                      inputRef={summaryInputRef}
                       required
                     />
                   </Col>
                 )}
-                <Col md={6} lg={requiredResume ? 4 : 6}>
+                <Col md={6} lg={requiredSummary ? 4 : 6}>
                   <UploadCard
                     t={t}
                     id="final-thesis-pdfa"
@@ -231,7 +231,7 @@ function FinalThesisUpload({ show, setShow, onSubmitResult }) {
                     required
                   />
                 </Col>
-                <Col md={6} lg={requiredResume ? 4 : 6}>
+                <Col md={6} lg={requiredSummary ? 4 : 6}>
                   <UploadCard
                     t={t}
                     id="final-thesis-additional-zip"

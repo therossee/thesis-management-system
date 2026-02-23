@@ -37,7 +37,7 @@ const {
 const selectLicenseAttributes = require('../../src/utils/selectLicenseAttributes');
 const selectMotivationAttributes = require('../../src/utils/selectMotivationAttributes');
 const selectTeacherAttributes = require('../../src/utils/selectTeacherAttributes');
-const { isResumeRequiredForStudent } = require('../../src/utils/requiredResume');
+const { isSummaryRequiredForStudent } = require('../../src/utils/requiredSummary');
 const { writeValidatedPdf } = require('../../src/utils/pdfa');
 const {
   cleanupUploads,
@@ -76,7 +76,7 @@ jest.mock('../../src/models', () => ({
 jest.mock('../../src/utils/selectLicenseAttributes', () => jest.fn(() => ['id', 'name']));
 jest.mock('../../src/utils/selectMotivationAttributes', () => jest.fn(() => ['id', 'motivation']));
 jest.mock('../../src/utils/selectTeacherAttributes', () => jest.fn(() => ['id', 'first_name', 'last_name']));
-jest.mock('../../src/utils/requiredResume', () => ({ isResumeRequiredForStudent: jest.fn() }));
+jest.mock('../../src/utils/requiredSummary', () => ({ isSummaryRequiredForStudent: jest.fn() }));
 jest.mock('../../src/utils/pdfa', () => ({ writeValidatedPdf: jest.fn() }));
 jest.mock('../../src/utils/uploads', () => ({
   ensureDirExists: jest.fn(),
@@ -218,7 +218,7 @@ describe('Thesis Conclusion Controller', () => {
       },
       files: {
         thesisFile: [{ path: '/tmp/thesis.pdf', mimetype: 'application/pdf', originalname: 'thesis.pdf' }],
-        thesisResume: [{ path: '/tmp/resume.pdf', mimetype: 'application/pdf', originalname: 'resume.pdf' }],
+        thesisSummary: [{ path: '/tmp/summary.pdf', mimetype: 'application/pdf', originalname: 'summary.pdf' }],
         additionalZip: [{ path: '/tmp/additional.zip', mimetype: 'application/zip', originalname: 'a.zip' }],
       },
     });
@@ -232,7 +232,7 @@ describe('Thesis Conclusion Controller', () => {
       abstract: null,
       abstract_eng: null,
       thesis_file_path: null,
-      thesis_resume_path: null,
+      thesis_summary_path: null,
       additional_zip_path: null,
       license_id: null,
       company_id: null,
@@ -254,7 +254,7 @@ describe('Thesis Conclusion Controller', () => {
       LoggedStudent.findOne.mockResolvedValue({ student_id: '320213' });
       Student.findByPk.mockResolvedValue({ id: '320213', degree_id: '37-18' });
       Thesis.findOne.mockResolvedValue(thesisRecord);
-      isResumeRequiredForStudent.mockResolvedValue(false);
+      isSummaryRequiredForStudent.mockResolvedValue(false);
       ensureDirExists.mockResolvedValue(undefined);
       writeValidatedPdf.mockResolvedValue(undefined);
       moveFile.mockResolvedValue(undefined);
@@ -273,7 +273,7 @@ describe('Thesis Conclusion Controller', () => {
         abstract: 'Abstract IT',
         abstract_eng: 'Abstract EN',
         thesis_file_path: 'uploads/thesis_conclusion_request/320213/thesis_320213.pdf',
-        thesis_resume_path: 'uploads/thesis_conclusion_request/320213/resume_320213.pdf',
+        thesis_summary_path: 'uploads/thesis_conclusion_request/320213/summary_320213.pdf',
         additional_zip_path: 'uploads/thesis_conclusion_request/320213/additional_320213.zip',
         license_id: 1,
         company_id: null,
@@ -333,7 +333,7 @@ describe('Thesis Conclusion Controller', () => {
         body: {},
         files: {
           thesisFile: [{ path: '/tmp/thesis.pdf', mimetype: 'application/pdf', originalname: 'thesis.pdf' }],
-          thesisResume: [{ path: '/tmp/resume.pdf', mimetype: 'application/pdf', originalname: 'resume.pdf' }],
+          thesisSummary: [{ path: '/tmp/summary.pdf', mimetype: 'application/pdf', originalname: 'summary.pdf' }],
           additionalZip: [{ path: '/tmp/additional.zip', mimetype: 'application/zip', originalname: 'a.zip' }],
         },
       };
@@ -343,7 +343,7 @@ describe('Thesis Conclusion Controller', () => {
 
       expect(cleanupUploads).toHaveBeenCalledWith(
         req.files.thesisFile[0],
-        req.files.thesisResume[0],
+        req.files.thesisSummary[0],
         req.files.additionalZip[0],
       );
       expect(res.status).toHaveBeenCalledWith(400);
@@ -375,7 +375,7 @@ describe('Thesis Conclusion Controller', () => {
 
       expect(cleanupUploads).toHaveBeenCalledWith(
         req.files.thesisFile[0],
-        req.files.thesisResume[0],
+        req.files.thesisSummary[0],
         req.files.additionalZip[0],
       );
       expect(res.status).toHaveBeenCalledWith(409);
@@ -392,20 +392,20 @@ describe('Thesis Conclusion Controller', () => {
 
       expect(cleanupUploads).toHaveBeenCalledWith(
         req.files.thesisFile[0],
-        req.files.thesisResume[0],
+        req.files.thesisSummary[0],
         req.files.additionalZip[0],
       );
       expect(res.status).toHaveBeenCalledWith(500);
       expect(res.json).toHaveBeenCalledWith({ error: 'Unexpected submit failure' });
     });
 
-    test('should handle invalid JSON fallback and object payloads while submitting without resume/additional files', async () => {
+    test('should handle invalid JSON fallback and object payloads while submitting without summary/additional files', async () => {
       const req = createConclusionReq();
       const res = createRes();
       const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
       const thesisRecord = {
         ...createOngoingThesis(),
-        thesis_resume_path: 'legacy/resume.pdf',
+        thesis_summary_path: 'legacy/summary.pdf',
         additional_zip_path: 'legacy/additional.zip',
       };
 
@@ -421,7 +421,7 @@ describe('Thesis Conclusion Controller', () => {
       LoggedStudent.findOne.mockResolvedValue({ student_id: '320213' });
       Student.findByPk.mockResolvedValue({ id: '320213', degree_id: '37-18' });
       Thesis.findOne.mockResolvedValue(thesisRecord);
-      isResumeRequiredForStudent.mockResolvedValue(false);
+      isSummaryRequiredForStudent.mockResolvedValue(false);
       ensureDirExists.mockResolvedValue(undefined);
       writeValidatedPdf.mockResolvedValue(undefined);
       moveFile.mockResolvedValue(undefined);
@@ -440,7 +440,7 @@ describe('Thesis Conclusion Controller', () => {
         title_eng: null,
         abstract_eng: null,
         thesis_file_path: 'uploads/thesis_conclusion_request/320213/thesis_320213.pdf',
-        thesis_resume_path: null,
+        thesis_summary_path: null,
         additional_zip_path: null,
         license_id: null,
         status: 'conclusion_requested',
@@ -461,12 +461,12 @@ describe('Thesis Conclusion Controller', () => {
         transaction: 'tx',
       });
       expect(ThesisEmbargo.destroy).toHaveBeenCalledWith({ where: { id: 9 }, transaction: 'tx' });
-      expect(thesisRecord.thesis_resume_path).toBeNull();
+      expect(thesisRecord.thesis_summary_path).toBeNull();
       expect(thesisRecord.additional_zip_path).toBeNull();
       expect(res.status).toHaveBeenCalledWith(200);
       expect(res.json).toHaveBeenCalledWith(
         expect.objectContaining({
-          thesisResumePath: null,
+          thesisSummaryPath: null,
           additionalZipPath: null,
         }),
       );
@@ -482,7 +482,7 @@ describe('Thesis Conclusion Controller', () => {
       LoggedStudent.findOne.mockResolvedValue({ student_id: '320213' });
       Student.findByPk.mockResolvedValue({ id: '320213', degree_id: '37-18' });
       Thesis.findOne.mockResolvedValue(thesisRecord);
-      isResumeRequiredForStudent.mockResolvedValue(false);
+      isSummaryRequiredForStudent.mockResolvedValue(false);
       ensureDirExists.mockResolvedValue(undefined);
       writeValidatedPdf.mockResolvedValue(undefined);
       moveFile.mockResolvedValue(undefined);
@@ -507,7 +507,7 @@ describe('Thesis Conclusion Controller', () => {
       LoggedStudent.findOne.mockResolvedValue({ student_id: '320213' });
       Student.findByPk.mockResolvedValue({ id: '320213', degree_id: '37-18' });
       Thesis.findOne.mockResolvedValue(thesisRecord);
-      isResumeRequiredForStudent.mockResolvedValue(false);
+      isSummaryRequiredForStudent.mockResolvedValue(false);
       ensureDirExists.mockResolvedValue(undefined);
       writeValidatedPdf.mockResolvedValue(undefined);
       moveFile.mockResolvedValue(undefined);
@@ -535,7 +535,7 @@ describe('Thesis Conclusion Controller', () => {
       LoggedStudent.findOne.mockResolvedValue({ student_id: '320213' });
       Student.findByPk.mockResolvedValue({ id: '320213', degree_id: '37-18' });
       Thesis.findOne.mockResolvedValue(thesisRecord);
-      isResumeRequiredForStudent.mockResolvedValue(false);
+      isSummaryRequiredForStudent.mockResolvedValue(false);
       ensureDirExists.mockResolvedValue(undefined);
       writeValidatedPdf.mockResolvedValue(undefined);
       moveFile.mockResolvedValue(undefined);
@@ -561,12 +561,12 @@ describe('Thesis Conclusion Controller', () => {
         coSupervisors: JSON.stringify([{ id: 38485, firstName: 'Riccardo', lastName: 'Coppola' }]),
         sdgs: JSON.stringify([{ goalId: 5, level: 'primary' }]),
         licenseId: '',
-        removeThesisResume: 'false',
+        removeThesisSummary: 'false',
         removeThesisFile: 'false',
         removeAdditionalZip: 'false',
       },
       files: {
-        thesisResume: [{ path: '/tmp/resume.pdf', mimetype: 'application/pdf', originalname: 'resume.pdf' }],
+        thesisSummary: [{ path: '/tmp/summary.pdf', mimetype: 'application/pdf', originalname: 'summary.pdf' }],
         thesisFile: [{ path: '/tmp/thesis.pdf', mimetype: 'application/pdf', originalname: 'thesis.pdf' }],
         additionalZip: [{ path: '/tmp/additional.zip', mimetype: 'application/zip', originalname: 'a.zip' }],
       },
@@ -586,7 +586,7 @@ describe('Thesis Conclusion Controller', () => {
         language: null,
         license_id: null,
         thesis_file_path: null,
-        thesis_resume_path: null,
+        thesis_summary_path: null,
         additional_zip_path: null,
         save: jest.fn().mockResolvedValue(undefined),
       };
@@ -648,7 +648,7 @@ describe('Thesis Conclusion Controller', () => {
       await saveThesisConclusionRequestDraft(req, res);
 
       expect(cleanupUploads).toHaveBeenCalledWith(
-        req.files.thesisResume[0],
+        req.files.thesisSummary[0],
         req.files.thesisFile[0],
         req.files.additionalZip[0],
       );
@@ -665,7 +665,7 @@ describe('Thesis Conclusion Controller', () => {
       await saveThesisConclusionRequestDraft(req, res);
 
       expect(cleanupUploads).toHaveBeenCalledWith(
-        req.files.thesisResume[0],
+        req.files.thesisSummary[0],
         req.files.thesisFile[0],
         req.files.additionalZip[0],
       );
@@ -677,7 +677,7 @@ describe('Thesis Conclusion Controller', () => {
       const req = createDraftReq();
       const res = createRes();
       req.body.title = null;
-      req.body.removeThesisResume = true;
+      req.body.removeThesisSummary = true;
       req.body.removeThesisFile = false;
       req.body.removeAdditionalZip = true;
       LoggedStudent.findOne.mockResolvedValue(null);
@@ -703,7 +703,7 @@ describe('Thesis Conclusion Controller', () => {
     test('should reject invalid optional boolean values in draft payload', async () => {
       const req = createDraftReq();
       const res = createRes();
-      req.body.removeThesisResume = 'maybe';
+      req.body.removeThesisSummary = 'maybe';
 
       await saveThesisConclusionRequestDraft(req, res);
 
@@ -1045,7 +1045,7 @@ describe('Thesis Conclusion Controller', () => {
       const req = {
         files: {
           thesisFile: [createUploadedFile({ path: '/tmp/thesis.pdf' })],
-          thesisResume: [createUploadedFile({ path: '/tmp/resume.pdf' })],
+          thesisSummary: [createUploadedFile({ path: '/tmp/summary.pdf' })],
           additionalZip: [createUploadedFile({ path: '/tmp/additional.zip', mimetype: 'application/zip' })],
         },
       };
@@ -1057,7 +1057,7 @@ describe('Thesis Conclusion Controller', () => {
 
       expect(cleanupUploads).toHaveBeenCalledWith(
         req.files.thesisFile[0],
-        req.files.thesisResume[0],
+        req.files.thesisSummary[0],
         req.files.additionalZip[0],
       );
       expect(res.status).toHaveBeenCalledWith(401);
@@ -1068,7 +1068,7 @@ describe('Thesis Conclusion Controller', () => {
       const req = {
         files: {
           thesisFile: [createUploadedFile({ path: '/tmp/thesis.pdf' })],
-          thesisResume: [createUploadedFile({ path: '/tmp/resume.pdf' })],
+          thesisSummary: [createUploadedFile({ path: '/tmp/summary.pdf' })],
           additionalZip: [createUploadedFile({ path: '/tmp/additional.zip', mimetype: 'application/zip' })],
         },
       };
@@ -1081,14 +1081,14 @@ describe('Thesis Conclusion Controller', () => {
 
       expect(cleanupUploads).toHaveBeenCalledWith(
         req.files.thesisFile[0],
-        req.files.thesisResume[0],
+        req.files.thesisSummary[0],
         req.files.additionalZip[0],
       );
       expect(res.status).toHaveBeenCalledWith(404);
       expect(res.json).toHaveBeenCalledWith({ error: 'Student not found' });
     });
 
-    test('should return 400 and cleanup uploads when resume is required but missing', async () => {
+    test('should return 400 and cleanup uploads when summary is required but missing', async () => {
       const req = {
         files: {
           thesisFile: [createUploadedFile({ path: '/tmp/thesis.pdf' })],
@@ -1099,20 +1099,20 @@ describe('Thesis Conclusion Controller', () => {
 
       LoggedStudent.findOne.mockResolvedValue({ student_id: '320213' });
       Student.findByPk.mockResolvedValue({ id: '320213', degree_id: '37-18' });
-      isResumeRequiredForStudent.mockResolvedValue(true);
+      isSummaryRequiredForStudent.mockResolvedValue(true);
 
       await uploadFinalThesis(req, res);
 
       expect(cleanupUploads).toHaveBeenCalledWith(req.files.thesisFile[0], req.files.additionalZip[0]);
       expect(res.status).toHaveBeenCalledWith(400);
-      expect(res.json).toHaveBeenCalledWith({ error: 'Missing thesis resume file' });
+      expect(res.json).toHaveBeenCalledWith({ error: 'Missing thesis summary file' });
     });
 
     test('should return validation error when thesis PDF validation fails', async () => {
       const req = {
         files: {
           thesisFile: [createUploadedFile({ path: '/tmp/thesis.pdf' })],
-          thesisResume: [createUploadedFile({ path: '/tmp/resume.pdf' })],
+          thesisSummary: [createUploadedFile({ path: '/tmp/summary.pdf' })],
           additionalZip: [createUploadedFile({ path: '/tmp/additional.zip', mimetype: 'application/zip' })],
         },
       };
@@ -1122,13 +1122,13 @@ describe('Thesis Conclusion Controller', () => {
 
       LoggedStudent.findOne.mockResolvedValue({ student_id: '320213' });
       Student.findByPk.mockResolvedValue({ id: '320213', degree_id: '37-18' });
-      isResumeRequiredForStudent.mockResolvedValue(false);
+      isSummaryRequiredForStudent.mockResolvedValue(false);
       writeValidatedPdf.mockRejectedValueOnce(validationError);
 
       await uploadFinalThesis(req, res);
 
       expect(ensureDirExists).toHaveBeenCalledTimes(1);
-      expect(cleanupUploads).toHaveBeenCalledWith(req.files.thesisResume[0], req.files.additionalZip[0]);
+      expect(cleanupUploads).toHaveBeenCalledWith(req.files.thesisSummary[0], req.files.additionalZip[0]);
       expect(res.status).toHaveBeenCalledWith(422);
       expect(res.json).toHaveBeenCalledWith({ error: 'Invalid PDF/A' });
     });
@@ -1137,7 +1137,7 @@ describe('Thesis Conclusion Controller', () => {
       const req = {
         files: {
           thesisFile: [createUploadedFile({ path: '/tmp/thesis.pdf' })],
-          thesisResume: [createUploadedFile({ path: '/tmp/resume.pdf' })],
+          thesisSummary: [createUploadedFile({ path: '/tmp/summary.pdf' })],
           additionalZip: [createUploadedFile({ path: '/tmp/additional.zip', mimetype: 'application/zip' })],
         },
       };
@@ -1145,45 +1145,45 @@ describe('Thesis Conclusion Controller', () => {
 
       LoggedStudent.findOne.mockResolvedValue({ student_id: '320213' });
       Student.findByPk.mockResolvedValue({ id: '320213', degree_id: '37-18' });
-      isResumeRequiredForStudent.mockResolvedValue(false);
+      isSummaryRequiredForStudent.mockResolvedValue(false);
       writeValidatedPdf.mockRejectedValueOnce(new Error('Invalid PDF/A without status'));
 
       await uploadFinalThesis(req, res);
 
-      expect(cleanupUploads).toHaveBeenCalledWith(req.files.thesisResume[0], req.files.additionalZip[0]);
+      expect(cleanupUploads).toHaveBeenCalledWith(req.files.thesisSummary[0], req.files.additionalZip[0]);
       expect(res.status).toHaveBeenCalledWith(500);
       expect(res.json).toHaveBeenCalledWith({ error: 'Invalid PDF/A without status' });
     });
 
-    test('should return validation error when resume PDF validation fails', async () => {
+    test('should return validation error when summary PDF validation fails', async () => {
       const req = {
         files: {
           thesisFile: [createUploadedFile({ path: '/tmp/thesis.pdf' })],
-          thesisResume: [createUploadedFile({ path: '/tmp/resume.pdf' })],
+          thesisSummary: [createUploadedFile({ path: '/tmp/summary.pdf' })],
           additionalZip: [createUploadedFile({ path: '/tmp/additional.zip', mimetype: 'application/zip' })],
         },
       };
       const res = createRes();
-      const validationError = new Error('Invalid resume PDF/A');
+      const validationError = new Error('Invalid summary PDF/A');
       validationError.status = 415;
 
       LoggedStudent.findOne.mockResolvedValue({ student_id: '320213' });
       Student.findByPk.mockResolvedValue({ id: '320213', degree_id: '37-18' });
-      isResumeRequiredForStudent.mockResolvedValue(true);
+      isSummaryRequiredForStudent.mockResolvedValue(true);
       writeValidatedPdf.mockResolvedValueOnce(undefined).mockRejectedValueOnce(validationError);
 
       await uploadFinalThesis(req, res);
 
       expect(cleanupUploads).toHaveBeenCalledWith(req.files.additionalZip[0]);
       expect(res.status).toHaveBeenCalledWith(415);
-      expect(res.json).toHaveBeenCalledWith({ error: 'Invalid resume PDF/A' });
+      expect(res.json).toHaveBeenCalledWith({ error: 'Invalid summary PDF/A' });
     });
 
-    test('should return 500 when resume PDF validation fails without status', async () => {
+    test('should return 500 when summary PDF validation fails without status', async () => {
       const req = {
         files: {
           thesisFile: [createUploadedFile({ path: '/tmp/thesis.pdf' })],
-          thesisResume: [createUploadedFile({ path: '/tmp/resume.pdf' })],
+          thesisSummary: [createUploadedFile({ path: '/tmp/summary.pdf' })],
           additionalZip: [createUploadedFile({ path: '/tmp/additional.zip', mimetype: 'application/zip' })],
         },
       };
@@ -1191,16 +1191,16 @@ describe('Thesis Conclusion Controller', () => {
 
       LoggedStudent.findOne.mockResolvedValue({ student_id: '320213' });
       Student.findByPk.mockResolvedValue({ id: '320213', degree_id: '37-18' });
-      isResumeRequiredForStudent.mockResolvedValue(true);
+      isSummaryRequiredForStudent.mockResolvedValue(true);
       writeValidatedPdf
         .mockResolvedValueOnce(undefined)
-        .mockRejectedValueOnce(new Error('Invalid resume PDF/A without status'));
+        .mockRejectedValueOnce(new Error('Invalid summary PDF/A without status'));
 
       await uploadFinalThesis(req, res);
 
       expect(cleanupUploads).toHaveBeenCalledWith(req.files.additionalZip[0]);
       expect(res.status).toHaveBeenCalledWith(500);
-      expect(res.json).toHaveBeenCalledWith({ error: 'Invalid resume PDF/A without status' });
+      expect(res.json).toHaveBeenCalledWith({ error: 'Invalid summary PDF/A without status' });
     });
 
     test('should return transaction 404 payload when thesis is not found', async () => {
@@ -1213,7 +1213,7 @@ describe('Thesis Conclusion Controller', () => {
 
       LoggedStudent.findOne.mockResolvedValue({ student_id: '320213' });
       Student.findByPk.mockResolvedValue({ id: '320213', degree_id: '37-18' });
-      isResumeRequiredForStudent.mockResolvedValue(false);
+      isSummaryRequiredForStudent.mockResolvedValue(false);
       writeValidatedPdf.mockResolvedValueOnce(undefined);
       Thesis.findOne.mockResolvedValue(null);
 
@@ -1233,7 +1233,7 @@ describe('Thesis Conclusion Controller', () => {
 
       LoggedStudent.findOne.mockResolvedValue({ student_id: '320213' });
       Student.findByPk.mockResolvedValue({ id: '320213', degree_id: '37-18' });
-      isResumeRequiredForStudent.mockResolvedValue(false);
+      isSummaryRequiredForStudent.mockResolvedValue(false);
       writeValidatedPdf.mockResolvedValueOnce(undefined);
       Thesis.findOne.mockResolvedValue({
         id: 1,
@@ -1252,7 +1252,7 @@ describe('Thesis Conclusion Controller', () => {
       const req = {
         files: {
           thesisFile: [createUploadedFile({ path: '/tmp/thesis.pdf' })],
-          thesisResume: [createUploadedFile({ path: '/tmp/resume.pdf' })],
+          thesisSummary: [createUploadedFile({ path: '/tmp/summary.pdf' })],
           additionalZip: [createUploadedFile({ path: '/tmp/additional.zip', mimetype: 'application/zip' })],
         },
       };
@@ -1263,8 +1263,8 @@ describe('Thesis Conclusion Controller', () => {
         thesis_application_id: 100,
         thesis_file: 'legacy',
         thesis_file_path: null,
-        thesis_resume: 'legacy',
-        thesis_resume_path: null,
+        thesis_summary: 'legacy',
+        thesis_summary_path: null,
         additional_zip: 'legacy',
         additional_zip_path: null,
         save: jest.fn().mockResolvedValue(undefined),
@@ -1272,7 +1272,7 @@ describe('Thesis Conclusion Controller', () => {
 
       LoggedStudent.findOne.mockResolvedValue({ student_id: '320213' });
       Student.findByPk.mockResolvedValue({ id: '320213', degree_id: '37-18' });
-      isResumeRequiredForStudent.mockResolvedValue(true);
+      isSummaryRequiredForStudent.mockResolvedValue(true);
       writeValidatedPdf.mockResolvedValue(undefined);
       Thesis.findOne.mockResolvedValue(thesisRecord);
       ThesisApplicationStatusHistory.create.mockResolvedValue(undefined);
@@ -1295,14 +1295,14 @@ describe('Thesis Conclusion Controller', () => {
       );
       expect(thesisRecord.status).toBe('final_thesis');
       expect(thesisRecord.thesis_file_path).toContain('uploads/final_thesis/320213/final_thesis_320213.pdf');
-      expect(thesisRecord.thesis_resume_path).toContain('uploads/final_thesis/320213/final_resume_320213.pdf');
+      expect(thesisRecord.thesis_summary_path).toContain('uploads/final_thesis/320213/final_summary_320213.pdf');
       expect(thesisRecord.additional_zip_path).toContain('uploads/final_thesis/320213/final_additional_320213.zip');
       expect(thesisRecord.save).toHaveBeenCalledWith({ transaction: 'tx' });
       expect(res.status).toHaveBeenCalledWith(200);
       expect(res.json).toHaveBeenCalledWith({ message: 'Final thesis uploaded successfully' });
     });
 
-    test('should upload only thesis when resume is not required and additional zip is missing', async () => {
+    test('should upload only thesis when summary is not required and additional zip is missing', async () => {
       const req = {
         files: {
           thesisFile: [createUploadedFile({ path: '/tmp/thesis.pdf' })],
@@ -1315,8 +1315,8 @@ describe('Thesis Conclusion Controller', () => {
         thesis_application_id: 101,
         thesis_file: 'legacy',
         thesis_file_path: null,
-        thesis_resume: 'legacy',
-        thesis_resume_path: 'uploads/final_thesis/320213/legacy_resume.pdf',
+        thesis_summary: 'legacy',
+        thesis_summary_path: 'uploads/final_thesis/320213/legacy_summary.pdf',
         additional_zip: 'legacy',
         additional_zip_path: 'uploads/final_thesis/320213/legacy_additional.zip',
         save: jest.fn().mockResolvedValue(undefined),
@@ -1324,7 +1324,7 @@ describe('Thesis Conclusion Controller', () => {
 
       LoggedStudent.findOne.mockResolvedValue({ student_id: '320213' });
       Student.findByPk.mockResolvedValue({ id: '320213', degree_id: '37-18' });
-      isResumeRequiredForStudent.mockResolvedValue(false);
+      isSummaryRequiredForStudent.mockResolvedValue(false);
       writeValidatedPdf.mockResolvedValue(undefined);
       Thesis.findOne.mockResolvedValue(thesisRecord);
       ThesisApplicationStatusHistory.create.mockResolvedValue(undefined);
@@ -1334,7 +1334,7 @@ describe('Thesis Conclusion Controller', () => {
       expect(writeValidatedPdf).toHaveBeenCalledTimes(1);
       expect(moveFile).not.toHaveBeenCalled();
       expect(thesisRecord.thesis_file_path).toContain('uploads/final_thesis/320213/final_thesis_320213.pdf');
-      expect(thesisRecord.thesis_resume_path).toBe('uploads/final_thesis/320213/legacy_resume.pdf');
+      expect(thesisRecord.thesis_summary_path).toBe('uploads/final_thesis/320213/legacy_summary.pdf');
       expect(thesisRecord.additional_zip_path).toBe('uploads/final_thesis/320213/legacy_additional.zip');
       expect(thesisRecord.save).toHaveBeenCalledWith({ transaction: 'tx' });
       expect(res.status).toHaveBeenCalledWith(200);
@@ -1351,7 +1351,7 @@ describe('Thesis Conclusion Controller', () => {
 
       LoggedStudent.findOne.mockResolvedValue({ student_id: '320213' });
       Student.findByPk.mockResolvedValue({ id: '320213', degree_id: '37-18' });
-      isResumeRequiredForStudent.mockResolvedValue(false);
+      isSummaryRequiredForStudent.mockResolvedValue(false);
       ensureDirExists.mockRejectedValue(new Error('Disk unavailable'));
 
       await uploadFinalThesis(req, res);
@@ -1417,7 +1417,7 @@ describe('Thesis Conclusion Controller', () => {
         language: 'it',
         license_id: 2,
         thesis_file_path: 'uploads/thesis_conclusion_draft/320213/thesis.pdf',
-        thesis_resume_path: 'uploads/thesis_conclusion_draft/320213/resume.pdf',
+        thesis_summary_path: 'uploads/thesis_conclusion_draft/320213/summary.pdf',
         additional_zip_path: 'uploads/thesis_conclusion_draft/320213/additional.zip',
         thesis_draft_date: thesisDraftDate,
       });
@@ -1444,7 +1444,7 @@ describe('Thesis Conclusion Controller', () => {
       );
       expect(resolveValidDraftFilePath).toHaveBeenNthCalledWith(
         2,
-        'uploads/thesis_conclusion_draft/320213/resume.pdf',
+        'uploads/thesis_conclusion_draft/320213/summary.pdf',
         '320213',
         expect.any(String),
       );
@@ -1464,7 +1464,7 @@ describe('Thesis Conclusion Controller', () => {
           language: 'it',
           licenseId: 2,
           thesisFilePath: 'uploads/thesis_conclusion_draft/320213/thesis.pdf',
-          thesisResumePath: null,
+          thesisSummaryPath: null,
           additionalZipPath: 'uploads/thesis_conclusion_draft/320213/additional.zip',
           thesisDraftDate: thesisDraftDate.toISOString(),
           coSupervisors: [expect.objectContaining({ id: 3019, firstName: 'Marco', lastName: 'Torchiano' })],
@@ -1488,7 +1488,7 @@ describe('Thesis Conclusion Controller', () => {
         language: null,
         license_id: null,
         thesis_file_path: null,
-        thesis_resume_path: null,
+        thesis_summary_path: null,
         additional_zip_path: null,
         thesis_draft_date: null,
       });
@@ -1508,7 +1508,7 @@ describe('Thesis Conclusion Controller', () => {
         language: null,
         licenseId: null,
         thesisFilePath: null,
-        thesisResumePath: null,
+        thesisSummaryPath: null,
         additionalZipPath: null,
         thesisDraftDate: null,
         coSupervisors: [],
@@ -1539,7 +1539,7 @@ describe('Thesis Conclusion Controller', () => {
       Thesis.findOne.mockResolvedValue({
         id: 1,
         thesis_file_path: 'uploads/thesis_conclusion_draft/320213/thesis.pdf',
-        thesis_resume_path: null,
+        thesis_summary_path: null,
         additional_zip_path: null,
       });
       ThesisSupervisorCoSupervisor.findAll.mockResolvedValue([]);
@@ -1569,7 +1569,7 @@ describe('Real thesis conclusion utils edge branches', () => {
 
   const baseSubmitFiles = {
     thesisFile: { path: '/tmp/thesis.pdf', mimetype: 'application/pdf', originalname: 'thesis.pdf' },
-    thesisResume: null,
+    thesisSummary: null,
     additionalZip: null,
   };
 
@@ -1584,7 +1584,7 @@ describe('Real thesis conclusion utils edge branches', () => {
     abstract_eng: null,
     language: null,
     thesis_file_path: null,
-    thesis_resume_path: null,
+    thesis_summary_path: null,
     additional_zip_path: null,
     save: jest.fn().mockResolvedValue(undefined),
   });
@@ -1626,7 +1626,7 @@ describe('Real thesis conclusion utils edge branches', () => {
       id: 10,
       student_id: '320213',
       status: 'ongoing',
-      thesis_resume_path: null,
+      thesis_summary_path: null,
       additional_zip_path: 'uploads/thesis_conclusion_draft/320213/missing.zip',
       save: jest.fn().mockResolvedValue(undefined),
     };
@@ -1636,7 +1636,7 @@ describe('Real thesis conclusion utils edge branches', () => {
     await saveDraftTransaction({
       loggedStudent: { id: '320213' },
       draftData: {
-        removeThesisResume: true,
+        removeThesisSummary: true,
         removeAdditionalZip: true,
       },
       files: {},
@@ -1926,7 +1926,7 @@ describe('Real thesis conclusion utils edge branches', () => {
     LoggedStudent.findOne.mockResolvedValue({ student_id: '320213' });
     Student.findByPk.mockResolvedValue({ id: '320213', degree_id: '37-18' });
     Thesis.findOne.mockResolvedValue(baseThesisRecord());
-    isResumeRequiredForStudent.mockResolvedValue(false);
+    isSummaryRequiredForStudent.mockResolvedValue(false);
 
     await expect(
       executeConclusionRequestTransaction({
@@ -1938,20 +1938,20 @@ describe('Real thesis conclusion utils edge branches', () => {
     ).rejects.toMatchObject({ status: 400, message: 'Missing thesis file' });
   });
 
-  test('executeConclusionRequestTransaction should throw 400 when resume is required but missing', async () => {
+  test('executeConclusionRequestTransaction should throw 400 when summary is required but missing', async () => {
     LoggedStudent.findOne.mockResolvedValue({ student_id: '320213' });
     Student.findByPk.mockResolvedValue({ id: '320213', degree_id: '37-18' });
     Thesis.findOne.mockResolvedValue(baseThesisRecord());
-    isResumeRequiredForStudent.mockResolvedValue(true);
+    isSummaryRequiredForStudent.mockResolvedValue(true);
 
     await expect(
       executeConclusionRequestTransaction({
         requestData: baseSubmitRequestData,
-        files: { ...baseSubmitFiles, thesisResume: null },
+        files: { ...baseSubmitFiles, thesisSummary: null },
         transaction: 'tx',
         baseUploadDir: '/tmp/base',
       }),
-    ).rejects.toMatchObject({ status: 400, message: 'Missing thesis resume' });
+    ).rejects.toMatchObject({ status: 400, message: 'Missing thesis summary' });
   });
 
   test('executeConclusionRequestTransaction should skip live supervisors/sdgs/embargo when empty or invalid arrays are provided', async () => {
@@ -1960,7 +1960,7 @@ describe('Real thesis conclusion utils edge branches', () => {
     LoggedStudent.findOne.mockResolvedValue({ student_id: '320213' });
     Student.findByPk.mockResolvedValue({ id: '320213', degree_id: '37-18' });
     Thesis.findOne.mockResolvedValue(thesisRecord);
-    isResumeRequiredForStudent.mockResolvedValue(false);
+    isSummaryRequiredForStudent.mockResolvedValue(false);
     ensureDirExists.mockResolvedValue(undefined);
     writeValidatedPdf.mockResolvedValue(undefined);
     moveFile.mockResolvedValue(undefined);
@@ -1991,7 +1991,7 @@ describe('Real thesis conclusion utils edge branches', () => {
     LoggedStudent.findOne.mockResolvedValue({ student_id: '320213' });
     Student.findByPk.mockResolvedValue({ id: '320213', degree_id: '37-18' });
     Thesis.findOne.mockResolvedValue(thesisRecord);
-    isResumeRequiredForStudent.mockResolvedValue(false);
+    isSummaryRequiredForStudent.mockResolvedValue(false);
     ensureDirExists.mockResolvedValue(undefined);
     writeValidatedPdf.mockResolvedValue(undefined);
     moveFile.mockResolvedValue(undefined);
@@ -2066,7 +2066,7 @@ describe('Real thesis conclusion utils edge branches', () => {
     LoggedStudent.findOne.mockResolvedValue({ student_id: '320213' });
     Student.findByPk.mockResolvedValue({ id: '320213', degree_id: '37-18' });
     Thesis.findOne.mockResolvedValue(thesisRecord);
-    isResumeRequiredForStudent.mockResolvedValue(false);
+    isSummaryRequiredForStudent.mockResolvedValue(false);
     ensureDirExists.mockResolvedValue(undefined);
     writeValidatedPdf.mockResolvedValue(undefined);
     moveFile.mockResolvedValue(undefined);
@@ -2099,7 +2099,7 @@ describe('Real thesis conclusion utils edge branches', () => {
     LoggedStudent.findOne.mockResolvedValue({ student_id: '320213' });
     Student.findByPk.mockResolvedValue({ id: '320213', degree_id: '37-18' });
     Thesis.findOne.mockResolvedValue(thesisRecord);
-    isResumeRequiredForStudent.mockResolvedValue(false);
+    isSummaryRequiredForStudent.mockResolvedValue(false);
     ensureDirExists.mockResolvedValue(undefined);
     writeValidatedPdf.mockResolvedValue(undefined);
     moveFile.mockResolvedValue(undefined);
@@ -2127,7 +2127,7 @@ describe('Real thesis conclusion utils edge branches', () => {
     LoggedStudent.findOne.mockResolvedValue({ student_id: '320213' });
     Student.findByPk.mockResolvedValue({ id: '320213', degree_id: '37-18' });
     Thesis.findOne.mockResolvedValue(thesisRecord);
-    isResumeRequiredForStudent.mockResolvedValue(false);
+    isSummaryRequiredForStudent.mockResolvedValue(false);
     ensureDirExists.mockResolvedValue(undefined);
     writeValidatedPdf.mockResolvedValue(undefined);
     moveFile.mockResolvedValue(undefined);
@@ -2159,7 +2159,7 @@ describe('Real thesis conclusion utils edge branches', () => {
     LoggedStudent.findOne.mockResolvedValue({ student_id: '320213' });
     Student.findByPk.mockResolvedValue({ id: '320213', degree_id: '37-18' });
     Thesis.findOne.mockResolvedValue(thesisRecord);
-    isResumeRequiredForStudent.mockResolvedValue(false);
+    isSummaryRequiredForStudent.mockResolvedValue(false);
     ensureDirExists.mockResolvedValue(undefined);
     writeValidatedPdf.mockResolvedValue(undefined);
     moveFile.mockResolvedValue(undefined);
@@ -2191,7 +2191,7 @@ describe('Real thesis conclusion utils edge branches', () => {
     LoggedStudent.findOne.mockResolvedValue({ student_id: '320213' });
     Student.findByPk.mockResolvedValue({ id: '320213', degree_id: '37-18' });
     Thesis.findOne.mockResolvedValue(thesisRecord);
-    isResumeRequiredForStudent.mockResolvedValue(false);
+    isSummaryRequiredForStudent.mockResolvedValue(false);
     ensureDirExists.mockResolvedValue(undefined);
     writeValidatedPdf.mockResolvedValue(undefined);
     moveFile.mockResolvedValue(undefined);
@@ -2215,7 +2215,7 @@ describe('Real thesis conclusion utils edge branches', () => {
     LoggedStudent.findOne.mockResolvedValue({ student_id: '320213' });
     Student.findByPk.mockResolvedValue({ id: '320213', degree_id: '37-18' });
     Thesis.findOne.mockResolvedValue(thesisRecord);
-    isResumeRequiredForStudent.mockResolvedValue(false);
+    isSummaryRequiredForStudent.mockResolvedValue(false);
     ensureDirExists.mockResolvedValue(undefined);
     writeValidatedPdf.mockResolvedValue(undefined);
     moveFile.mockResolvedValue(undefined);
@@ -2245,7 +2245,7 @@ describe('Real thesis conclusion utils edge branches', () => {
       abstract: 'Abstract',
       abstract_eng: 'Abstract EN',
       thesis_file_path: 'uploads/thesis_conclusion_request/320213/thesis_320213.pdf',
-      thesis_resume_path: 'uploads/thesis_conclusion_request/320213/resume_320213.pdf',
+      thesis_summary_path: 'uploads/thesis_conclusion_request/320213/summary_320213.pdf',
       additional_zip_path: 'uploads/thesis_conclusion_request/320213/additional_320213.zip',
       license_id: 1,
       company_id: null,
@@ -2270,7 +2270,7 @@ describe('Real thesis conclusion utils edge branches', () => {
         title: 'Titolo',
         titleEng: 'Title',
         thesisFilePath: 'uploads/thesis_conclusion_request/320213/thesis_320213.pdf',
-        thesisResumePath: 'uploads/thesis_conclusion_request/320213/resume_320213.pdf',
+        thesisSummaryPath: 'uploads/thesis_conclusion_request/320213/summary_320213.pdf',
         additionalZipPath: 'uploads/thesis_conclusion_request/320213/additional_320213.zip',
         keywords: [{ keywordId: null, keywordOther: 'free-keyword' }],
         embargo: {
@@ -2296,7 +2296,7 @@ describe('Real thesis conclusion utils edge branches', () => {
       abstract: null,
       abstract_eng: null,
       thesis_file_path: null,
-      thesis_resume_path: null,
+      thesis_summary_path: null,
       additional_zip_path: null,
       license_id: null,
       company_id: null,

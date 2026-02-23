@@ -23,12 +23,12 @@ export default function StepSubmit() {
     selectedLicenseLabel,
     selectedEmbargoLabels = [],
     embargoPeriod,
-    resumePdf,
+    summaryPdf,
     pdfFile,
     supplementaryZip,
     declarationsAcceptedCount = 0,
     declarationsTotalCount = 0,
-    requiredResume,
+    requiredSummary,
   } = useConclusionRequest();
 
   const [showFullTitle, setShowFullTitle] = useState(false);
@@ -237,13 +237,13 @@ export default function StepSubmit() {
               </>
             )}
 
-            {requiredResume && (
+            {requiredSummary && (
               <CustomBlock
                 icon="file-pdf"
                 title={t('carriera.conclusione_tesi.summary_for_committee_pdf')}
                 ignoreMoreLines
               >
-                {resumePdf ? resumePdf.name : '-'}
+                {summaryPdf ? summaryPdf.name : '-'}
               </CustomBlock>
             )}
 

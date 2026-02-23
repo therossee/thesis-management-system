@@ -477,7 +477,7 @@
             "error_title": "Errore durante l'invio della richiesta.",
             "error_message": "Si è verificato un errore durante l'invio della richiesta. Riprova più tardi.",
             "uploaded": "Documenti caricati",
-            "resume": "Riassunto",
+            "summary": "Riassunto",
             "thesis_pdfa": "Tesi in formato PDF/A",
             "additional": "Allegato aggiuntivo",
             "steps": {

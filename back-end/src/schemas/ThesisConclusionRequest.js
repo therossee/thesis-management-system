@@ -31,9 +31,9 @@ const thesisConclusionRequestSchema = z.object({
     })
     .nullable()
     .optional(),
-  thesisResume: uploadedFileSchema
+  thesisSummary: uploadedFileSchema
     .refine(file => file.mimetype === 'application/pdf', {
-      message: 'thesisResume must be a PDF file',
+      message: 'thesisSummary must be a PDF file',
     })
     .nullable()
     .optional(),

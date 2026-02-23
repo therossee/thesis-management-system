@@ -68,10 +68,10 @@ const thesisConclusionDraftSchema = z.object({
     })
     .nullable()
     .optional(),
-  thesisResume: optionalPdfFileSchema,
+  thesisSummary: optionalPdfFileSchema,
   thesisFile: optionalPdfFileSchema,
   additionalZip: optionalZipFileSchema,
-  removeThesisResume: optionalBooleanSchema,
+  removeThesisSummary: optionalBooleanSchema,
   removeThesisFile: optionalBooleanSchema,
   removeAdditionalZip: optionalBooleanSchema,
 });

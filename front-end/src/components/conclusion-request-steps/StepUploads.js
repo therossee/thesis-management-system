@@ -176,7 +176,7 @@ UploadCard.propTypes = {
   isSubmitting: PropTypes.bool.isRequired,
   tooltipText: PropTypes.string,
   draftFile: PropTypes.shape({
-    fileType: PropTypes.oneOf(['thesis', 'resume', 'additional']).isRequired,
+    fileType: PropTypes.oneOf(['thesis', 'summary', 'additional']).isRequired,
     fileName: PropTypes.string.isRequired,
     canPreview: PropTypes.bool.isRequired,
   }),
@@ -188,8 +188,8 @@ UploadCard.propTypes = {
 export default function StepUploads() {
   const {
     t,
-    resumePdf,
-    setResumePdf,
+    summaryPdf,
+    setSummaryPdf,
     pdfFile,
     setPdfFile,
     supplementaryZip,
@@ -200,7 +200,7 @@ export default function StepUploads() {
     removeFileText,
     appliedTheme,
     isSubmitting,
-    requiredResume,
+    requiredSummary,
   } = useConclusionRequest();
 
   return (
@@ -228,7 +228,7 @@ export default function StepUploads() {
           </div>
         </div>
         <Row className="mb-2 g-3 justify-content-center">
-          {requiredResume === true && (
+          {requiredSummary === true && (
             <Col md="auto">
               <UploadCard
                 t={t}
@@ -236,21 +236,25 @@ export default function StepUploads() {
                 label={`${t('carriera.conclusione_tesi.summary_for_committee_pdf')} *`}
                 maxSizeKey="carriera.conclusione_tesi.max_size_20_mb"
                 accept="application/pdf"
-                file={resumePdf}
-                onFileChange={setResumePdf}
-                onRemove={() => setResumePdf(null)}
+                file={summaryPdf}
+                onFileChange={setSummaryPdf}
+                onRemove={() => setSummaryPdf(null)}
                 removeFileText={removeFileText}
                 appliedTheme={appliedTheme}
                 isSubmitting={isSubmitting}
                 tooltipText={t('carriera.conclusione_tesi.summary_for_committee_subtext')}
-                draftFile={draftUploadedFiles.resume}
+                draftFile={draftUploadedFiles.summary}
                 onOpenDraft={() =>
-                  handleDraftFileAction(draftUploadedFiles.resume?.fileType, draftUploadedFiles.resume?.fileName, true)
+                  handleDraftFileAction(
+                    draftUploadedFiles.summary?.fileType,
+                    draftUploadedFiles.summary?.fileName,
+                    true,
+                  )
                 }
                 onDownloadDraft={() =>
-                  handleDraftFileAction(draftUploadedFiles.resume?.fileType, draftUploadedFiles.resume?.fileName)
+                  handleDraftFileAction(draftUploadedFiles.summary?.fileType, draftUploadedFiles.summary?.fileName)
                 }
-                onRemoveDraft={() => removeDraftUploadedFile('resume')}
+                onRemoveDraft={() => removeDraftUploadedFile('summary')}
               />
             </Col>
           )}

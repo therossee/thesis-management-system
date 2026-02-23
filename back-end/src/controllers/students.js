@@ -2,7 +2,7 @@ const { QueryTypes } = require('sequelize');
 const { sequelize, LoggedStudent, Student } = require('../models');
 const StudentSchema = require('../schemas/Student');
 
-const REQUIRED_RESUME_COLLEGIO_IDS = new Set(['CL003']);
+const REQUIRED_SUMMARY_COLLEGIO_IDS = new Set(['CL003']);
 
 const getStudentData = async () => {
   const studentData = await sequelize.query(
@@ -116,7 +116,7 @@ const updateLoggedStudent = async (req, res) => {
   }
 };
 
-const getRequiredResumeForLoggedStudent = async (_req, res) => {
+const getRequiredSummaryForLoggedStudent = async (_req, res) => {
   try {
     const loggedStudent = await LoggedStudent.findOne();
     if (!loggedStudent) {
@@ -140,8 +140,8 @@ const getRequiredResumeForLoggedStudent = async (_req, res) => {
     }
 
     const collegioId = collegio_id[0].collegioId;
-    const requiredResume = REQUIRED_RESUME_COLLEGIO_IDS.has(collegioId);
-    res.status(200).json({ requiredResume });
+    const requiredSummary = REQUIRED_SUMMARY_COLLEGIO_IDS.has(collegioId);
+    res.status(200).json({ requiredSummary });
   } catch (error) {
     if (error.message === 'Student data not found') {
       return res.status(404).json({ error: error.message });
@@ -155,5 +155,5 @@ module.exports = {
   getStudents,
   getLoggedStudent,
   updateLoggedStudent,
-  getRequiredResumeForLoggedStudent,
+  getRequiredSummaryForLoggedStudent,
 };

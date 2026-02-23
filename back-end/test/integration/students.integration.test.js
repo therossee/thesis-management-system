@@ -123,7 +123,7 @@ describe('PUT /api/students/logged-student', () => {
   });
 });
 
-describe('GET /api/students/required-resume', () => {
+describe('GET /api/students/required-summary', () => {
   beforeAll(async () => {
     await sequelize.query('DELETE FROM logged_student WHERE student_id = :studentId', {
       replacements: { studentId: TEMP_STUDENT_ID },
@@ -150,19 +150,19 @@ describe('GET /api/students/required-resume', () => {
     });
   });
 
-  test('Should return requiredResume=true for a CL003 student', async () => {
+  test('Should return requiredSummary=true for a CL003 student', async () => {
     await request(server).put('/api/students/logged-student').send({ student_id: DEFAULT_STUDENT_ID });
 
-    const response = await request(server).get('/api/students/required-resume');
+    const response = await request(server).get('/api/students/required-summary');
     expect(response.status).toBe(200);
-    expect(response.body).toEqual({ requiredResume: true });
+    expect(response.body).toEqual({ requiredSummary: true });
   });
 
-  test('Should return requiredResume=false for a non-CL003 student', async () => {
+  test('Should return requiredSummary=false for a non-CL003 student', async () => {
     await request(server).put('/api/students/logged-student').send({ student_id: TEMP_STUDENT_ID });
 
-    const response = await request(server).get('/api/students/required-resume');
+    const response = await request(server).get('/api/students/required-summary');
     expect(response.status).toBe(200);
-    expect(response.body).toEqual({ requiredResume: false });
+    expect(response.body).toEqual({ requiredSummary: false });
   });
 });

@@ -53,7 +53,7 @@ export default function Thesis(props) {
   const supervisors = data ? [data.supervisor, ...(data.coSupervisors || [])] : [];
   const activeStep = data ? (thesis ? thesis.status : thesisApplication.status) : 'none';
 
-  const { isLoading, sessionDeadlines, isEligible, requiredResume, appStatusHistory } = useThesisPageData({
+  const { isLoading, sessionDeadlines, isEligible, requiredSummary, appStatusHistory } = useThesisPageData({
     thesis,
     thesisApplication,
     dataId,
@@ -156,7 +156,7 @@ export default function Thesis(props) {
                 <ThesisSummaryCard
                   t={t}
                   thesis={thesis}
-                  requiredResume={requiredResume}
+                  requiredSummary={requiredSummary}
                   showFullAbstract={showFullAbstract}
                   setShowFullAbstract={setShowFullAbstract}
                   onDownload={handleDownload}
@@ -274,7 +274,7 @@ Thesis.propTypes = {
     ),
     status: PropTypes.string.isRequired,
     thesisFilePath: PropTypes.string,
-    thesisResumePath: PropTypes.string,
+    thesisSummaryPath: PropTypes.string,
     additionalZipPath: PropTypes.string,
     thesisConclusionRequestDate: PropTypes.string,
     thesisConclusionConfirmedDate: PropTypes.string,

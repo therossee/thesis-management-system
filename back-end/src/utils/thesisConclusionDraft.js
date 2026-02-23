@@ -68,11 +68,11 @@ const saveDraftFiles = async ({
     setField(thesisPathField, path.relative(baseUploadDir, destination));
   };
 
-  if (removeFlags.removeThesisResume && !files.thesisResume) await removeStoredDraftFile('thesis_resume_path');
+  if (removeFlags.removeThesisSummary && !files.thesisSummary) await removeStoredDraftFile('thesis_summary_path');
   if (removeFlags.removeThesisFile && !files.thesisFile) await removeStoredDraftFile('thesis_file_path');
   if (removeFlags.removeAdditionalZip && !files.additionalZip) await removeStoredDraftFile('additional_zip_path');
 
-  await moveDraftFile(files.thesisResume, 'thesis_resume_path');
+  await moveDraftFile(files.thesisSummary, 'thesis_summary_path');
   await moveDraftFile(files.thesisFile, 'thesis_file_path');
   await moveDraftFile(files.additionalZip, 'additional_zip_path');
 };
@@ -163,10 +163,10 @@ const parseDraftRequestData = (req, files) =>
     licenseId: req.body.licenseId,
     sdgs: toSnakeCase(parseJsonField(req.body.sdgs, undefined)),
     embargo: toSnakeCase(parseJsonField(req.body.embargo, undefined)),
-    thesisResume: files.thesisResume,
+    thesisSummary: files.thesisSummary,
     thesisFile: files.thesisFile,
     additionalZip: files.additionalZip,
-    removeThesisResume: req.body.removeThesisResume,
+    removeThesisSummary: req.body.removeThesisSummary,
     removeThesisFile: req.body.removeThesisFile,
     removeAdditionalZip: req.body.removeAdditionalZip,
   });
@@ -218,7 +218,7 @@ const saveDraftTransaction = async ({
     draftUploadDir,
     files,
     removeFlags: {
-      removeThesisResume: draftData.removeThesisResume,
+      removeThesisSummary: draftData.removeThesisSummary,
       removeThesisFile: draftData.removeThesisFile,
       removeAdditionalZip: draftData.removeAdditionalZip,
     },
