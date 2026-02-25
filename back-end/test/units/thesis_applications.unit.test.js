@@ -236,11 +236,44 @@ describe('createThesisApplication', () => {
     LoggedStudent.findOne.mockResolvedValue({ student_id: 1 });
     Student.findByPk.mockResolvedValue({ id: 1 });
     Teacher.findByPk.mockResolvedValue(mockTeacher(1));
-    ThesisApplication.findAll.mockResolvedValue([{ id: 1 }]);
+    ThesisApplication.findAll.mockResolvedValue([{ id: 1, status: 'pending' }]);
 
     await createThesisApplication(req, res);
 
     expect(res.status).toHaveBeenCalledWith(400);
+  });
+
+  test('returns 400 if student has approved application linked to thesis not cancel_approved', async () => {
+    const req = { body: { topic: 'Test', supervisor: { id: 1 } } };
+    const res = mockRes();
+
+    LoggedStudent.findOne.mockResolvedValue({ student_id: 1 });
+    Student.findByPk.mockResolvedValue({ id: 1 });
+    Teacher.findByPk.mockResolvedValue(mockTeacher(1));
+    ThesisApplication.findAll.mockResolvedValue([{ id: 11, status: 'approved' }]);
+    Thesis.findOne.mockResolvedValue({ id: 22, status: 'ongoing' });
+
+    await createThesisApplication(req, res);
+
+    expect(Thesis.findOne).toHaveBeenCalledWith({ where: { thesis_application_id: 11 } });
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json).toHaveBeenCalledWith({ error: 'Student already has an active thesis application' });
+  });
+
+  test('creates application when approved one is linked to cancel_approved thesis', async () => {
+    const req = { body: { topic: 'Test', supervisor: { id: 1 } } };
+    const res = mockRes();
+
+    LoggedStudent.findOne.mockResolvedValue({ student_id: 1 });
+    Student.findByPk.mockResolvedValue({ id: 1 });
+    Teacher.findByPk.mockResolvedValue(mockTeacher(1));
+    ThesisApplication.findAll.mockResolvedValue([{ id: 11, status: 'approved' }]);
+    Thesis.findOne.mockResolvedValue({ id: 22, status: 'cancel_approved' });
+    ThesisApplication.create.mockResolvedValue({ id: 500, topic: 'Test' });
+
+    await createThesisApplication(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(201);
   });
 
   test('returns 500 on unexpected error', async () => {

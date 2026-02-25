@@ -78,8 +78,21 @@ const createThesisApplication = async (req, res) => {
           status: { [Op.in]: ['pending', 'approved'] },
         },
       });
-      if (existingApplications.length > 0) {
+
+      const hasPendingApplication = existingApplications.some(app => app.status === 'pending');
+      if (hasPendingApplication) {
         return res.status(400).json({ error: 'Student already has an active thesis application' });
+      }
+
+      const approvedApplications = existingApplications.filter(app => app.status === 'approved');
+      for (const approvedApplication of approvedApplications) {
+        const linkedThesis = await Thesis.findOne({
+          where: { thesis_application_id: approvedApplication.id },
+        });
+
+        if (linkedThesis?.status !== 'cancel_approved') {
+          return res.status(400).json({ error: 'Student already has an active thesis application' });
+        }
       }
 
       // 3. Create ThesisApplication

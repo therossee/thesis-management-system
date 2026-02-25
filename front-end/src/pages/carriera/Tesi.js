@@ -70,22 +70,36 @@ export default function Tesi({ initialActiveTab }) {
 
   useEffect(() => {
     setIsLoading(true);
-    if (!loggedStudent) return;
-    Promise.all([API.getLoggedStudentThesis(), API.getLastStudentApplication()])
-      .then(([fetchedThesis, fetchedThesisApplication]) => {
-        setThesis(fetchedThesis);
+    if (!loggedStudent) {
+      setIsLoading(false);
+      return;
+    }
+
+    const loadThesisArea = async () => {
+      try {
+        const fetchedThesisApplication = (await API.getLastStudentApplication()) || null;
+        const applicationStatus = String(fetchedThesisApplication?.status || '').toLowerCase();
+        const shouldSkipThesisLoad = ['pending', 'rejected', 'cancelled', 'canceled'].includes(applicationStatus);
+
+        let fetchedThesis = null;
+        if (!shouldSkipThesisLoad) {
+          fetchedThesis = (await API.getLoggedStudentThesis()) || null;
+        }
+
+        setThesis(shouldSkipThesisLoad ? null : fetchedThesis);
         setThesisApplication(fetchedThesisApplication);
-      })
-      .catch(error => {
+      } catch (error) {
         console.error('Error fetching thesis or thesis application data:', error);
-      })
-      .finally(() => {
+      } finally {
         setIsLoading(false);
         if (pendingToastRef.current) {
           showToast(pendingToastRef.current);
           pendingToastRef.current = null;
         }
-      });
+      }
+    };
+
+    loadThesisArea();
   }, [loggedStudent, refreshKey]);
 
   const handleRequestSubmitResult = success => {

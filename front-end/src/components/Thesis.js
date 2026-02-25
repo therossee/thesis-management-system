@@ -174,11 +174,13 @@ export default function Thesis(props) {
                     </Col>
                     <Col md={5} lg={5}>
                       {thesis.status === 'cancel_approved' ? (
-                        // lasciato invariato: se vuoi, estraiamo anche questo in un componente dedicato
-                        <div className="mb-1">
-                          {/* riuso LinkCard per ora */}
-                          <LinkCard />
-                        </div>
+                        <NextStepsCard
+                          t={t}
+                          appliedTheme={appliedTheme}
+                          variant="thesis_cancel_approved"
+                          isEligible={isEligible}
+                          onOpenRequest={() => setShowRequestModal(true)}
+                        />
                       ) : (
                         <LinkCard />
                       )}
