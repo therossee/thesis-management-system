@@ -1527,6 +1527,7 @@ describe('Thesis Conclusion Controller', () => {
         coSupervisors: [],
         embargo: null,
         sdgs: [],
+        keywords: [],
       });
     });
 

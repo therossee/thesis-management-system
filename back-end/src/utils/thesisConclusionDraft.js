@@ -6,6 +6,8 @@ const {
   Student,
   Thesis,
   Teacher,
+  ThesisKeyword,
+  Keyword,
   ThesisSupervisorCoSupervisor,
   SustainableDevelopmentGoal,
   ThesisSustainableDevelopmentGoal,
@@ -152,6 +154,39 @@ const saveDraftSdgs = async ({ thesisId, sdgs, transaction }) => {
     })),
     { transaction },
   );
+};
+
+const saveDraftKeywords = async ({ thesisId, keywords, transaction }) => {
+  if (keywords === undefined) return;
+
+  await ThesisKeyword.destroy({ where: { thesis_id: thesisId }, transaction });
+
+  const normalizedKeywords = Array.isArray(keywords) ? keywords : [];
+  const keywordIds = [
+    ...new Set(normalizedKeywords.map(keyword => Number(keyword?.id)).filter(id => Number.isFinite(id) && id > 0)),
+  ];
+  const keywordNames = normalizedKeywords
+    .filter(keyword => typeof keyword === 'string' && keyword.trim().length > 0)
+    .map(keyword => keyword.trim());
+
+  if (keywordIds.length) {
+    const currentKeywords = await Keyword.findAll({ where: { id: { [Op.in]: keywordIds } }, transaction });
+    if (currentKeywords.length !== keywordIds.length) {
+      throw httpError(400, 'One or more keywords not found');
+    }
+
+    await ThesisKeyword.bulkCreate(
+      currentKeywords.map(keyword => ({ thesis_id: thesisId, keyword_id: keyword.id })),
+      { transaction },
+    );
+  }
+
+  if (keywordNames.length) {
+    await ThesisKeyword.bulkCreate(
+      keywordNames.map(keywordName => ({ thesis_id: thesisId, keyword_other: keywordName })),
+      { transaction },
+    );
+  }
 };
 
 const clearDraftEmbargo = async ({ thesisId, transaction }) => {
@@ -328,6 +363,12 @@ const saveDraftTransaction = async ({
   await saveDraftSdgs({
     thesisId: thesis.id,
     sdgs: draftData.sdgs,
+    transaction,
+  });
+
+  await saveDraftKeywords({
+    thesisId: thesis.id,
+    keywords: draftData.keywords,
     transaction,
   });
 

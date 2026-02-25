@@ -386,10 +386,8 @@ export default function ConclusionRequest({ onSubmitResult, saveDraftTrigger = 0
       const coSupervisorsPayload = (coSupervisors || []).map(toTeacher).filter(Boolean);
       formData.append('coSupervisors', JSON.stringify(coSupervisorsPayload));
 
-      if (keywords?.length) {
-        const keywordPayload = keywords.map(toKeywordPayload).filter(Boolean);
-        formData.append('keywords', JSON.stringify(keywordPayload));
-      }
+      const keywordPayload = (keywords || []).map(toKeywordPayload).filter(Boolean);
+      formData.append('keywords', JSON.stringify(keywordPayload));
 
       if (authorization === 'authorize') formData.append('licenseId', licenseChoice);
 
@@ -515,7 +513,7 @@ export default function ConclusionRequest({ onSubmitResult, saveDraftTrigger = 0
     const labels = selectedIds
       .map(id => sdgOptions.find(option => option.value === id)?.label || `SDG ${id}`)
       .filter(Boolean);
-    return [...new Set(labels)];
+    return labels;
   }, [primarySdg, secondarySdg1, secondarySdg2, sdgOptions]);
 
   const selectedLicenseLabel = useMemo(() => {

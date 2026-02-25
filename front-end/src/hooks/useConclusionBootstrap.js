@@ -197,8 +197,33 @@ export default function useConclusionBootstrap({
               const primaryGoal = normalizedDraftSdgs.find(sdg => sdg.level === 'primary') || normalizedDraftSdgs[0];
               const secondaryGoals = normalizedDraftSdgs.filter(sdg => sdg.level === 'secondary');
               const fallbackSecondaryGoals = normalizedDraftSdgs.filter(sdg => sdg.goalId !== primaryGoal?.goalId);
-              const resolvedSecondaryGoals =
+              let resolvedSecondaryGoals =
                 secondaryGoals.length > 0 ? secondaryGoals : fallbackSecondaryGoals.slice(0, 2);
+
+              const notApplicableGoalIds = new Set(
+                (sdgsData || [])
+                  .filter(goal => {
+                    const text = String(goal?.goal ?? goal?.goal_en ?? goal?.label ?? '').toLowerCase();
+                    return text.includes('not applicable') || text.includes('non applicabile');
+                  })
+                  .map(goal => Number(goal?.id ?? goal?.value))
+                  .filter(Number.isFinite),
+              );
+              const primaryGoalId = Number(primaryGoal?.goalId);
+              const isPrimaryNotApplicable = Number.isFinite(primaryGoalId) && notApplicableGoalIds.has(primaryGoalId);
+
+              if (isPrimaryNotApplicable && resolvedSecondaryGoals.length === 0) {
+                resolvedSecondaryGoals = [
+                  { goalId: primaryGoalId, level: 'secondary' },
+                  { goalId: primaryGoalId, level: 'secondary' },
+                ];
+              } else if (
+                isPrimaryNotApplicable &&
+                resolvedSecondaryGoals.length === 1 &&
+                Number(resolvedSecondaryGoals[0]?.goalId) === primaryGoalId
+              ) {
+                resolvedSecondaryGoals = [resolvedSecondaryGoals[0], { goalId: primaryGoalId, level: 'secondary' }];
+              }
 
               setPrimarySdg(primaryGoal ? primaryGoal.goalId : '');
               setSecondarySdg1(resolvedSecondaryGoals[0] ? resolvedSecondaryGoals[0].goalId : '');

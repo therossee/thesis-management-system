@@ -11,6 +11,8 @@ const {
   EmbargoMotivation,
   ThesisEmbargo,
   ThesisEmbargoMotivation,
+  ThesisKeyword,
+  Keyword,
   License,
   LoggedStudent,
   ThesisApplication,
@@ -356,7 +358,7 @@ const getThesisConclusionRequestDraft = async (req, res) => {
       resolveValidDraftFilePath(thesis.additional_zip_path, loggedStudent.id, baseUploadDir),
     ]);
 
-    const [draftSdgs, draftEmbargo] = await Promise.all([
+    const [draftSdgs, draftEmbargo, draftKeywords] = await Promise.all([
       ThesisSustainableDevelopmentGoal.findAll({
         where: { thesis_id: thesis.id },
         attributes: ['goal_id', 'sdg_level'],
@@ -364,6 +366,10 @@ const getThesisConclusionRequestDraft = async (req, res) => {
       ThesisEmbargo.findOne({
         where: { thesis_id: String(thesis.id) },
         attributes: ['id', 'duration'],
+      }),
+      ThesisKeyword.findAll({
+        where: { thesis_id: thesis.id },
+        attributes: ['keyword_id', 'keyword_other'],
       }),
     ]);
 
@@ -373,6 +379,27 @@ const getThesisConclusionRequestDraft = async (req, res) => {
           attributes: ['motivation_id', 'other_motivation'],
         })
       : [];
+
+    const keywordIds = [...new Set(draftKeywords.map(keyword => keyword.keyword_id).filter(Boolean))];
+    const keywordRows = keywordIds.length
+      ? await Keyword.findAll({
+          where: { id: { [Op.in]: keywordIds } },
+          attributes: ['id', 'keyword'],
+        })
+      : [];
+    const keywordById = new Map(keywordRows.map(keyword => [keyword.id, keyword.keyword]));
+
+    const keywords = draftKeywords
+      .map(keyword => {
+        if (keyword.keyword_id) {
+          const keywordText = keywordById.get(keyword.keyword_id);
+          return keywordText ? { id: keyword.keyword_id, keyword: keywordText } : null;
+        }
+
+        const otherKeyword = String(keyword.keyword_other || '').trim();
+        return otherKeyword.length > 0 ? otherKeyword : null;
+      })
+      .filter(Boolean);
 
     return res.status(200).json({
       title: thesis.title ?? null,
@@ -399,6 +426,7 @@ const getThesisConclusionRequestDraft = async (req, res) => {
         goalId: sdg.goal_id,
         level: sdg.sdg_level,
       })),
+      keywords,
     });
   } catch (error) {
     return res.status(error.status || 500).json({ error: error.message });
