@@ -41,20 +41,10 @@ const fetchThesisProposals = async (where, includes, lang, pagination) => {
 
   const sortBySnakeCase = camelToSnakeCase(sortBy);
 
-  const notInApprovedApplications = {
-    id: {
-      [Op.notIn]: sequelize.literal(`(SELECT thesis_proposal_id FROM thesis_application WHERE status = 'approved')`),
-    },
-  };
-
-  const finalWhere = {
-    [Op.and]: [where, notInApprovedApplications],
-  };
-
   const { count, rows } = await ThesisProposal.findAndCountAll({
     attributes: selectThesisProposalAttributes(lang),
     include: includes,
-    where: finalWhere,
+    where,
     order: [[sortBySnakeCase, orderBy]],
     limit,
     offset,

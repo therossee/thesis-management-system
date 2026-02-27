@@ -28,9 +28,9 @@ describe('GET /api/thesis-proposals', () => {
     expect(response.body).toHaveProperty('thesisProposals');
     expect(response.body).toHaveProperty('currentPage');
     expect(response.body).toHaveProperty('totalPages');
-    expect(response.body.count).toEqual(6);
+    expect(response.body.count).toEqual(7);
     expect(response.body.thesisProposals).toBeInstanceOf(Array);
-    expect(response.body.thesisProposals.length).toEqual(6);
+    expect(response.body.thesisProposals.length).toEqual(7);
     expect(response.body.currentPage).toEqual(1);
     expect(response.body.totalPages).toEqual(1);
     let previousId = null;
@@ -49,7 +49,7 @@ describe('GET /api/thesis-proposals', () => {
   test('Should filter thesis proposals by search', async () => {
     const response = await request(server).get('/api/thesis-proposals').query({ search: 'descrizione' });
     expect(response.status).toBe(200);
-    expect(response.body.count).toBe(6);
+    expect(response.body.count).toBe(7);
     response.body.thesisProposals.forEach(proposal => {
       const topic = proposal.topic.toLowerCase();
       const description = proposal.description.toLowerCase();
@@ -60,7 +60,7 @@ describe('GET /api/thesis-proposals', () => {
   test('Should filter thesis proposals by isInternal', async () => {
     const response = await request(server).get('/api/thesis-proposals').query({ isInternal: 'true' });
     expect(response.status).toBe(200);
-    expect(response.body.count).toBe(3);
+    expect(response.body.count).toBe(4);
     response.body.thesisProposals.forEach(proposal => {
       expect(proposal.isInternal).toBe(true);
     });
@@ -172,9 +172,9 @@ describe('GET /api/thesis-proposals/targeted', () => {
     expect(response.body).toHaveProperty('thesisProposals');
     expect(response.body).toHaveProperty('currentPage');
     expect(response.body).toHaveProperty('totalPages');
-    expect(response.body.count).toEqual(4);
+    expect(response.body.count).toEqual(5);
     expect(response.body.thesisProposals).toBeInstanceOf(Array);
-    expect(response.body.thesisProposals.length).toEqual(4);
+    expect(response.body.thesisProposals.length).toEqual(5);
     expect(response.body.currentPage).toEqual(1);
     expect(response.body.totalPages).toEqual(1);
   });
@@ -184,7 +184,7 @@ describe('GET /api/thesis-proposals/targeted', () => {
       .get('/api/thesis-proposals/targeted')
       .query({ lang: 'en', search: 'description' });
     expect(response.status).toBe(200);
-    expect(response.body.count).toBe(4);
+    expect(response.body.count).toBe(5);
     response.body.thesisProposals.forEach(proposal => {
       const topic = proposal.topic.toLowerCase();
       const description = proposal.description.toLowerCase();
@@ -195,7 +195,7 @@ describe('GET /api/thesis-proposals/targeted', () => {
   test('Should filter targeted thesis proposals by isInternal', async () => {
     const response = await request(server).get('/api/thesis-proposals/targeted').query({ isInternal: 'true' });
     expect(response.status).toBe(200);
-    expect(response.body.count).toBe(3);
+    expect(response.body.count).toBe(4);
     response.body.thesisProposals.forEach(proposal => {
       expect(proposal.isInternal).toBe(true);
     });

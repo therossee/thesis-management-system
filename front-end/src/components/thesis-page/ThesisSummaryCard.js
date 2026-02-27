@@ -41,10 +41,10 @@ export default function ThesisSummaryCard({
       <Card.Header className="border-0 d-flex align-items-center">
         <h3 className="thesis-topic mb-0">
           <i className="fa-regular fa-clipboard fa-sm pe-2" />
-          {t('carriera.conclusione_tesi.summary_committee')}
+          {t('carriera.conclusione_tesi.summary')}
         </h3>
         <InfoTooltip
-          tooltipText={t('carriera.conclusione_tesi.summary_committee_tooltip')}
+          tooltipText={t('carriera.conclusione_tesi.summary_tooltip')}
           placement="right"
           id="thesis-summary-tooltip"
         />

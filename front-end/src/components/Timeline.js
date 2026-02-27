@@ -207,6 +207,9 @@ function mapStatusToBaseEffectiveActiveStep(currentStatus) {
   if (currentStatus === 'cancel_approved') return 'cancel_outcome';
 
   if (currentStatus === 'conclusion_approved') return 'almalaurea';
+  if (currentStatus === 'almalaurea') return 'compiled_questionnaire';
+  if (currentStatus === 'compiled_questionnaire') return 'final_exam';
+  if (currentStatus === 'final_exam') return 'final_thesis';
 
   if (currentStatus === 'done') return 'final_upload_outcome';
 
@@ -378,14 +381,16 @@ function decorateSteps({
   return steps.map(step => {
     const key = step.key;
     const thisIndex = stepKeys.indexOf(key);
+    const isFinalThesisGrayActive = currentStatus === 'final_exam' && key === 'final_thesis';
 
-    const isApplicationOutcomeWaiting = currentStatus === 'pending' && key === 'application_outcome';
+    const isApplicationOutcomeWaiting = !hasNoData && currentStatus === 'pending' && key === 'application_outcome';
     const isCancelOutcomeWaiting = currentStatus === 'cancel_requested' && key === 'cancel_outcome';
     const isConclusionOutcomeWaiting = currentStatus === 'conclusion_requested' && key === 'conclusion_outcome';
     const isFinalUploadOutcomeWaiting = currentStatus === 'final_thesis' && key === 'final_upload_outcome';
 
     const isActive =
       key === baseActiveStep ||
+      isFinalThesisGrayActive ||
       key === specialOutcomeActive ||
       isApplicationOutcomeWaiting ||
       isCancelOutcomeWaiting ||
@@ -420,6 +425,8 @@ function decorateSteps({
       titleClass = 'active';
 
       if (hasNoData && key === 'pending') {
+        circleClass = 'waiting';
+      } else if (isFinalThesisGrayActive) {
         circleClass = 'waiting';
       } else if (key === 'application_outcome') {
         if (hasThesis) circleClass = 'approved';
