@@ -368,10 +368,59 @@ body {
   color: var(--text-400) !important;
 }
 
+.modal-xxl .modal-content {
+  max-width: 70vw;
+  min-width: 550px;
+  margin: auto;
+  display: flex !important;
+}
+
+.btn-light.btn-header {
+  font-size: var(--font-size-xs);
+  height: 1.5rem;
+  min-height: 1.5rem;
+  padding: 0 0.5rem;
+  line-height: 1;
+  gap: 0.25rem;
+}
+
+.btn-dark .btn-header {
+  font-size: var(--font-size-xs);
+  height: 1.5rem;
+  min-height: 1.5rem;
+  padding: 0 0.5rem;
+  line-height: 1;
+  gap: 0.25rem;
+}
+
 /*scrollbar si vede solo se sopra brakpoint lg*/
 @media (max-width: 991px) {
   ::-webkit-scrollbar {
     display: none;
+  }
+}
+
+@media (max-width: 991px) {
+  .modal-xxl .modal-content {
+    max-width: 90vw;
+    min-width: unset;
+    margin: auto;
+  }
+}
+
+@media (max-width: 991px) {
+  .conclusion-process.modal-dialog,
+  .conclusion-process .modal-dialog {
+    max-width: 95vw;
+    width: 95vw;
+    margin: 1rem auto;
+  }
+}
+
+@media (max-height: 700px) {
+  .modal-xxl .modal-content {
+    max-height: 90vh;
+    overflow: auto;
   }
 }
 

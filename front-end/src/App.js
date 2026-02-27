@@ -4,6 +4,7 @@ import { Col, Row } from 'react-bootstrap';
 import { Route, Routes, useLocation } from 'react-router-dom';
 
 import API from './API';
+import CustomToast from './components/CustomToast';
 import FloatingButton from './components/FloatingButton';
 import LoadingModal from './components/LoadingModal';
 import PoliNavbar from './components/Navbar';
@@ -16,9 +17,11 @@ import Homepage from './pages/Homepage';
 import Opportunita from './pages/Opportunita';
 import PageNotFound from './pages/PageNotFound';
 import Servizi from './pages/Servizi';
+import ConclusioneTesi from './pages/carriera/ConclusioneTesi';
 import LaureaEdEsameFinale from './pages/carriera/LaureaEdEsameFinale';
 import PropostaDiTesi from './pages/carriera/PropostaDiTesi';
-import ProposteDiTesi from './pages/carriera/ProposteDiTesi';
+import Tesi from './pages/carriera/Tesi';
+import Test from './pages/servizi/Test';
 import { getSystemTheme, scrollTop } from './utils/utils';
 
 export const FavoritesContext = createContext(null);
@@ -26,6 +29,7 @@ export const ThemeContext = createContext(null);
 export const DesktopToggleContext = createContext(null);
 export const LoggedStudentContext = createContext(null);
 export const BodyDataLoadingContext = createContext(null);
+export const ToastContext = createContext(null);
 
 function App() {
   const [theme, setTheme] = useState(localStorage.getItem('theme') || 'auto');
@@ -36,6 +40,12 @@ function App() {
   const [navbarDataLoading, setNavbarDataLoading] = useState(true);
   const [bodyDataLoading, setBodyDataLoading] = useState(false);
   const [refresh, setRefresh] = useState(false);
+  const [toastState, setToastState] = useState({
+    show: false,
+    success: true,
+    title: '',
+    message: '',
+  });
   const location = useLocation();
 
   const updateTheme = theme => {
@@ -85,6 +95,17 @@ function App() {
   const favoritesValue = useMemo(() => ({ favorites, setFavorites }), [favorites]);
   const themeValue = useMemo(() => ({ theme, setTheme }), [theme]);
   const bodyDataLoadingValue = useMemo(() => ({ bodyDataLoading, setBodyDataLoading }), [bodyDataLoading]);
+  const toastValue = useMemo(
+    () => ({
+      showToast: ({ success, title, message }) => {
+        setToastState({ show: true, success, title, message });
+      },
+      hideToast: () => {
+        setToastState(prev => ({ ...prev, show: false }));
+      },
+    }),
+    [],
+  );
 
   return (
     <ThemeContext.Provider value={themeValue}>
@@ -92,33 +113,45 @@ function App() {
         <DesktopToggleContext.Provider value={desktopToggleValue}>
           <FavoritesContext.Provider value={favoritesValue}>
             <BodyDataLoadingContext.Provider value={bodyDataLoadingValue}>
-              <LoadingModal show={navbarDataLoading || bodyDataLoading} onHide={() => setNavbarDataLoading(false)} />
-              <PoliNavbar
-                allStudents={allStudents}
-                setNavbarDataLoading={setNavbarDataLoading}
-                refresh={refresh}
-                setRefresh={setRefresh}
-              />
-              <Row className="p-0 m-0" style={{ width: '100vw', height: '100vh' }}>
-                <Sidebar />
-                <Col className={`custom-content reduced ${desktopToggle ? 'minimized' : ''}`}>
-                  <Routes>
-                    <Route path="/" element={<Homepage />} />
-                    <Route path="/area_personale" element={<AreaPersonale />} />
-                    <Route path="/home" element={<Homepage />} />
-                    <Route path="/didattica" element={<Didattica />} />
-                    <Route path="/carriera" element={<Carriera />} />
-                    <Route path="/carriera/proposte_di_tesi" element={<ProposteDiTesi />} />
-                    <Route path="/carriera/proposte_di_tesi/:id" element={<PropostaDiTesi />} />
-                    <Route path="/carriera/laurea_ed_esame_finale" element={<LaureaEdEsameFinale />} />
-                    <Route path="/opportunita" element={<Opportunita />} />
-                    <Route path="/servizi" element={<Servizi />} />
-                    <Route path="/help" element={<Help />} />
-                    <Route path="*" element={<PageNotFound />} />
-                  </Routes>
-                  <FloatingButton />
-                </Col>
-              </Row>
+              <ToastContext.Provider value={toastValue}>
+                <LoadingModal show={navbarDataLoading || bodyDataLoading} onHide={() => setNavbarDataLoading(false)} />
+                <CustomToast
+                  show={toastState.show}
+                  success={toastState.success}
+                  title={toastState.title}
+                  message={toastState.message}
+                  onClose={toastValue.hideToast}
+                />
+                <PoliNavbar
+                  allStudents={allStudents}
+                  setNavbarDataLoading={setNavbarDataLoading}
+                  refresh={refresh}
+                  setRefresh={setRefresh}
+                />
+                <Row className="p-0 m-0" style={{ width: '100vw', height: '100vh' }}>
+                  <Sidebar />
+                  <Col className={`custom-content reduced ${desktopToggle ? 'minimized' : ''}`}>
+                    <Routes>
+                      <Route path="/" element={<Homepage />} />
+                      <Route path="/area_personale" element={<AreaPersonale />} />
+                      <Route path="/home" element={<Homepage />} />
+                      <Route path="/didattica" element={<Didattica />} />
+                      <Route path="/carriera" element={<Carriera />} />
+                      <Route path="/carriera/laurea_ed_esame_finale" element={<LaureaEdEsameFinale />} />
+                      <Route path="/opportunita" element={<Opportunita />} />
+                      <Route path="/servizi" element={<Servizi />} />
+                      <Route path="/help" element={<Help />} />
+                      <Route path="*" element={<PageNotFound />} />
+                      <Route path="/servizi/test" element={<Test />} />
+                      <Route path="/carriera/tesi" element={<Tesi initialActiveTab="thesis" />} />
+                      <Route path="/carriera/tesi/proposte_di_tesi" element={<Tesi initialActiveTab="proposals" />} />
+                      <Route path="/carriera/tesi/proposta_di_tesi/:id" element={<PropostaDiTesi />} />
+                      <Route path="/carriera/tesi/conclusione_tesi" element={<ConclusioneTesi />} />
+                    </Routes>
+                    <FloatingButton />
+                  </Col>
+                </Row>
+              </ToastContext.Provider>
             </BodyDataLoadingContext.Provider>
           </FavoritesContext.Provider>
         </DesktopToggleContext.Provider>

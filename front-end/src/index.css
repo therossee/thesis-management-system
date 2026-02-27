@@ -20,6 +20,12 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+.modal.show .modal-dialog:not([class*='modal-fullscreen']) {
+  min-height: calc(100% - var(--bs-modal-margin) * 2);
+  display: flex;
+  align-items: center;
+}
+
 code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
 }

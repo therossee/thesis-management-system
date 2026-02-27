@@ -1,6 +1,6 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 
-import { Card, Col, Row } from 'react-bootstrap';
+import { Button, Card, Col, Modal, Row } from 'react-bootstrap';
 import { useTranslation } from 'react-i18next';
 import Linkify from 'react-linkify';
 
@@ -8,9 +8,16 @@ import moment from 'moment';
 import 'moment/locale/it';
 import PropTypes from 'prop-types';
 
+import API from '../API';
+import { LoggedStudentContext, ThemeContext, ToastContext } from '../App';
+import '../styles/custom-modal.css';
+import '../styles/custom-toast.css';
 import '../styles/text.css';
 import '../styles/utilities.css';
+import { getSystemTheme } from '../utils/utils';
 import CustomBadge from './CustomBadge';
+import CustomBlock from './CustomBlock';
+import LoadingModal from './LoadingModal';
 
 moment.locale('it');
 
@@ -32,119 +39,223 @@ function ThesisProposalDetail(props) {
     attachmentUrl,
     keywords,
     types,
+    company,
   } = props.thesisProposal;
+
   const supervisors = [supervisor, ...internalCoSupervisors];
-  return (
-    <div className="proposals-container">
-      <Card className="mb-3 roundCard py-2">
-        {topic && (
-          <Card.Header className="border-0">
-            <Row className="d-flex justify-content-between">
-              <Col xs={10} sm={10} md={11} lg={11} xl={11}>
-                <h3 className="thesis-topic">{topic}</h3>
-              </Col>
-              <Col xs={2} sm={2} md={1} lg={1} xl={1} className="thesis-topic text-end">
+  const [sending, setSending] = useState(false);
+  const [showModal, setShowModal] = useState(false);
+  const [isEligible, setIsEligible] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isAvailable, setIsAvailable] = useState(false);
+  const { loggedStudent } = useContext(LoggedStudentContext);
+  const { showToast } = useContext(ToastContext);
+  const { t } = useTranslation();
+
+  useEffect(() => {
+    API.checkStudentEligibility()
+      .then(data => {
+        setIsEligible(data.eligible);
+      })
+      .catch(error => {
+        console.error('Error checking student eligibility:', error);
+      });
+    API.getProposalAvailability(id)
+      .then(response => {
+        setIsAvailable(response.available);
+      })
+      .catch(error => console.error('Error fetching thesis proposal availability:', error))
+      .finally(() => {
+        setIsLoading(false);
+      });
+  }, [loggedStudent]);
+
+  const sendApplication = () => {
+    if (sending) return;
+    const applicationData = {
+      thesisProposal: {
+        id: id,
+        topic: topic,
+      },
+      topic: topic + '\n' + description,
+      company: company ? company : null,
+      supervisor: props.thesisProposal.supervisor,
+      coSupervisors: internalCoSupervisors,
+    };
+    console.log(applicationData);
+    setSending(true);
+    API.createThesisApplication(applicationData)
+      .then(() => {
+        setIsEligible(false);
+        showToast({
+          success: true,
+          title: t('carriera.richiesta_tesi.success'),
+          message: t('carriera.richiesta_tesi.success_content'),
+        });
+      })
+      .catch(error => {
+        console.error('Error sending thesis application:', error);
+        setIsEligible(true);
+        showToast({
+          success: false,
+          title: t('carriera.richiesta_tesi.error'),
+          message: t('carriera.richiesta_tesi.error_content'),
+        });
+      })
+      .finally(() => {
+        setSending(false);
+        setIsEligible(false);
+        setShowModal(false);
+      });
+  };
+
+  if (sending) {
+    return <div>{'Invio candidatura in corso...'}</div>;
+  } else if (isLoading) {
+    return <LoadingModal show={isLoading} onHide={() => setIsLoading(false)} />;
+  } else {
+    return (
+      <>
+        <div className="proposals-container">
+          <Card className="mb-3 roundCard py-2 py-2">
+            {topic && (
+              <Card.Header className="border-0">
+                <Row className="d-flex justify-content-between align-items-start">
+                  <Col xs="auto" className="flex-grow-1">
+                    <h3 className="thesis-topic">{topic}</h3>
+                  </Col>
+                  <Col xs="auto" className="text-end">
+                    <CustomBadge variant="status" content={expirationDate} />
+                  </Col>
+                </Row>
+              </Card.Header>
+            )}
+            <Card.Body className="pt-2 pb-0">
+              <div className="custom-badge-container mb-3">
+                <CustomBadge variant={isInternal ? 'internal' : 'external'} />
                 <CustomBadge variant={isAbroad ? 'abroad' : 'italy'} />
-              </Col>
-            </Row>
-          </Card.Header>
-        )}
-        <Card.Body className="pt-2 pb-0">
-          <div className="custom-badge-container mb-3">
-            <CustomBadge variant="status" content={expirationDate} />
-            <CustomBadge variant={isInternal ? 'internal' : 'external'} />
-            {types.map(item => (
-              <CustomBadge key={item.id} variant="type" content={item.type} />
-            ))}
-          </div>
-          <MyBlock icon="user" title="carriera.proposte_di_tesi.supervisors" ignoreMoreLines>
-            <CustomBadge variant="teacher" content={supervisors.map(s => s.lastName + ' ' + s.firstName)} />
-          </MyBlock>
-          {keywords.length > 0 ? (
-            <MyBlock icon="key" title="carriera.proposte_di_tesi.keywords" ignoreMoreLines>
-              <CustomBadge variant="keyword" content={keywords.map(item => item.keyword)} />
-            </MyBlock>
-          ) : null}
-          {externalCoSupervisors && (
-            <MyBlock icon="user-plus" title="carriera.proposta_di_tesi.relatori_esterni">
-              <Linkify>{externalCoSupervisors}</Linkify>
-            </MyBlock>
-          )}
-          {description && (
-            <MyBlock icon="memo" title="carriera.proposta_di_tesi.descrizione">
-              <Linkify>{description}</Linkify>
-            </MyBlock>
-          )}
-          {requiredSkills && (
-            <MyBlock icon="head-side-brain" title="carriera.proposta_di_tesi.conoscenze_richieste">
-              <Linkify>{requiredSkills}</Linkify>
-            </MyBlock>
-          )}
-          {additionalNotes && (
-            <MyBlock icon="notes" title="carriera.proposta_di_tesi.note">
-              <Linkify>{additionalNotes}</Linkify>
-            </MyBlock>
-          )}
-          {link && (
-            <MyBlock icon="link" title="Link">
-              <Linkify>{link}</Linkify>
-            </MyBlock>
-          )}
-          {attachmentUrl && (
-            <MyBlock icon="paperclip" title="carriera.proposta_di_tesi.allegato">
-              <a
-                href={`https://didattica.polito.it/pls/portal30/sviluppo.tesi_proposte.download_alleg?idts=${id}&lang=IT`}
-                className="info-detail d-flex align-items-center"
-              >
-                {attachmentUrl}
-              </a>
-            </MyBlock>
-          )}
-          {creationDate && (
-            <MyBlock icon="calendar" title="carriera.proposte_di_tesi.creationDate">
-              {moment(creationDate).format('DD/MM/YYYY')}
-            </MyBlock>
-          )}
-          {expirationDate && (
-            <MyBlock icon="calendar-clock" title="carriera.proposte_di_tesi.expirationDate">
-              {moment(expirationDate).format('DD/MM/YYYY')}
-            </MyBlock>
-          )}
-        </Card.Body>
-      </Card>
-    </div>
+                {types.map(item => (
+                  <CustomBadge key={item.id} variant="type" content={item.type} />
+                ))}
+              </div>
+              <CustomBlock icon="user" title="carriera.proposte_di_tesi.supervisors" ignoreMoreLines>
+                <CustomBadge variant="teacher" content={supervisors.map(s => s.lastName + ' ' + s.firstName)} />
+              </CustomBlock>
+              {company && (
+                <CustomBlock icon="building" title="carriera.proposta_di_tesi.azienda" ignoreMoreLines>
+                  <CustomBadge variant="external-company" content={company.corporateName} />
+                </CustomBlock>
+              )}
+              {keywords.length > 0 ? (
+                <CustomBlock icon="key" title="carriera.proposte_di_tesi.keywords" ignoreMoreLines>
+                  <CustomBadge variant="keyword" content={keywords.map(item => item.keyword)} />
+                </CustomBlock>
+              ) : null}
+              {externalCoSupervisors && (
+                <CustomBlock icon="user-plus" title="carriera.proposta_di_tesi.relatori_esterni">
+                  <Linkify>{externalCoSupervisors}</Linkify>
+                </CustomBlock>
+              )}
+              {description && (
+                <CustomBlock icon="memo" title="carriera.proposta_di_tesi.descrizione">
+                  <Linkify>{description}</Linkify>
+                </CustomBlock>
+              )}
+              {requiredSkills && (
+                <CustomBlock icon="head-side-brain" title="carriera.proposta_di_tesi.conoscenze_richieste">
+                  <Linkify>{requiredSkills}</Linkify>
+                </CustomBlock>
+              )}
+              {additionalNotes && (
+                <CustomBlock icon="notes" title="carriera.proposta_di_tesi.note">
+                  <Linkify>{additionalNotes}</Linkify>
+                </CustomBlock>
+              )}
+              {link && (
+                <CustomBlock icon="link" title="Link">
+                  <Linkify>{link}</Linkify>
+                </CustomBlock>
+              )}
+              {attachmentUrl && (
+                <CustomBlock icon="paperclip" title="carriera.proposta_di_tesi.allegato">
+                  <a
+                    href={`https://didattica.polito.it/pls/portal30/sviluppo.tesi_proposte.download_alleg?idts=${id}&lang=IT`}
+                    className="info-detail d-flex align-items-center"
+                  >
+                    {attachmentUrl}
+                  </a>
+                </CustomBlock>
+              )}
+              {creationDate && (
+                <CustomBlock icon="calendar" title="carriera.proposte_di_tesi.creation_date">
+                  {moment(creationDate).format('DD/MM/YYYY')}
+                </CustomBlock>
+              )}
+              <div className="d-flex align-items-start justify-content-between">
+                {expirationDate && (
+                  <div className="flex-grow-1 me-3">
+                    <CustomBlock icon="calendar-clock" title="carriera.proposte_di_tesi.expiration_date">
+                      {moment(expirationDate).format('DD/MM/YYYY')}
+                    </CustomBlock>
+                  </div>
+                )}
+                <div className="d-flex gap-2">
+                  <ApplicationButton setShowModal={setShowModal} isEligible={isEligible && isAvailable} />
+                </div>
+              </div>
+            </Card.Body>
+          </Card>
+          <ProposalModal show={showModal} handleClose={() => setShowModal(false)} sendApplication={sendApplication} />
+        </div>
+      </>
+    );
+  }
+}
+
+function ApplicationButton(props) {
+  const { t } = useTranslation();
+  const isEligible = props.isEligible;
+  const setShowModal = props.setShowModal;
+  const { theme } = useContext(ThemeContext);
+  const appliedTheme = theme === 'auto' ? getSystemTheme() : theme;
+  return (
+    <Button
+      className={`btn-primary-${appliedTheme} mb-3`}
+      size="md"
+      onClick={() => setShowModal(true)}
+      disabled={!isEligible}
+    >
+      <i className="fa-solid fa-paper-plane"></i>
+      {t('carriera.proposta_di_tesi.candidatura')}
+    </Button>
   );
 }
 
-function MyBlock({ icon, title, children, ignoreMoreLines }) {
+function ProposalModal({ show, handleClose, sendApplication }) {
   const { t } = useTranslation();
-  const [moreLines, setMoreLines] = useState(false);
-  const contentRef = useRef(null);
-
-  useEffect(() => {
-    if (ignoreMoreLines) {
-      return;
-    }
-    const element = contentRef.current;
-    if (element) {
-      const computedStyle = window.getComputedStyle(element);
-      const lineHeight = parseFloat(computedStyle.lineHeight);
-      const lines = element.offsetHeight / lineHeight;
-
-      setMoreLines(lines > 1);
-    }
-  }, [children, ignoreMoreLines]);
+  const { theme } = useContext(ThemeContext);
+  const appliedTheme = theme === 'auto' ? getSystemTheme() : theme;
 
   return (
-    <div className={moreLines ? 'text-container' : 'info-container mb-3'}>
-      <div className={`title-container ${moreLines ? 'pb-1' : ''}`}>
-        {icon && <i className={`fa-regular fa-${icon} fa-fw`} />}
-        {t(title)}:
-      </div>
-      <div ref={contentRef} className={`info-detail ${moreLines ? 'aligned mb-3' : ''}`}>
-        {children}
-      </div>
-    </div>
+    <Modal show={show} onHide={handleClose} contentClassName="modal-content" backdropClassName="modal-overlay" centered>
+      <Modal.Header closeButton={true} className="modal-header">
+        <Modal.Title className="modal-title">
+          <i className="fa-regular fa-circle-exclamation" />
+          {` `}
+          {t('carriera.proposta_di_tesi.candidatura')}
+        </Modal.Title>
+      </Modal.Header>
+      <Modal.Body className="modal-body">{t('carriera.proposta_di_tesi.modal_contenuto')}</Modal.Body>
+      <Modal.Footer className="modal-footer">
+        <Button className="modal-cancel mb-3" size="md" onClick={handleClose}>
+          {t('carriera.proposta_di_tesi.chiudi')}
+        </Button>
+        <Button className={`btn-primary-${appliedTheme} mb-3`} size="md" onClick={() => sendApplication()}>
+          <i className="fa-solid fa-paper-plane"></i>
+          {t('carriera.proposta_di_tesi.prosegui')}
+        </Button>
+      </Modal.Footer>
+    </Modal>
   );
 }
 
@@ -166,14 +277,22 @@ ThesisProposalDetail.propTypes = {
     attachmentUrl: PropTypes.string,
     keywords: PropTypes.array,
     types: PropTypes.array,
+    company: PropTypes.shape({
+      id: PropTypes.number.isRequired,
+      corporateName: PropTypes.string.isRequired,
+    }),
   }).isRequired,
 };
 
-MyBlock.propTypes = {
-  icon: PropTypes.string.isRequired,
-  title: PropTypes.string.isRequired,
-  children: PropTypes.node.isRequired,
-  ignoreMoreLines: PropTypes.bool,
+ApplicationButton.propTypes = {
+  isEligible: PropTypes.bool.isRequired,
+  setShowModal: PropTypes.func.isRequired,
+};
+
+ProposalModal.propTypes = {
+  show: PropTypes.bool.isRequired,
+  handleClose: PropTypes.func.isRequired,
+  sendApplication: PropTypes.func.isRequired,
 };
 
 export default ThesisProposalDetail;

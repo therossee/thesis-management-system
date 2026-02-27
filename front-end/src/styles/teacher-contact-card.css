@@ -1,0 +1,86 @@
+.teacher-contact-card {
+  margin-bottom: 1.5rem;
+  background-color: var(--surface);
+}
+
+.contact-title {
+  margin-bottom: 1.25rem;
+  font-size: 1.1rem;
+  color: var(--text);
+}
+
+.supervisor-main {
+  padding-bottom: 1.25rem;
+}
+
+.contact-item {
+  display: flex;
+  align-items: flex-start;
+  color: var(--text);
+}
+
+.contact-avatar-light {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--primary);
+  color: var(--surface);
+  font-weight: bold;
+  font-size: 1rem;
+  flex-shrink: 0;
+}
+
+.contact-avatar-dark {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--background);
+  color: var(--text);
+  font-weight: bold;
+  font-size: 1rem;
+  flex-shrink: 0;
+}
+
+.contact-info {
+  flex-grow: 1;
+  min-width: 0;
+}
+
+.contact-name {
+  display: block;
+  font-size: var(--font-size-md);
+  color: var(--text);
+  margin-bottom: 0.25rem;
+}
+
+.contact-role {
+  font-size: var(--font-size-sm);
+  color: var(--text-muted);
+  margin-bottom: 0.25rem;
+}
+
+.contact-email {
+  font-size: var(--font-size-sm);
+  color: var(--link);
+  text-decoration: underline;
+  word-break: break-word;
+}
+
+.contact-email:hover {
+  text-decoration: underline;
+}
+
+.cosupervisors-section {
+  border-top: 1px solid var(--border);
+  padding-top: 1rem;
+}
+
+.cosupervisor-button {
+  color: var(--text);
+}

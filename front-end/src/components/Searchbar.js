@@ -105,6 +105,7 @@ export default function Searchbar(props) {
             as={Link}
             to={searchUrl}
             target="_blank"
+            rel="noopener noreferrer"
             variant="light"
             onClick={() => {
               setSearchWord('');

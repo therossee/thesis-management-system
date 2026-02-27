@@ -1,4 +1,4 @@
-const { Keyword, Teacher, Type } = require('../models');
+const { Company, Keyword, Teacher, Type } = require('../models');
 const selectKeywordAttributes = require('./selectKeywordAttributes');
 const selectTeacherAttributes = require('./selectTeacherAttributes');
 const selectTypeAttributes = require('./selectTypeAttributes');
@@ -18,6 +18,10 @@ const getIncludes = (lang, detailed = false) => [
     model: Teacher,
     through: { attributes: ['is_supervisor'] },
     attributes: detailed === true ? selectTeacherAttributes(detailed) : selectTeacherAttributes(),
+  },
+  {
+    model: Company,
+    attributes: ['id', 'corporate_name'],
   },
 ];
 

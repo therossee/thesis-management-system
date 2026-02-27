@@ -7,9 +7,10 @@ const {
   getThesisProposalsKeywords,
   getThesisProposalsTeachers,
   getThesisProposalById,
+  getProposalAvailability,
 } = require('../../src/controllers/thesis-proposals');
 const { getStudentData } = require('../../src/controllers/students');
-const { ThesisProposal, sequelize, Type, Keyword, Teacher } = require('../../src/models');
+const { ThesisProposal, ThesisApplication, sequelize, Type, Keyword, Teacher } = require('../../src/models');
 
 jest.mock('../../src/controllers/students', () => ({
   getStudentData: jest.fn(),
@@ -20,6 +21,9 @@ jest.mock('../../src/models', () => ({
     findAndCountAll: jest.fn(),
     findByPk: jest.fn(),
   },
+  ThesisProposalDegree: {
+    findAll: jest.fn(),
+  },
   Type: {
     findAll: jest.fn(),
   },
@@ -28,6 +32,9 @@ jest.mock('../../src/models', () => ({
   },
   Teacher: {
     findAll: jest.fn(),
+  },
+  ThesisApplication: {
+    findOne: jest.fn(),
   },
   sequelize: {
     literal: jest.fn(),
@@ -723,6 +730,48 @@ describe('getThesisProposalById', () => {
     const res = { json: jest.fn(), status: jest.fn(() => res) };
 
     await getThesisProposalById(req, res);
+
+    expect(ThesisProposal.findByPk).toHaveBeenCalledTimes(1);
+    expect(res.status).toHaveBeenCalledWith(500);
+    expect(res.json).toHaveBeenCalledWith({ error: 'Database error' });
+  });
+});
+
+describe('getProposalAvailability', () => {
+  test('should return 404 if the thesis proposal does not exist', async () => {
+    ThesisProposal.findByPk.mockResolvedValueOnce(null);
+
+    const req = { params: { thesisProposalId: 1 } };
+    const res = { json: jest.fn(), status: jest.fn(() => res) };
+
+    await getProposalAvailability(req, res);
+
+    expect(ThesisProposal.findByPk).toHaveBeenCalledTimes(1);
+    expect(res.status).toHaveBeenCalledWith(404);
+    expect(res.json).toHaveBeenCalledWith({ error: 'Thesis proposal not found' });
+  });
+
+  test('should return availability status of the thesis proposal', async () => {
+    ThesisProposal.findByPk.mockResolvedValueOnce({ id: 1 });
+    ThesisApplication.findOne.mockResolvedValueOnce(null);
+
+    const req = { params: { thesisProposalId: 1 } };
+    const res = { json: jest.fn(), status: jest.fn(() => res) };
+
+    await getProposalAvailability(req, res);
+
+    expect(ThesisProposal.findByPk).toHaveBeenCalledTimes(1);
+    expect(ThesisApplication.findOne).toHaveBeenCalledTimes(1);
+    expect(res.json).toHaveBeenCalledWith({ available: true });
+  });
+
+  test('should return 500 status if an error occurred', async () => {
+    ThesisProposal.findByPk.mockRejectedValueOnce(new Error('Database error'));
+
+    const req = { params: { thesisProposalId: 1 } };
+    const res = { json: jest.fn(), status: jest.fn(() => res) };
+
+    await getProposalAvailability(req, res);
 
     expect(ThesisProposal.findByPk).toHaveBeenCalledTimes(1);
     expect(res.status).toHaveBeenCalledWith(500);

@@ -2,6 +2,7 @@ const { z } = require('zod');
 
 const keywordSchema = require('./Keyword');
 const teacherOverviewSchema = require('./TeacherOverview');
+const companySchema = require('./Company');
 const typeSchema = require('./Type');
 
 const thesisProposalOverviewSchema = z
@@ -16,21 +17,23 @@ const thesisProposalOverviewSchema = z
     keywords: z.array(keywordSchema).default([]),
     types: z.array(typeSchema).default([]),
     teachers: z.array(teacherOverviewSchema).default([]),
+    company: companySchema.optional().nullable(),
   })
   .transform(proposal => {
-    const teachers = proposal.teachers;
+    const teachers = proposal.teachers || [];
     const supervisor = teachers.find(teacher => teacher.isSupervisor);
     const internalCoSupervisors = teachers.filter(teacher => !teacher.isSupervisor);
 
-    delete proposal.teachers;
-    delete supervisor.isSupervisor;
+    if (supervisor) {
+      delete supervisor.isSupervisor;
+    }
     internalCoSupervisors.forEach(coSupervisor => delete coSupervisor.isSupervisor);
 
     return {
       id: proposal.id,
       topic: proposal.topic,
       description: proposal.description,
-      supervisor: supervisor,
+      supervisor: supervisor || null,
       internalCoSupervisors,
       creationDate: proposal.creation_date,
       expirationDate: proposal.expiration_date,
@@ -38,6 +41,7 @@ const thesisProposalOverviewSchema = z
       isAbroad: proposal.is_abroad,
       keywords: proposal.keywords,
       types: proposal.types,
+      company: proposal.company,
     };
   });
 

@@ -1,0 +1,118 @@
+.status-history-card {
+  margin-bottom: 1.5rem;
+  background-color: var(--surface);
+}
+
+.status-history-title {
+  margin-bottom: 1.5rem;
+  font-size: 1.1rem;
+  color: var(--text);
+}
+
+.status-history-timeline {
+  position: relative;
+}
+
+.status-history-item {
+  display: flex;
+  margin-bottom: 2rem;
+  position: relative;
+}
+
+.status-history-item.last {
+  margin-bottom: 0;
+}
+
+.status-history-marker {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-right: 1.25rem;
+}
+
+.status-history-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  z-index: 2;
+  position: relative;
+}
+
+.status-history-icon.status-pending {
+  background-color: var(--primary-200);
+  color: var(--primary-700);
+}
+
+.status-history-icon.status-approved {
+  background-color: var(--green-200);
+  color: var(--green-700);
+}
+
+.status-history-icon.status-rejected {
+  background-color: var(--red-200);
+  color: var(--red-700);
+}
+
+.status-history-icon.status-cancelled {
+  background-color: var(--red-200);
+  color: var(--red-700);
+}
+
+.status-history-icon.status-default {
+  background-color: var(--gray-200);
+  color: var(--gray-700);
+}
+
+.status-history-line {
+  position: absolute;
+  top: 40px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 2px;
+  height: calc(100% + 2rem);
+  background-image: linear-gradient(to bottom, var(--border) 50%, transparent 50%);
+  background-size: 2px 8px;
+  background-repeat: repeat-y;
+  z-index: 1;
+}
+
+.status-history-content {
+  flex-grow: 1;
+  padding-top: 0.5rem;
+}
+
+.status-history-status {
+  font-size: var(--font-size-md);
+  color: var(--text);
+  margin-bottom: 0.25rem;
+}
+
+.status-history-date {
+  font-size: var(--font-size-sm);
+  color: var(--text-muted);
+  margin-bottom: 0.5rem;
+}
+
+.status-history-note {
+  font-size: var(--font-size-sm);
+  color: var(--text);
+  padding: 0.75rem;
+  background-color: var(--background);
+  border-left: 3px solid var(--primary);
+  border-radius: var(--border-radius);
+  margin-top: 0.5rem;
+}
+
+.progress-step .disabled {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+  padding: 0.5rem;
+  opacity: 0.5;
+}

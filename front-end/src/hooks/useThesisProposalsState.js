@@ -65,6 +65,22 @@ export default function useThesisProposalsState() {
         state.sorting,
       )
         .then(data => {
+          if (data.totalPages > 0 && state.currentPage > data.totalPages) {
+            setState(prevState => ({
+              ...prevState,
+              currentPage: data.totalPages,
+            }));
+            return;
+          }
+
+          if (data.totalPages === 0 && state.currentPage !== 1) {
+            setState(prevState => ({
+              ...prevState,
+              currentPage: 1,
+            }));
+            return;
+          }
+
           setPageProposals(data.thesisProposals);
           setCount(data.count);
           setTotalPages(data.totalPages);
@@ -130,7 +146,7 @@ export default function useThesisProposalsState() {
           ...prevState,
           currentPage: pageNumber,
         }));
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        globalThis.scrollTo({ top: 0, behavior: 'smooth' });
       }
     },
     [state.currentPage],
@@ -143,7 +159,7 @@ export default function useThesisProposalsState() {
       currentPage: 1,
       proposalsPerPage: value,
     }));
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    globalThis.scrollTo({ top: 0, behavior: 'smooth' });
   }, []);
 
   const handleSearchbarChange = useCallback(event => {

@@ -19,6 +19,16 @@ VALUES
     ("CL017", "Collegio di Ingegneria Elettrica ed Energetica"),
     ("CL018", "Collegio di Ingegneria Civile ed Edile");
 
+INSERT INTO
+    company (id, corporate_name)
+VALUES
+    (1, "Tech Solutions S.r.l."),
+    (2, "Innovatech S.p.A."),
+    (3, "Green Energy Corp."),
+    (4, "AutoMotive Innovations"),
+    (5, "BioHealth Technologies");
+
+
 
 -- ------------------------------------------------------------
 -- ↓ degree_programme_container table ↓
@@ -726,6 +736,27 @@ VALUES
         "Sylvie",
         "Molinatto",
         "https://avatars.githubusercontent.com/u/126864619",
+        "37-18"
+    ),
+    (
+        "321001",
+        "Giulia",
+        "Rossi",
+        "https://avatars.githubusercontent.com/u/188880001",
+        "37-18"
+    ),
+    (
+        "321002",
+        "Marco",
+        "Bianchi",
+        "https://avatars.githubusercontent.com/u/188880002",
+        "37-18"
+    ),
+    (
+        "321003",
+        "Elena",
+        "Conti",
+        "https://avatars.githubusercontent.com/u/188880003",
         "37-18"
     );
 
@@ -3010,7 +3041,7 @@ VALUES
         NULL,
         NULL,
         "2022-12-07",
-        "2023-12-07",
+        "2000-12-07",
         1,
         0,
         "CL003",
@@ -3030,7 +3061,7 @@ VALUES
         NULL,
         NULL,
         "2024-11-11",
-        "2027-11-11",
+        "2099-11-11",
         1,
         0,
         "CL003",
@@ -3050,7 +3081,7 @@ VALUES
         NULL,
         "Domenico De Guglielmo",
         "2024-09-05",
-        "2027-09-05",
+        "2099-09-05",
         1,
         0,
         "CL003",
@@ -3069,8 +3100,8 @@ VALUES
         NULL,
         NULL,
         NULL,
-        "2026-01-09",
-        "2024-01-09",
+        "2028-01-09",
+        "2000-01-09",
         0,
         0,
         "CL003",
@@ -3096,7 +3127,7 @@ VALUES
         NULL,
         NULL,
         "2024-02-26",
-        "2026-02-26",
+        "2099-02-26",
         0,
         1,
         "CL003",
@@ -3116,7 +3147,7 @@ VALUES
         NULL,
         NULL,
         "2024-10-16",
-        "2027-10-16",
+        "2099-10-16",
         1,
         0,
         "CL003",
@@ -3136,7 +3167,7 @@ VALUES
         NULL,
         NULL,
         "2024-05-31",
-        "2027-10-31",
+        "2099-10-31",
         1,
         0,
         "CL003",
@@ -3162,7 +3193,7 @@ VALUES
         NULL,
         "Edgar Pironti - innoactive.io",
         "2023-10-31",
-        "2024-10-31",
+        "2000-10-31",
         0,
         0,
         "CL003",
@@ -3182,7 +3213,7 @@ VALUES
         NULL,
         NULL,
         "2024-09-03",
-        "2027-09-03",
+        "2099-09-03",
         0, /* Discrepancy with real value */
         0,
         "CL003",
@@ -3202,7 +3233,7 @@ VALUES
         NULL,
         NULL,
         "2024-09-30",
-        "2027-09-30",
+        "2099-09-30",
         0,
         0,
         "CL003",
@@ -3292,3 +3323,197 @@ INSERT INTO
     logged_student (student_id)
 VALUES
     (320213);
+
+-- ------------------------------------------------------------
+-- ↓ thesis_application table ↓
+-- ------------------------------------------------------------
+INSERT INTO
+    thesis_application (
+        id,
+        topic,
+        student_id,
+        thesis_proposal_id,
+        company_id,
+        submission_date,
+        status
+    )
+VALUES
+    (
+        1,
+        "Valutazione Critica delle Capacità di Generazione del Codice da Parte di LLM in Contesto di Istruzione",
+        320213,
+        13275,
+        NULL,
+        "2024-11-20",
+        "pending"
+    ),
+    (
+        2,
+        "Sviluppo di un simulatore di Home Automation",
+        314796,
+        13363,
+        2,
+        "2024-10-15",
+        "approved"
+    ),
+    (
+        3,
+        "IA Generativa per la Creazione di OpenScenario e OpenDrive da Serie di Immagini del Traffico",
+        318952,
+        13470,
+        NULL,
+        "2024-12-01",
+        "rejected"
+    );
+-- ------------------------------------------------------------
+-- ↓ thesis_application_supervisor_cosupervisor table ↓
+-- ------------------------------------------------------------
+INSERT INTO
+    thesis_application_supervisor_cosupervisor (
+        thesis_application_id,
+        teacher_id,
+        is_supervisor
+    )
+VALUES
+    (
+        1,
+        3019,
+        1
+    ),
+    (
+        1,
+        38485,
+        0
+    ),
+    (
+        2,
+        23270,
+        1
+    ),
+    (
+        2,
+        3019,
+        0
+    ),
+    (
+        3,
+        38485,
+        1
+    ),
+    (
+        3,
+        1921,
+        0
+    );
+
+-- ------------------------------------------------------------
+-- ↓ thesis_application_status_history table ↓
+-- ------------------------------------------------------------
+INSERT INTO
+    thesis_application_status_history (
+        thesis_application_id,
+        old_status,
+        new_status,
+        change_date
+    )
+VALUES
+    (
+        1,
+        NULL,
+        'pending',
+        "2024-11-20T10:00:00"
+    ),
+    (
+        2,
+        NULL,
+        'pending',
+        "2024-10-15T09:30:00"
+    ),
+    (
+        2,
+        'pending',
+        'approved',
+        "2024-11-10T15:45:00"
+    ),
+    (
+        3,
+        NULL,
+        'pending',
+        "2024-12-01T08:15:00"
+    ),
+    (
+        3,
+        'pending',
+        'rejected',
+        "2024-12-10T14:00:00"
+    );
+
+-- ------------------------------------------------------------
+-- ↓ thesis table ↓
+-- ------------------------------------------------------------
+INSERT INTO
+    thesis (
+        id,
+        topic,
+        thesis_application_id,
+        student_id,
+        company_id,    
+        thesis_start_date
+    )
+VALUES
+    (
+        1,
+        "Valutazione Critica delle Capacità di Generazione del Codice da Parte di LLM in Contesto di Istruzione",
+        1,
+        320213,
+        NULL,
+        "2025-02-01"
+    );
+
+-- ------------------------------------------------------------
+-- ↓ thesis_supervisor_cosupervisor table ↓
+-- ------------------------------------------------------------
+INSERT INTO
+    thesis_supervisor_cosupervisor (
+        thesis_id,
+        teacher_id,
+        is_supervisor
+    )
+VALUES
+    (
+        1,
+        3019,
+        1
+    ),
+    (
+        1,
+        38485,
+        0
+    );
+
+-- ------------------------------------------------------------
+-- ↓ embargo_motivation table ↓ 
+-- ------------------------------------------------------------
+
+
+INSERT INTO
+    embargo_motivation (motivation, motivation_en)
+VALUES
+    ("Necessità di evitare la divulgazione di risultati potenzialmente brevettabili contenuti all'interno della tesi, al fine di preservare il requisito della novità necessario per la brevettabilità.", 
+    "Need to avoid the disclosure of potentially patentable results contained within the thesis, in order to preserve the novelty requirement necessary for patentability."),
+    ("Esistenza di accordi di riservatezza o impegni al rispetto della segretezza contenuti in contratti o convenzioni con società o Enti terzi",
+    "Existence of confidentiality agreements or commitments to confidentiality contained in contracts or agreements with third-party companies or entities"),
+    ("Segretezza e/o di proprietà dei risultati e informazioni di enti esterni o aziende private che hanno partecipato alla realizzazione del lavoro di ricerca.",
+    "Confidentiality and/or ownership of results and information from external entities or private companies that participated in the research work"),
+    ("Pubblicazione editoriale", "Editorial publication"),
+    ("Pubblica sicurezza (il contenuto della tesi può in qualche modo mettere a rischio la sicurezza pubblica o nazionale)",
+    "Public security (the content of the thesis may in some way jeopardize public or national security)."),
+    ("Privacy (il contenuto dell'elaborato verte su una persona ancora in vita o deceduta di recente per la quale si teme di violare il diritto alla privacy)", 
+    "Privacy (the content of the thesis concerns a person still alive or recently deceased for whom there is a fear of violating the right to privacy)");
+
+
+-- ------------------------------------------------------------
+-- NOTE:
+-- The test schema does not define `sustainable_development_goals`.
+-- Keep this seed file limited to entities used by backend unit/integration tests.
+-- ------------------------------------------------------------

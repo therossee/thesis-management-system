@@ -19,6 +19,10 @@ export default [
       '**/*.config.js',
       '**/.config.mjs',
       '**/config-overrides.js',
+      '**/build/**',
+      '**/dist/**',
+      '**/public/**',
+      '**/vendor/**',
     ],
   },
   {

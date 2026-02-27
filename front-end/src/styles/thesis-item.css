@@ -38,6 +38,15 @@
   display: block;
 }
 
+.link-container {
+  align-items: center;
+  color: var(--section-title);
+  display: flex;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  gap: 0.5rem;
+}
+
 @media (max-width: 576px) {
   .info-container {
     display: block;

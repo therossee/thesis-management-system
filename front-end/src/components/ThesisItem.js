@@ -2,8 +2,10 @@ import React, { useContext } from 'react';
 
 import { Button, Card, Col, Row } from 'react-bootstrap';
 import { useTranslation } from 'react-i18next';
-import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 
+import moment from 'moment';
+import 'moment/locale/it';
 import PropTypes from 'prop-types';
 
 import { ThemeContext } from '../App';
@@ -16,25 +18,26 @@ function ThesisItem(props) {
   const teachers = [props.supervisor, ...props.internalCoSupervisors];
   const { theme } = useContext(ThemeContext);
   const appliedTheme = theme === 'auto' ? getSystemTheme() : theme;
+  const navigate = useNavigate();
 
   const { t } = useTranslation();
   return (
     <Col xs={12} sm={12} md={12} lg={6} xl={6} className="mb-3">
-      <Card className="mb-3 roundCard h-100 py-2">
+      <Card className="mb-3 roundCard py-2 h-100 ">
         <Card.Header className="border-0">
-          <Row>
-            <Col xs={10} sm={10} md={11} lg={10} xl={10}>
+          <Row className="d-flex justify-content-between align-items-start">
+            <Col xs={8} sm={8} md={9} lg={8} xl={9}>
               <h3 className="thesis-topic">{props.topic}</h3>
             </Col>
-            <Col xs={2} sm={2} md={1} lg={2} xl={2} className="thesis-topic text-end">
-              <CustomBadge variant={props.isAbroad ? 'abroad' : 'italy'} />
+            <Col xs={4} sm={4} md={3} lg={4} xl={3} className="justify-content-end d-flex">
+              <CustomBadge variant="status" content={props.expirationDate} />
             </Col>
           </Row>
         </Card.Header>
         <Card.Body className="pt-2">
           <div className="custom-badge-container mb-2">
-            <CustomBadge variant="status" content={props.expirationDate} />
             {props.isInternal ? <CustomBadge variant="internal" /> : <CustomBadge variant="external" />}
+            <CustomBadge variant={props.isAbroad ? 'abroad' : 'italy'} />
             {props.types.map(type => (
               <CustomBadge key={type.id} variant="type" content={type.type} />
             ))}
@@ -64,12 +67,18 @@ function ThesisItem(props) {
           )}
           <Card.Text className="thesis-description">{props.description}</Card.Text>
         </Card.Body>
-        <Card.Footer className="mx-2 px-2 d-flex justify-content-end border-0">
-          <Link to={`${props.id}`} style={{ textDecoration: 'none' }}>
-            <Button className={`btn-${appliedTheme}`} size="md">
-              {t('carriera.proposte_di_tesi.show_more')}
-            </Button>
-          </Link>
+        <Card.Footer className="mx-2 px-2 d-flex justify-content-between border-0">
+          <div className="title-container">
+            <i className="fa-regular fa-calendar-clock" />
+            {t('carriera.proposte_di_tesi.expires')}: <span>{moment(props.expirationDate).format('DD/MM/YYYY')}</span>
+          </div>
+          <Button
+            className={`btn-${appliedTheme}`}
+            size="md"
+            onClick={() => navigate(`/carriera/tesi/proposta_di_tesi/${props.id}`)}
+          >
+            {t('carriera.proposte_di_tesi.show_more')}
+          </Button>
         </Card.Footer>
       </Card>
     </Col>

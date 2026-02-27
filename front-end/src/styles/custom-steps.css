@@ -1,0 +1,123 @@
+.custom-steps {
+  box-sizing: border-box;
+  position: relative;
+  width: 100%;
+  min-height: auto;
+  padding: 8px 0;
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  justify-content: center;
+  align-items: center;
+  gap: 0;
+  overflow-x: auto;
+  font-family: 'Montserrat', 'Helvetica Neue', Arial, sans-serif;
+}
+
+.custom-step {
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  padding: 8px 16px 12px;
+  gap: 12px;
+  height: 40px;
+  border-top: 3px solid transparent;
+  flex: 0 0 auto;
+  justify-content: center;
+}
+
+.custom-step__dot {
+  box-sizing: border-box;
+  width: 24px;
+  height: 24px;
+  min-width: 24px;
+  min-height: 24px;
+  flex: 0 0 24px;
+  border-radius: 50%;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid transparent;
+  background: transparent;
+}
+
+.custom-step__dot i {
+  /* Aligned with timeline icon centering approach */
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  width: 14px;
+  height: 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: currentColor;
+  font-size: 14px;
+  line-height: 1;
+}
+
+.custom-step__label {
+  font-weight: 600;
+  font-size: 16px;
+  line-height: 1.25;
+  color: #262626;
+}
+
+.custom-step--done {
+  border-top-color: var(--green-700);
+}
+
+.custom-step--done .custom-step__dot {
+  background: var(--green-200);
+  border-color: var(--green-700);
+  color: var(--green-700);
+}
+
+.custom-step--error {
+  border-top-color: var(--red-700);
+}
+
+.custom-step--error .custom-step__dot {
+  background: var(--red-200);
+  border-color: var(--red-700);
+  color: var(--red-700);
+}
+
+.custom-step--current {
+  border-top-color: var(--gray-700);
+}
+
+.custom-step--current .custom-step__dot {
+  background: var(--gray-300);
+  border-color: var(--gray-700);
+  color: var(--gray-800);
+}
+
+.custom-step--current .custom-step__label {
+  color: var(--text);
+}
+
+.custom-step--todo {
+  border-top-color: var(--gray-300);
+}
+
+.custom-step--todo .custom-step__dot {
+  background: var(--gray-100);
+  border-color: var(--gray-300);
+  color: var(--gray-400);
+}
+
+.custom-step--todo .custom-step__label {
+  color: var(--text-muted);
+}
+
+.custom-step--in-progress {
+  border-top-color: var(--primary-400);
+}
+
+.custom-step--in-progress .custom-step__dot {
+  background: var(--primary-200);
+  border-color: var(--primary-400);
+  color: var(--primary-700);
+}
