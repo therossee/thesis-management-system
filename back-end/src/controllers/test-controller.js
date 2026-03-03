@@ -6,6 +6,73 @@ const {
   ThesisSupervisorCoSupervisor,
 } = require('../models');
 
+const CLOSED_APPLICATION_STATUSES = new Set(['cancelled', 'rejected', 'approved']);
+
+const getApplicationStatusValidationError = (currentStatus, nextStatus) => {
+  if (currentStatus === nextStatus) {
+    return 'New status must be different from the current status';
+  }
+
+  if (CLOSED_APPLICATION_STATUSES.has(currentStatus)) {
+    return 'Cannot update a closed application';
+  }
+
+  return null;
+};
+
+const createThesisFromApprovedApplication = async (application, transaction) => {
+  const application_supervisors = await ThesisApplicationSupervisorCoSupervisor.findAll({
+    where: { thesis_application_id: application.id },
+  });
+
+  const supervisor = application_supervisors.find(sup => sup.is_supervisor);
+  const co_supervisors = application_supervisors.filter(sup => !sup.is_supervisor);
+
+  const newThesis = await Thesis.create(
+    {
+      student_id: application.student_id,
+      company_id: application.company_id,
+      topic: application.topic,
+      thesis_application_id: application.id,
+    },
+    { transaction },
+  );
+
+  await ThesisSupervisorCoSupervisor.create(
+    {
+      thesis_id: newThesis.id,
+      teacher_id: supervisor.teacher_id,
+      is_supervisor: true,
+    },
+    { transaction },
+  );
+
+  for (const coSupervisor of co_supervisors) {
+    await ThesisSupervisorCoSupervisor.create(
+      {
+        thesis_id: newThesis.id,
+        teacher_id: coSupervisor.teacher_id,
+        is_supervisor: false,
+      },
+      { transaction },
+    );
+  }
+
+  return newThesis;
+};
+
+const rollbackTransactionSafely = async transaction => {
+  if (!transaction) {
+    return;
+  }
+
+  try {
+    await transaction.rollback();
+  } catch (rollbackError) {
+    console.error('Error rolling back thesis application status transaction:', rollbackError);
+  }
+};
+
 const updateThesisApplicationStatus = async (req, res) => {
   let t;
   try {
@@ -15,15 +82,12 @@ const updateThesisApplicationStatus = async (req, res) => {
     if (!application) {
       return res.status(404).json({ error: 'Thesis application not found' });
     }
-    if (application.status === new_status) {
-      return res.status(400).json({ error: 'New status must be different from the current status' });
-    } else if (
-      application.status === 'cancelled' ||
-      application.status === 'rejected' ||
-      application.status === 'approved'
-    ) {
-      return res.status(400).json({ error: 'Cannot update a closed application' });
+
+    const statusValidationError = getApplicationStatusValidationError(application.status, new_status);
+    if (statusValidationError) {
+      return res.status(400).json({ error: statusValidationError });
     }
+
     t = await sequelize.transaction();
     await ThesisApplicationStatusHistory.create(
       {
@@ -36,54 +100,12 @@ const updateThesisApplicationStatus = async (req, res) => {
     application.status = new_status;
     await application.save({ transaction: t });
 
-    let payload = application;
-    if (new_status === 'approved') {
-      const application_supervisors = await ThesisApplicationSupervisorCoSupervisor.findAll({
-        where: { thesis_application_id: id },
-      });
-
-      const supervisor = application_supervisors.find(sup => sup.is_supervisor);
-      const co_supervisors = application_supervisors.filter(sup => !sup.is_supervisor);
-      const newThesis = await Thesis.create(
-        {
-          student_id: application.student_id,
-          company_id: application.company_id,
-          topic: application.topic,
-          thesis_application_id: application.id,
-        },
-        { transaction: t },
-      );
-
-      const supervisorEntry = {
-        thesis_id: newThesis.id,
-        teacher_id: supervisor.teacher_id,
-        is_supervisor: true,
-      };
-      await ThesisSupervisorCoSupervisor.create(supervisorEntry, { transaction: t });
-
-      if (co_supervisors && co_supervisors.length > 0) {
-        for (const coSupervisor of co_supervisors) {
-          const coSupervisorEntry = {
-            thesis_id: newThesis.id,
-            teacher_id: coSupervisor.teacher_id,
-            is_supervisor: false,
-          };
-          await ThesisSupervisorCoSupervisor.create(coSupervisorEntry, { transaction: t });
-        }
-      }
-      payload = newThesis;
-    }
+    const payload = new_status === 'approved' ? await createThesisFromApprovedApplication(application, t) : application;
 
     await t.commit();
     return res.status(200).json(payload);
   } catch (error) {
-    if (t) {
-      try {
-        await t.rollback();
-      } catch (rollbackError) {
-        console.error('Error rolling back thesis application status transaction:', rollbackError);
-      }
-    }
+    await rollbackTransactionSafely(t);
     console.error('Error updating thesis application status:', error);
     return res.status(500).json({ error: 'Internal server error' });
   }

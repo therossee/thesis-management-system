@@ -103,6 +103,208 @@ CustomCompanySingleValue.propTypes = {
   }).isRequired,
 };
 
+const NoIndicatorSeparator = () => null;
+
+const resolveIsClearable = (isClearable, fallbackValue) => {
+  return isClearable !== undefined ? isClearable : fallbackValue;
+};
+
+const buildClassName = (baseClassName, className, error) => {
+  return `${baseClassName} ${className || ''} ${error ? 'is-invalid' : ''}`;
+};
+
+const filterByLabelOrEmail = (candidate, input) => {
+  const label = candidate.data.label.toLowerCase();
+  const email = candidate.data.email ? candidate.data.email.toLowerCase() : '';
+  const inputLower = input.toLowerCase();
+  return label.includes(inputLower) || email.includes(inputLower);
+};
+
+const handleBoundedSelectionChange = (value, isMulti, maxMulti, setSelected) => {
+  if (!isMulti) {
+    setSelected(value);
+    return;
+  }
+
+  if (!value || value.length <= maxMulti) {
+    setSelected(value);
+  }
+};
+
+const renderKeywordSelect = ({
+  isDisabled,
+  options,
+  isMenuOpen,
+  placeholder,
+  selected,
+  setSelected,
+  onMenuOpen,
+  onMenuClose,
+  error,
+  commonStyles,
+  formatCreateLabel,
+  menuPortalTarget,
+}) => {
+  return (
+    <CreatableSelect
+      isMulti={true}
+      isClearable={false}
+      isDisabled={isDisabled}
+      options={options}
+      components={{
+        MultiValue: props => <CustomMultiValue {...props} badgeVariant="keyword" />,
+        Option: OptionBasic,
+        IndicatorSeparator: NoIndicatorSeparator,
+      }}
+      placeholder={isMenuOpen ? '' : placeholder}
+      value={selected}
+      onChange={setSelected}
+      onMenuOpen={onMenuOpen}
+      onMenuClose={onMenuClose}
+      className={buildClassName('multi-select', '', error)}
+      classNamePrefix="select"
+      styles={commonStyles}
+      formatCreateLabel={formatCreateLabel || (inputValue => `Aggiungi "${inputValue}"`)}
+      menuPortalTarget={menuPortalTarget}
+      menuPosition="fixed"
+      menuShouldScrollIntoView={false}
+    />
+  );
+};
+
+const renderCompanySelect = ({
+  isClearable,
+  isDisabled,
+  selected,
+  options,
+  isMenuOpen,
+  placeholder,
+  setSelected,
+  onMenuOpen,
+  onMenuClose,
+  className,
+  error,
+  commonStyles,
+}) => {
+  return (
+    <Select
+      isMulti={false}
+      isClearable={resolveIsClearable(isClearable, true)}
+      isDisabled={isDisabled}
+      components={{
+        SingleValue: CustomCompanySingleValue,
+        IndicatorSeparator: NoIndicatorSeparator,
+      }}
+      name="companies"
+      defaultValue={selected}
+      options={options}
+      placeholder={isMenuOpen ? '' : placeholder}
+      value={selected}
+      onChange={setSelected}
+      onMenuOpen={onMenuOpen}
+      onMenuClose={onMenuClose}
+      className={buildClassName('single-select', className, error)}
+      classNamePrefix="select"
+      styles={commonStyles}
+    />
+  );
+};
+
+const renderSdgSelect = ({
+  isMulti,
+  isClearable,
+  isDisabled,
+  selected,
+  options,
+  isMenuOpen,
+  placeholder,
+  maxMulti,
+  setSelected,
+  onMenuOpen,
+  onMenuClose,
+  className,
+  error,
+  commonStyles,
+}) => {
+  return (
+    <Select
+      isMulti={!!isMulti}
+      isClearable={resolveIsClearable(isClearable, !isMulti)}
+      isDisabled={isDisabled}
+      components={{
+        SingleValue: props => <CustomSingleValue {...props} badgeVariant="sdg" />,
+        MultiValue: props => <CustomMultiValue {...props} badgeVariant="sdg" />,
+        Option: OptionBasic,
+        IndicatorSeparator: NoIndicatorSeparator,
+      }}
+      name={isMulti ? 'sdgs' : 'sdg'}
+      defaultValue={selected}
+      options={options}
+      placeholder={isMenuOpen ? '' : placeholder}
+      value={selected}
+      onChange={value => handleBoundedSelectionChange(value, isMulti, maxMulti, setSelected)}
+      onMenuOpen={onMenuOpen}
+      onMenuClose={onMenuClose}
+      className={buildClassName('multi-select', className, error)}
+      classNamePrefix="select"
+      styles={commonStyles}
+      menuPortalTarget={typeof document === 'undefined' ? null : document.body}
+      menuPosition="fixed"
+      menuPlacement="top"
+      menuShouldScrollIntoView={false}
+    />
+  );
+};
+
+const renderSupervisorSelect = ({
+  isMulti,
+  isClearable,
+  isDisabled,
+  selected,
+  options,
+  isMenuOpen,
+  placeholder,
+  maxMulti,
+  setSelected,
+  onMenuOpen,
+  onMenuClose,
+  badgeVariant,
+  className,
+  error,
+  commonStyles,
+  menuOutside,
+  menuPortalTarget,
+}) => {
+  return (
+    <Select
+      isMulti={!!isMulti}
+      isClearable={resolveIsClearable(isClearable, !isMulti)}
+      isDisabled={isDisabled}
+      components={{
+        SingleValue: props => <CustomSingleValue {...props} badgeVariant={badgeVariant} />,
+        MultiValue: props => <CustomMultiValue {...props} badgeVariant={badgeVariant} />,
+        Option: OptionWithEmail,
+        IndicatorSeparator: NoIndicatorSeparator,
+      }}
+      name={isMulti ? 'supervisors' : 'supervisor'}
+      defaultValue={selected}
+      options={options}
+      placeholder={isMenuOpen ? '' : placeholder}
+      value={selected}
+      onChange={value => handleBoundedSelectionChange(value, isMulti, maxMulti, setSelected)}
+      onMenuOpen={onMenuOpen}
+      onMenuClose={onMenuClose}
+      className={buildClassName('multi-select', className, error)}
+      classNamePrefix="select"
+      filterOption={filterByLabelOrEmail}
+      styles={commonStyles}
+      menuPortalTarget={menuOutside ? menuPortalTarget : undefined}
+      menuPosition={menuOutside ? 'fixed' : 'absolute'}
+      menuShouldScrollIntoView={menuOutside ? false : undefined}
+    />
+  );
+};
+
 export default function CustomSelect({
   mode,
   options = [],
@@ -121,6 +323,8 @@ export default function CustomSelect({
 }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const menuPortalTarget = typeof document === 'undefined' ? null : document.body;
+  const onMenuOpen = () => setIsMenuOpen(true);
+  const onMenuClose = () => setIsMenuOpen(false);
 
   const commonStyles = useMemo(
     () => ({
@@ -133,145 +337,40 @@ export default function CustomSelect({
     [],
   );
 
-  const filterOption = (candidate, input) => {
-    const label = candidate.data.label.toLowerCase();
-    const email = candidate.data.email ? candidate.data.email.toLowerCase() : '';
-    const inputLower = input.toLowerCase();
-    return label.includes(inputLower) || email.includes(inputLower);
+  const commonParams = {
+    isDisabled,
+    options,
+    isMenuOpen,
+    placeholder,
+    selected,
+    setSelected,
+    onMenuOpen,
+    onMenuClose,
+    error,
+    commonStyles,
+    className,
+    isClearable,
+    isMulti,
+    maxMulti,
   };
 
-  if (mode === 'keyword') {
-    return (
-      <div>
-        <CreatableSelect
-          isMulti={true}
-          isClearable={false}
-          isDisabled={isDisabled}
-          options={options}
-          components={{
-            MultiValue: props => <CustomMultiValue {...props} badgeVariant="keyword" />,
-            Option: OptionBasic,
-            IndicatorSeparator: () => null,
-          }}
-          placeholder={isMenuOpen ? '' : placeholder}
-          value={selected}
-          onChange={setSelected}
-          onMenuOpen={() => setIsMenuOpen(true)}
-          onMenuClose={() => setIsMenuOpen(false)}
-          className={`multi-select ${error ? 'is-invalid' : ''}`}
-          classNamePrefix="select"
-          styles={commonStyles}
-          formatCreateLabel={formatCreateLabel || (inputValue => `Aggiungi "${inputValue}"`)}
-          menuPortalTarget={menuPortalTarget}
-          menuPosition="fixed"
-          menuShouldScrollIntoView={false}
-        />
-      </div>
-    );
-  }
+  const byMode = {
+    keyword: renderKeywordSelect({
+      ...commonParams,
+      formatCreateLabel,
+      menuPortalTarget,
+    }),
+    company: renderCompanySelect(commonParams),
+    sdg: renderSdgSelect(commonParams),
+    supervisor: renderSupervisorSelect({
+      ...commonParams,
+      badgeVariant,
+      menuOutside,
+      menuPortalTarget,
+    }),
+  };
 
-  if (mode === 'company') {
-    return (
-      <div>
-        <Select
-          isMulti={false}
-          isClearable={isClearable !== undefined ? isClearable : true}
-          isDisabled={isDisabled}
-          components={{
-            SingleValue: CustomCompanySingleValue,
-            IndicatorSeparator: () => null,
-          }}
-          name="companies"
-          defaultValue={selected}
-          options={options}
-          placeholder={isMenuOpen ? '' : placeholder}
-          value={selected}
-          onChange={value => setSelected(value)}
-          onMenuOpen={() => setIsMenuOpen(true)}
-          onMenuClose={() => setIsMenuOpen(false)}
-          className={`single-select ${className || ''} ${error ? 'is-invalid' : ''}`}
-          classNamePrefix="select"
-          styles={commonStyles}
-        />
-      </div>
-    );
-  }
-
-  if (mode === 'sdg') {
-    return (
-      <div>
-        <Select
-          isMulti={!!isMulti}
-          isClearable={isClearable !== undefined ? isClearable : !isMulti}
-          isDisabled={isDisabled}
-          components={{
-            SingleValue: props => <CustomSingleValue {...props} badgeVariant="sdg" />,
-            MultiValue: props => <CustomMultiValue {...props} badgeVariant="sdg" />,
-            Option: OptionBasic,
-            IndicatorSeparator: () => null,
-          }}
-          name={isMulti ? 'sdgs' : 'sdg'}
-          defaultValue={selected}
-          options={options}
-          placeholder={isMenuOpen ? '' : placeholder}
-          value={selected}
-          onChange={value => {
-            if (isMulti) {
-              if (!value || value.length <= maxMulti) setSelected(value);
-            } else {
-              setSelected(value);
-            }
-          }}
-          onMenuOpen={() => setIsMenuOpen(true)}
-          onMenuClose={() => setIsMenuOpen(false)}
-          className={`multi-select ${className || ''} ${error ? 'is-invalid' : ''}`}
-          classNamePrefix="select"
-          styles={commonStyles}
-          menuPortalTarget={menuPortalTarget}
-          menuPosition="fixed"
-          menuPlacement="top"
-          menuShouldScrollIntoView={false}
-        />
-      </div>
-    );
-  }
-
-  return (
-    <div>
-      <Select
-        isMulti={!!isMulti}
-        isClearable={isClearable !== undefined ? isClearable : !isMulti}
-        isDisabled={isDisabled}
-        components={{
-          SingleValue: props => <CustomSingleValue {...props} badgeVariant={badgeVariant} />,
-          MultiValue: props => <CustomMultiValue {...props} badgeVariant={badgeVariant} />,
-          Option: OptionWithEmail,
-          IndicatorSeparator: () => null,
-        }}
-        name={isMulti ? 'supervisors' : 'supervisor'}
-        defaultValue={selected}
-        options={options}
-        placeholder={isMenuOpen ? '' : placeholder}
-        value={selected}
-        onChange={value => {
-          if (isMulti) {
-            if (!value || value.length <= maxMulti) setSelected(value);
-          } else {
-            setSelected(value);
-          }
-        }}
-        onMenuOpen={() => setIsMenuOpen(true)}
-        onMenuClose={() => setIsMenuOpen(false)}
-        className={`multi-select ${className || ''} ${error ? 'is-invalid' : ''}`}
-        classNamePrefix="select"
-        filterOption={filterOption}
-        styles={commonStyles}
-        menuPortalTarget={menuOutside ? menuPortalTarget : undefined}
-        menuPosition={menuOutside ? 'fixed' : 'absolute'}
-        menuShouldScrollIntoView={menuOutside ? false : undefined}
-      />
-    </div>
-  );
+  return <div>{byMode[mode] || byMode.supervisor}</div>;
 }
 
 CustomSelect.propTypes = {

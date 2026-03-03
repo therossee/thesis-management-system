@@ -27,6 +27,90 @@ import StepOutcome from './conclusion-request-steps/StepOutcome';
 import StepSubmit from './conclusion-request-steps/StepSubmit';
 import StepUploads from './conclusion-request-steps/StepUploads';
 
+const alignEnglishText = (language, isDraft, baseText, englishText) => {
+  if (language === 'en') {
+    return baseText;
+  }
+
+  if (isDraft) {
+    return englishText;
+  }
+
+  return englishText === '' ? baseText : englishText;
+};
+
+const buildSdgPayload = (primarySdg, secondarySdg1, secondarySdg2) => {
+  return [
+    ...(primarySdg ? [{ goalId: primarySdg, level: 'primary' }] : []),
+    ...(secondarySdg1 ? [{ goalId: secondarySdg1, level: 'secondary' }] : []),
+    ...(secondarySdg2 ? [{ goalId: secondarySdg2, level: 'secondary' }] : []),
+  ];
+};
+
+const buildEmbargoPayload = (embargoPeriod, embargoMotivations, otherEmbargoReason) => {
+  return {
+    duration: embargoPeriod,
+    motivations: embargoMotivations.map(motivationCode => ({
+      motivationId: motivationCode,
+      otherMotivation: motivationCode === 7 ? otherEmbargoReason : undefined,
+    })),
+  };
+};
+
+const appendFieldIfPresent = (formData, fieldName, value) => {
+  if (value !== undefined && value !== null && value !== '') {
+    formData.append(fieldName, value);
+  }
+};
+
+const appendJsonFieldIfNotEmpty = (formData, fieldName, value) => {
+  if (Array.isArray(value) && value.length > 0) {
+    formData.append(fieldName, JSON.stringify(value));
+  }
+};
+
+const appendAuthorizationPayload = (
+  formData,
+  authorization,
+  licenseChoice,
+  embargoPeriod,
+  embargoMotivations,
+  otherReason,
+) => {
+  if (authorization === 'authorize') {
+    formData.append('licenseId', licenseChoice);
+    return;
+  }
+
+  if (authorization === 'deny') {
+    formData.append('embargo', JSON.stringify(buildEmbargoPayload(embargoPeriod, embargoMotivations, otherReason)));
+  }
+};
+
+const appendFileIfPresent = (formData, fieldName, file) => {
+  if (file) {
+    formData.append(fieldName, file);
+  }
+};
+
+const appendDraftRemovalFlags = (formData, isDraft, draftFilesToRemove) => {
+  if (!isDraft) {
+    return;
+  }
+
+  if (draftFilesToRemove.summary) {
+    formData.append('removeThesisSummary', 'true');
+  }
+
+  if (draftFilesToRemove.thesis) {
+    formData.append('removeThesisFile', 'true');
+  }
+
+  if (draftFilesToRemove.additional) {
+    formData.append('removeAdditionalZip', 'true');
+  }
+};
+
 export default function ConclusionRequest({ onSubmitResult, saveDraftTrigger = 0, onSaveDraftResult }) {
   const { t, i18n } = useTranslation();
   const { theme } = useContext(ThemeContext);
@@ -360,17 +444,9 @@ export default function ConclusionRequest({ onSubmitResult, saveDraftTrigger = 0
     isDraft => {
       const formData = new FormData();
 
-      const alignedTitleEng =
-        lang === 'en' ? titleText : isDraft ? titleEngText : titleEngText === '' ? titleText : titleEngText;
-
-      const alignedAbstractEng =
-        lang === 'en'
-          ? abstractText
-          : isDraft
-            ? abstractEngText
-            : abstractEngText === ''
-              ? abstractText
-              : abstractEngText;
+      const alignedTitleEng = alignEnglishText(lang, isDraft, titleText, titleEngText);
+      const alignedAbstractEng = alignEnglishText(lang, isDraft, abstractText, abstractEngText);
+      const sdgPayload = buildSdgPayload(primarySdg, secondarySdg1, secondarySdg2);
 
       formData.append('title', titleText);
       formData.append('titleEng', alignedTitleEng);
@@ -378,7 +454,7 @@ export default function ConclusionRequest({ onSubmitResult, saveDraftTrigger = 0
       formData.append('abstractEng', alignedAbstractEng);
       formData.append('language', lang);
 
-      if (supervisor?.id) formData.append('supervisor', supervisor.id);
+      appendFieldIfPresent(formData, 'supervisor', supervisor?.id);
 
       const toTeacher = makeTeacherOverviewPayload(teachers);
       const coSupervisorsPayload = (coSupervisors || []).map(toTeacher).filter(Boolean);
@@ -387,39 +463,21 @@ export default function ConclusionRequest({ onSubmitResult, saveDraftTrigger = 0
       const keywordPayload = (keywords || []).map(toKeywordPayload).filter(Boolean);
       formData.append('keywords', JSON.stringify(keywordPayload));
 
-      if (authorization === 'authorize') formData.append('licenseId', licenseChoice);
+      appendAuthorizationPayload(
+        formData,
+        authorization,
+        licenseChoice,
+        embargoPeriod,
+        embargoMotivations,
+        otherEmbargoReason,
+      );
+      appendJsonFieldIfNotEmpty(formData, 'sdgs', sdgPayload);
 
-      if (primarySdg || secondarySdg1 || secondarySdg2) {
-        formData.append(
-          'sdgs',
-          JSON.stringify([
-            ...(primarySdg ? [{ goalId: primarySdg, level: 'primary' }] : []),
-            ...(secondarySdg1 ? [{ goalId: secondarySdg1, level: 'secondary' }] : []),
-            ...(secondarySdg2 ? [{ goalId: secondarySdg2, level: 'secondary' }] : []),
-          ]),
-        );
-      }
+      appendFileIfPresent(formData, 'thesisSummary', summaryPdf);
+      appendFileIfPresent(formData, 'thesisFile', pdfFile);
+      appendFileIfPresent(formData, 'additionalZip', supplementaryZip);
 
-      if (authorization === 'deny') {
-        formData.append(
-          'embargo',
-          JSON.stringify({
-            duration: embargoPeriod,
-            motivations: embargoMotivations.map(m => ({
-              motivationId: m,
-              otherMotivation: m === 7 ? otherEmbargoReason : undefined,
-            })),
-          }),
-        );
-      }
-
-      if (summaryPdf) formData.append('thesisSummary', summaryPdf);
-      if (pdfFile) formData.append('thesisFile', pdfFile);
-      if (supplementaryZip) formData.append('additionalZip', supplementaryZip);
-
-      if (isDraft && draftFilesToRemove.summary) formData.append('removeThesisSummary', 'true');
-      if (isDraft && draftFilesToRemove.thesis) formData.append('removeThesisFile', 'true');
-      if (isDraft && draftFilesToRemove.additional) formData.append('removeAdditionalZip', 'true');
+      appendDraftRemovalFlags(formData, isDraft, draftFilesToRemove);
 
       return formData;
     },

@@ -20,135 +20,313 @@ const thesisApplicationStatusHistorySchema = require('../schemas/ThesisApplicati
 const thesisApplicationSchema = require('../schemas/ThesisApplication');
 const toSnakeCase = require('../utils/snakeCase');
 
+class HttpError extends Error {
+  constructor(status, message) {
+    super(message);
+    this.status = status;
+  }
+}
+
+const getLoggedStudentOrThrow = async () => {
+  const logged = await LoggedStudent.findOne();
+  if (!logged?.student_id) {
+    throw new HttpError(401, 'No logged-in student found');
+  }
+
+  const loggedStudent = await Student.findByPk(logged.student_id);
+  if (!loggedStudent) {
+    throw new HttpError(404, 'Student not found');
+  }
+
+  return loggedStudent;
+};
+
+const getValidatedApplicationData = async requestBody => {
+  const application_data = toSnakeCase(requestBody);
+  return thesisApplicationRequestSchema.parseAsync(application_data);
+};
+
+const getSupervisorOrThrow = async supervisorId => {
+  const supervisor = await Teacher.findByPk(supervisorId, {
+    attributes: selectTeacherAttributes(true),
+  });
+  if (!supervisor) {
+    throw new HttpError(400, 'Supervisor not found');
+  }
+  return supervisor;
+};
+
+const getCoSupervisorsOrThrow = async coSupervisors => {
+  const coSupervisorsData = [];
+  for (const coSup of coSupervisors || []) {
+    const coSupervisor = await Teacher.findByPk(coSup.id, {
+      attributes: selectTeacherAttributes(true),
+    });
+    if (!coSupervisor) {
+      throw new HttpError(400, `Co-Supervisor with id ${coSup.id} not found`);
+    }
+    coSupervisorsData.push(coSupervisor);
+  }
+
+  return coSupervisorsData;
+};
+
+const validateOptionalReferencesOrThrow = async applicationData => {
+  if (applicationData.thesis_proposal) {
+    const proposal = await ThesisProposal.findByPk(applicationData.thesis_proposal.id);
+    if (!proposal) {
+      throw new HttpError(400, 'Thesis proposal not found');
+    }
+  }
+
+  if (applicationData.company) {
+    const company = await Company.findByPk(applicationData.company.id);
+    if (!company) {
+      throw new HttpError(400, 'Company not found');
+    }
+  }
+};
+
+const ensureStudentCanApplyOrThrow = async studentId => {
+  const existingApplications = await ThesisApplication.findAll({
+    where: {
+      student_id: studentId,
+      status: { [Op.in]: ['pending', 'approved'] },
+    },
+  });
+
+  const hasPendingApplication = existingApplications.some(app => app.status === 'pending');
+  if (hasPendingApplication) {
+    throw new HttpError(400, 'Student already has an active thesis application');
+  }
+
+  const approvedApplications = existingApplications.filter(app => app.status === 'approved');
+  for (const approvedApplication of approvedApplications) {
+    const linkedThesis = await Thesis.findOne({
+      where: { thesis_application_id: approvedApplication.id },
+    });
+
+    if (linkedThesis?.status !== 'cancel_approved') {
+      throw new HttpError(400, 'Student already has an active thesis application');
+    }
+  }
+};
+
+const createThesisApplicationRecords = async ({ applicationData, studentId, transaction }) => {
+  const submissionDate = new Date();
+  const newApplication = await ThesisApplication.create(
+    {
+      topic: applicationData.topic,
+      student_id: studentId,
+      thesis_proposal_id: applicationData.thesis_proposal?.id || null,
+      company_id: applicationData.company?.id || null,
+      status: 'pending',
+      submission_date: submissionDate,
+    },
+    { transaction },
+  );
+
+  const supervisorLinks = [
+    { teacher_id: applicationData.supervisor.id, thesis_application_id: newApplication.id, is_supervisor: true },
+    ...(applicationData.co_supervisors || []).map(s => ({
+      teacher_id: s.id,
+      thesis_application_id: newApplication.id,
+      is_supervisor: false,
+    })),
+  ];
+  await ThesisApplicationSupervisorCoSupervisor.bulkCreate(supervisorLinks, { transaction });
+
+  await ThesisApplicationStatusHistory.create(
+    {
+      thesis_application_id: newApplication.id,
+      old_status: null,
+      new_status: 'pending',
+      change_date: submissionDate,
+    },
+    { transaction },
+  );
+
+  return { newApplication, submissionDate };
+};
+
+const buildCreatedApplicationResponse = async ({
+  applicationData,
+  supervisor,
+  coSupervisorsData,
+  newApplication,
+  submissionDate,
+}) => {
+  const responsePayload = toSnakeCase({
+    id: newApplication.id,
+    topic: newApplication.topic,
+    supervisor: supervisor.get({ plain: true }),
+    co_supervisors: coSupervisorsData.filter(Boolean).map(s => s.get({ plain: true })),
+    company: applicationData.company || null,
+    submission_date: submissionDate.toISOString(),
+    thesis_proposal: applicationData.thesis_proposal || null,
+    status: 'pending',
+  });
+
+  return thesisApplicationResponseSchema.parseAsync(responsePayload);
+};
+
+const createThesisApplicationWithinTransaction = async (reqBody, transaction) => {
+  const loggedStudent = await getLoggedStudentOrThrow();
+  const applicationData = await getValidatedApplicationData(reqBody);
+  const supervisor = await getSupervisorOrThrow(applicationData.supervisor.id);
+  const coSupervisorsData = await getCoSupervisorsOrThrow(applicationData.co_supervisors);
+
+  await validateOptionalReferencesOrThrow(applicationData);
+  await ensureStudentCanApplyOrThrow(loggedStudent.id);
+
+  const { newApplication, submissionDate } = await createThesisApplicationRecords({
+    applicationData,
+    studentId: loggedStudent.id,
+    transaction,
+  });
+
+  return buildCreatedApplicationResponse({
+    applicationData,
+    supervisor,
+    coSupervisorsData,
+    newApplication,
+    submissionDate,
+  });
+};
+
+const getUniqueTruthyValues = values => [...new Set(values.filter(Boolean))];
+
+const groupLinksByApplicationId = supervisorLinks => {
+  const linksByApplicationId = new Map();
+  for (const link of supervisorLinks) {
+    if (!linksByApplicationId.has(link.thesis_application_id)) {
+      linksByApplicationId.set(link.thesis_application_id, []);
+    }
+    linksByApplicationId.get(link.thesis_application_id).push(link);
+  }
+  return linksByApplicationId;
+};
+
+const getProposalDataOrThrow = (app, proposalById) => {
+  if (!app.thesis_proposal_id) {
+    return null;
+  }
+
+  const proposal = proposalById.get(app.thesis_proposal_id);
+  if (!proposal) {
+    throw new HttpError(400, `Thesis proposal with id ${app.thesis_proposal_id} not found`);
+  }
+
+  return proposal.toJSON();
+};
+
+const getCompanyDataOrThrow = (app, companyById) => {
+  if (!app.company_id) {
+    return null;
+  }
+
+  const company = companyById.get(app.company_id);
+  if (!company) {
+    throw new HttpError(400, `Company with id ${app.company_id} not found`);
+  }
+
+  return company;
+};
+
+const getSupervisorDataOrThrow = (links, teacherById) => {
+  let supervisorData = null;
+  const coSupervisorsData = [];
+
+  for (const link of links) {
+    const teacher = teacherById.get(link.teacher_id);
+    if (!teacher) {
+      throw new HttpError(400, `Teacher with id ${link.teacher_id} not found`);
+    }
+
+    if (link.is_supervisor) {
+      supervisorData = teacher;
+    } else {
+      coSupervisorsData.push(teacher);
+    }
+  }
+
+  return { supervisorData, coSupervisorsData };
+};
+
+const fetchAllThesisApplicationsRelatedData = async allApplications => {
+  const applicationIds = allApplications.map(app => app.id);
+  const proposalIds = getUniqueTruthyValues(allApplications.map(app => app.thesis_proposal_id));
+  const companyIds = getUniqueTruthyValues(allApplications.map(app => app.company_id));
+
+  const [proposals, supervisorLinks, companies] = await Promise.all([
+    proposalIds.length
+      ? ThesisProposal.findAll({
+          where: { id: { [Op.in]: proposalIds } },
+        })
+      : [],
+    applicationIds.length
+      ? ThesisApplicationSupervisorCoSupervisor.findAll({
+          where: { thesis_application_id: { [Op.in]: applicationIds } },
+        })
+      : [],
+    companyIds.length
+      ? Company.findAll({
+          where: { id: { [Op.in]: companyIds } },
+        })
+      : [],
+  ]);
+
+  const proposalById = new Map(proposals.map(proposal => [proposal.id, proposal]));
+  const companyById = new Map(companies.map(company => [company.id, company]));
+  const linksByApplicationId = groupLinksByApplicationId(supervisorLinks);
+
+  const teacherIds = getUniqueTruthyValues(supervisorLinks.map(link => link.teacher_id));
+  const teachers = teacherIds.length
+    ? await Teacher.findAll({
+        where: { id: { [Op.in]: teacherIds } },
+        attributes: selectTeacherAttributes(true),
+      })
+    : [];
+  const teacherById = new Map(teachers.map(teacher => [teacher.id, teacher]));
+
+  return { proposalById, companyById, linksByApplicationId, teacherById };
+};
+
+const buildThesisApplicationResponseOrThrow = (app, maps) => {
+  const proposalData = getProposalDataOrThrow(app, maps.proposalById);
+  const company = getCompanyDataOrThrow(app, maps.companyById);
+  const links = maps.linksByApplicationId.get(app.id) || [];
+  const { supervisorData, coSupervisorsData } = getSupervisorDataOrThrow(links, maps.teacherById);
+
+  const responsePayload = {
+    id: app.id,
+    topic: app.topic,
+    student: maps.studentById.get(app.student_id) || null,
+    supervisor: supervisorData,
+    co_supervisors: coSupervisorsData,
+    company: company || null,
+    thesis_proposal: proposalData,
+    submission_date: app.submission_date.toISOString(),
+    status: app.status || 'pending',
+  };
+
+  return thesisApplicationSchema.parse(responsePayload);
+};
+
 const createThesisApplication = async (req, res) => {
   try {
-    await sequelize.transaction(async t => {
-      // 0. Get logged student
-      const logged = await LoggedStudent.findOne();
-      if (!logged?.student_id) {
-        return res.status(401).json({ error: 'No logged-in student found' });
-      }
-
-      const loggedStudent = await Student.findByPk(logged.student_id);
-      if (!loggedStudent) {
-        return res.status(404).json({ error: 'Student not found' });
-      }
-
-      const application_data = toSnakeCase(req.body);
-      const applicationData = await thesisApplicationRequestSchema.parseAsync(application_data);
-
-      // 1. Fetch Supervisor & Co-Supervisors
-      const supervisor = await Teacher.findByPk(applicationData.supervisor.id, {
-        attributes: selectTeacherAttributes(true),
-      });
-      if (!supervisor) {
-        return res.status(400).json({ error: 'Supervisor not found' });
-      }
-
-      const coSupervisorsData = [];
-      for (const coSup of applicationData.co_supervisors || []) {
-        const coSupervisor = await Teacher.findByPk(coSup.id, {
-          attributes: selectTeacherAttributes(true),
-        });
-        if (!coSupervisor) {
-          return res.status(400).json({ error: `Co-Supervisor with id ${coSup.id} not found` });
-        }
-        coSupervisorsData.push(coSupervisor);
-      }
-
-      //Check if thesis proposal exists
-      if (applicationData.thesis_proposal) {
-        const proposal = await ThesisProposal.findByPk(applicationData.thesis_proposal.id);
-        if (!proposal) {
-          return res.status(400).json({ error: 'Thesis proposal not found' });
-        }
-      }
-
-      if (applicationData.company) {
-        const company = await Company.findByPk(applicationData.company.id);
-        if (!company) {
-          return res.status(400).json({ error: 'Company not found' });
-        }
-      }
-
-      // 2. Check if student is eligible to apply
-      const existingApplications = await ThesisApplication.findAll({
-        where: {
-          student_id: loggedStudent.id,
-          status: { [Op.in]: ['pending', 'approved'] },
-        },
-      });
-
-      const hasPendingApplication = existingApplications.some(app => app.status === 'pending');
-      if (hasPendingApplication) {
-        return res.status(400).json({ error: 'Student already has an active thesis application' });
-      }
-
-      const approvedApplications = existingApplications.filter(app => app.status === 'approved');
-      for (const approvedApplication of approvedApplications) {
-        const linkedThesis = await Thesis.findOne({
-          where: { thesis_application_id: approvedApplication.id },
-        });
-
-        if (linkedThesis?.status !== 'cancel_approved') {
-          return res.status(400).json({ error: 'Student already has an active thesis application' });
-        }
-      }
-
-      // 3. Create ThesisApplication
-      const submissionDate = new Date();
-      const newApplication = await ThesisApplication.create(
-        {
-          topic: applicationData.topic,
-          student_id: loggedStudent.id,
-          thesis_proposal_id: applicationData.thesis_proposal?.id || null,
-          company_id: applicationData.company?.id || null,
-          status: 'pending',
-          submission_date: submissionDate,
-        },
-        { transaction: t },
-      );
-
-      // Link Supervisors
-      const supervisorLinks = [
-        { teacher_id: applicationData.supervisor.id, thesis_application_id: newApplication.id, is_supervisor: true },
-        ...(applicationData.co_supervisors || []).map(s => ({
-          teacher_id: s.id,
-          thesis_application_id: newApplication.id,
-          is_supervisor: false,
-        })),
-      ];
-      await ThesisApplicationSupervisorCoSupervisor.bulkCreate(supervisorLinks, { transaction: t });
-
-      // 5. History
-      await ThesisApplicationStatusHistory.create(
-        {
-          thesis_application_id: newApplication.id,
-          old_status: null,
-          new_status: 'pending',
-          change_date: submissionDate,
-        },
-        { transaction: t },
-      );
-
-      // 6. Response
-      const responsePayload = toSnakeCase({
-        id: newApplication.id,
-        topic: newApplication.topic,
-        supervisor: supervisor.get({ plain: true }),
-        co_supervisors: coSupervisorsData.filter(Boolean).map(s => s.get({ plain: true })),
-        company: applicationData.company || null,
-        submission_date: submissionDate.toISOString(),
-        thesis_proposal: applicationData.thesis_proposal || null,
-        status: 'pending',
-      });
-
-      const validatedResponse = await thesisApplicationResponseSchema.parseAsync(responsePayload);
-      res.status(201).json(validatedResponse);
+    const validatedResponse = await sequelize.transaction(async t => {
+      return createThesisApplicationWithinTransaction(req.body, t);
     });
+
+    return res.status(201).json(validatedResponse);
   } catch (error) {
+    if (error instanceof HttpError) {
+      return res.status(error.status).json({ error: error.message });
+    }
+
     const status = error instanceof z.ZodError ? 400 : 500;
-    res.status(status).json({ error: error.message || error.errors });
+    return res.status(status).json({ error: error.message || error.errors });
   }
 };
 
@@ -304,95 +482,17 @@ const getAllThesisApplications = async (req, res) => {
     ]);
 
     const studentById = new Map(students.map(student => [student.id, student]));
-    const applicationIds = allApplications.map(app => app.id);
-    const proposalIds = [...new Set(allApplications.map(app => app.thesis_proposal_id).filter(Boolean))];
-    const companyIds = [...new Set(allApplications.map(app => app.company_id).filter(Boolean))];
-
-    const [proposals, supervisorLinks, companies] = await Promise.all([
-      proposalIds.length
-        ? ThesisProposal.findAll({
-            where: { id: { [Op.in]: proposalIds } },
-          })
-        : [],
-      applicationIds.length
-        ? ThesisApplicationSupervisorCoSupervisor.findAll({
-            where: { thesis_application_id: { [Op.in]: applicationIds } },
-          })
-        : [],
-      companyIds.length
-        ? Company.findAll({
-            where: { id: { [Op.in]: companyIds } },
-          })
-        : [],
-    ]);
-
-    const proposalById = new Map(proposals.map(proposal => [proposal.id, proposal]));
-    const companyById = new Map(companies.map(company => [company.id, company]));
-
-    const teacherIds = [...new Set(supervisorLinks.map(link => link.teacher_id))];
-    const teachers = teacherIds.length
-      ? await Teacher.findAll({
-          where: { id: { [Op.in]: teacherIds } },
-          attributes: selectTeacherAttributes(true),
-        })
-      : [];
-    const teacherById = new Map(teachers.map(teacher => [teacher.id, teacher]));
-
-    const linksByApplicationId = new Map();
-    for (const link of supervisorLinks) {
-      if (!linksByApplicationId.has(link.thesis_application_id)) {
-        linksByApplicationId.set(link.thesis_application_id, []);
-      }
-      linksByApplicationId.get(link.thesis_application_id).push(link);
-    }
-
-    const applicationsResponse = [];
-
-    for (const app of allApplications) {
-      let proposalData = null;
-      if (app.thesis_proposal_id) {
-        const proposal = proposalById.get(app.thesis_proposal_id);
-        if (!proposal) {
-          return res.status(400).json({ error: `Thesis proposal with id ${app.thesis_proposal_id} not found` });
-        }
-        proposalData = proposal.toJSON();
-      }
-
-      const company = app.company_id ? companyById.get(app.company_id) : null;
-      if (app.company_id && !company) {
-        return res.status(400).json({ error: `Company with id ${app.company_id} not found` });
-      }
-
-      const links = linksByApplicationId.get(app.id) || [];
-      let supervisorData = null;
-      const coSupervisorsData = [];
-
-      for (const link of links) {
-        const teacher = teacherById.get(link.teacher_id);
-        if (!teacher) {
-          return res.status(400).json({ error: `Teacher with id ${link.teacher_id} not found` });
-        }
-        if (link.is_supervisor) supervisorData = teacher;
-        else coSupervisorsData.push(teacher);
-      }
-
-      const responsePayload = {
-        id: app.id,
-        topic: app.topic,
-        student: studentById.get(app.student_id) || null,
-        supervisor: supervisorData,
-        co_supervisors: coSupervisorsData,
-        company: company || null,
-        thesis_proposal: proposalData,
-        submission_date: app.submission_date.toISOString(),
-        status: app.status || 'pending',
-      };
-
-      applicationsResponse.push(thesisApplicationSchema.parse(responsePayload));
-    }
+    const relatedDataMaps = await fetchAllThesisApplicationsRelatedData(allApplications);
+    const applicationsResponse = allApplications.map(app =>
+      buildThesisApplicationResponseOrThrow(app, { ...relatedDataMaps, studentById }),
+    );
 
     return res.status(200).json(applicationsResponse);
   } catch (error) {
+    if (error instanceof HttpError) {
+      return res.status(error.status).json({ error: error.message });
+    }
+
     console.error('Error fetching all thesis applications:', error);
     return res.status(500).json({ error: error.message });
   }

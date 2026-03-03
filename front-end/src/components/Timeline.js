@@ -218,78 +218,135 @@ function mapStatusToBaseEffectiveActiveStep(currentStatus) {
   return 'pending';
 }
 
-function buildSteps(t, currentStatus, hasNoData, hasThesis, conclusionRejected, finalUploadRejected) {
-  const flow = deriveFlow(currentStatus);
+function buildPendingStep(t, hasNoData) {
+  return {
+    key: 'pending',
+    label: hasNoData
+      ? t('carriera.tesi.thesis_progress.pending_to_submit')
+      : t('carriera.tesi.thesis_progress.pending'),
+    description: hasNoData
+      ? t('carriera.tesi.thesis_progress.pending_to_submit_description')
+      : t('carriera.tesi.thesis_progress.pending_description'),
+  };
+}
 
-  const steps = [
-    {
-      key: 'pending',
-      label: hasNoData
-        ? t('carriera.tesi.thesis_progress.pending_to_submit')
-        : t('carriera.tesi.thesis_progress.pending'),
-      description: hasNoData
-        ? t('carriera.tesi.thesis_progress.pending_to_submit_description')
-        : t('carriera.tesi.thesis_progress.pending_description'),
-    },
-  ];
+function getApplicationOutcomeContent(t, isApproved, isRejected, isCancelled) {
+  if (isApproved) {
+    return {
+      label: t('carriera.tesi.thesis_progress.approved'),
+      description: t('carriera.tesi.thesis_progress.approved_description'),
+    };
+  }
 
-  // application outcome
+  if (isRejected) {
+    return {
+      label: t('carriera.tesi.thesis_progress.rejected'),
+      description: t('carriera.tesi.thesis_progress.rejected_description'),
+    };
+  }
+
+  if (isCancelled) {
+    return {
+      label: t('carriera.tesi.thesis_progress.cancelled'),
+      description: t('carriera.tesi.thesis_progress.cancelled_description'),
+    };
+  }
+
+  return {
+    label: t('carriera.tesi.thesis_progress.outcome'),
+    description: t('carriera.tesi.thesis_progress.outcome_description'),
+  };
+}
+
+function buildApplicationOutcomeStep(t, hasThesis, currentStatus) {
   const isApproved = hasThesis || THESIS_STATUSES.has(currentStatus) || currentStatus === 'approved';
   const isRejected = !hasThesis && currentStatus === 'rejected';
   const isCancelled = !hasThesis && currentStatus === 'cancelled';
+  const outcomeContent = getApplicationOutcomeContent(t, isApproved, isRejected, isCancelled);
 
-  steps.push({
+  return {
     key: 'application_outcome',
-    label: isApproved
-      ? t('carriera.tesi.thesis_progress.approved')
-      : isRejected
-        ? t('carriera.tesi.thesis_progress.rejected')
-        : isCancelled
-          ? t('carriera.tesi.thesis_progress.cancelled')
-          : t('carriera.tesi.thesis_progress.outcome'),
-    description: isApproved
-      ? t('carriera.tesi.thesis_progress.approved_description')
-      : isRejected
-        ? t('carriera.tesi.thesis_progress.rejected_description')
-        : isCancelled
-          ? t('carriera.tesi.thesis_progress.cancelled_description')
-          : t('carriera.tesi.thesis_progress.outcome_description'),
-  });
+    label: outcomeContent.label,
+    description: outcomeContent.description,
+  };
+}
 
-  // ongoing
-  steps.push({
+function buildOngoingStep(t) {
+  return {
     key: 'ongoing',
     label: t('carriera.tesi.thesis_progress.ongoing_title'),
     description: t('carriera.tesi.thesis_progress.ongoing'),
-  });
+  };
+}
 
-  // cancel flow (only these steps)
-  if (flow === 'cancel') {
-    const isCancelApproved = currentStatus === 'cancel_approved';
+function buildCancelFlowSteps(t, currentStatus) {
+  const isCancelApproved = currentStatus === 'cancel_approved';
 
-    steps.push(
-      {
-        key: 'cancel_requested',
-        label: t('carriera.tesi.thesis_progress.cancel_requested_title'),
-        description: t('carriera.tesi.thesis_progress.cancel_requested'),
-      },
-      {
-        key: 'cancel_outcome',
-        label: isCancelApproved
-          ? t('carriera.tesi.thesis_progress.cancel_approved_title')
-          : t('carriera.tesi.thesis_progress.cancel_outcome_title'),
-        description: isCancelApproved
-          ? t('carriera.tesi.thesis_progress.cancel_approved')
-          : t('carriera.tesi.thesis_progress.cancel_outcome'),
-      },
-    );
+  return [
+    {
+      key: 'cancel_requested',
+      label: t('carriera.tesi.thesis_progress.cancel_requested_title'),
+      description: t('carriera.tesi.thesis_progress.cancel_requested'),
+    },
+    {
+      key: 'cancel_outcome',
+      label: isCancelApproved
+        ? t('carriera.tesi.thesis_progress.cancel_approved_title')
+        : t('carriera.tesi.thesis_progress.cancel_outcome_title'),
+      description: isCancelApproved
+        ? t('carriera.tesi.thesis_progress.cancel_approved')
+        : t('carriera.tesi.thesis_progress.cancel_outcome'),
+    },
+  ];
+}
 
-    return steps;
+function getConclusionOutcomeContent(t, currentStatus, conclusionRejected) {
+  if (currentStatus === 'conclusion_approved') {
+    return {
+      label: t('carriera.tesi.thesis_progress.conclusion_confirmed_title'),
+      description: t('carriera.tesi.thesis_progress.conclusion_confirmed'),
+    };
   }
 
-  const isConclusionApproved = currentStatus === 'conclusion_approved';
+  if (conclusionRejected) {
+    return {
+      label: t('carriera.tesi.thesis_progress.conclusion_rejected_title'),
+      description: t('carriera.tesi.thesis_progress.conclusion_rejected'),
+    };
+  }
 
-  steps.push(
+  return {
+    label: t('carriera.tesi.thesis_progress.conclusion_outcome_title'),
+    description: t('carriera.tesi.thesis_progress.conclusion_outcome'),
+  };
+}
+
+function getFinalUploadOutcomeContent(t, currentStatus, finalUploadRejected) {
+  if (currentStatus === 'done') {
+    return {
+      label: t('carriera.tesi.thesis_progress.final_upload_approved_title'),
+      description: t('carriera.tesi.thesis_progress.final_upload_approved'),
+    };
+  }
+
+  if (finalUploadRejected) {
+    return {
+      label: t('carriera.tesi.thesis_progress.final_upload_rejected_title'),
+      description: t('carriera.tesi.thesis_progress.final_upload_rejected'),
+    };
+  }
+
+  return {
+    label: t('carriera.tesi.thesis_progress.final_upload_outcome_title'),
+    description: t('carriera.tesi.thesis_progress.final_upload_outcome'),
+  };
+}
+
+function buildNormalFlowSteps(t, currentStatus, conclusionRejected, finalUploadRejected) {
+  const conclusionOutcomeContent = getConclusionOutcomeContent(t, currentStatus, conclusionRejected);
+  const finalUploadOutcomeContent = getFinalUploadOutcomeContent(t, currentStatus, finalUploadRejected);
+
+  return [
     {
       key: 'conclusion_requested',
       label: t('carriera.tesi.thesis_progress.conclusion_request_title'),
@@ -297,16 +354,8 @@ function buildSteps(t, currentStatus, hasNoData, hasThesis, conclusionRejected, 
     },
     {
       key: 'conclusion_outcome',
-      label: isConclusionApproved
-        ? t('carriera.tesi.thesis_progress.conclusion_confirmed_title')
-        : conclusionRejected
-          ? t('carriera.tesi.thesis_progress.conclusion_rejected_title')
-          : t('carriera.tesi.thesis_progress.conclusion_outcome_title'),
-      description: isConclusionApproved
-        ? t('carriera.tesi.thesis_progress.conclusion_confirmed')
-        : conclusionRejected
-          ? t('carriera.tesi.thesis_progress.conclusion_rejected')
-          : t('carriera.tesi.thesis_progress.conclusion_outcome'),
+      label: conclusionOutcomeContent.label,
+      description: conclusionOutcomeContent.description,
     },
     {
       key: 'almalaurea',
@@ -330,22 +379,25 @@ function buildSteps(t, currentStatus, hasNoData, hasThesis, conclusionRejected, 
     },
     {
       key: 'final_upload_outcome',
-      label:
-        currentStatus === 'done'
-          ? t('carriera.tesi.thesis_progress.final_upload_approved_title')
-          : finalUploadRejected
-            ? t('carriera.tesi.thesis_progress.final_upload_rejected_title')
-            : t('carriera.tesi.thesis_progress.final_upload_outcome_title'),
-      description:
-        currentStatus === 'done'
-          ? t('carriera.tesi.thesis_progress.final_upload_approved')
-          : finalUploadRejected
-            ? t('carriera.tesi.thesis_progress.final_upload_rejected')
-            : t('carriera.tesi.thesis_progress.final_upload_outcome'),
+      label: finalUploadOutcomeContent.label,
+      description: finalUploadOutcomeContent.description,
     },
-  );
+  ];
+}
 
-  return steps;
+function buildSteps(t, currentStatus, hasNoData, hasThesis, conclusionRejected, finalUploadRejected) {
+  const flow = deriveFlow(currentStatus);
+  const commonSteps = [
+    buildPendingStep(t, hasNoData),
+    buildApplicationOutcomeStep(t, hasThesis, currentStatus),
+    buildOngoingStep(t),
+  ];
+
+  if (flow === 'cancel') {
+    return [...commonSteps, ...buildCancelFlowSteps(t, currentStatus)];
+  }
+
+  return [...commonSteps, ...buildNormalFlowSteps(t, currentStatus, conclusionRejected, finalUploadRejected)];
 }
 
 /**
@@ -354,6 +406,185 @@ function buildSteps(t, currentStatus, hasNoData, hasThesis, conclusionRejected, 
  * - Rejected outcomes can be "special active" but must NOT advance completion.
  * - When in conclusion_requested, we don't show special outcome actives (reset phase).
  */
+function getSpecialOutcomeActiveStep(currentStatus, conclusionRejected, finalUploadRejected) {
+  if (currentStatus === 'conclusion_requested') return null;
+  if (currentStatus === 'ongoing' && finalUploadRejected) return 'final_upload_outcome';
+  if (currentStatus === 'ongoing' && conclusionRejected) return 'conclusion_outcome';
+  return null;
+}
+
+function getWaitingOutcomeFlags(currentStatus, key, hasNoData) {
+  return {
+    isApplicationOutcomeWaiting: !hasNoData && currentStatus === 'pending' && key === 'application_outcome',
+    isCancelOutcomeWaiting: currentStatus === 'cancel_requested' && key === 'cancel_outcome',
+    isConclusionOutcomeWaiting: currentStatus === 'conclusion_requested' && key === 'conclusion_outcome',
+    isFinalUploadOutcomeWaiting: currentStatus === 'final_thesis' && key === 'final_upload_outcome',
+  };
+}
+
+function hasWaitingOutcomeFlag(waitingFlags) {
+  return (
+    waitingFlags.isApplicationOutcomeWaiting ||
+    waitingFlags.isCancelOutcomeWaiting ||
+    waitingFlags.isConclusionOutcomeWaiting ||
+    waitingFlags.isFinalUploadOutcomeWaiting
+  );
+}
+
+function resolveOutcomeCircleClass(key, currentStatus, hasThesis, conclusionRejected, finalUploadRejected) {
+  switch (key) {
+    case 'application_outcome':
+      if (hasThesis || currentStatus === 'approved') return 'approved';
+      if (currentStatus === 'rejected') return 'rejected';
+      if (currentStatus === 'cancelled') return 'cancelled';
+      return 'waiting';
+
+    case 'conclusion_outcome':
+      if (conclusionRejected) return 'rejected';
+      if (currentStatus === 'conclusion_approved') return 'approved';
+      return 'waiting';
+
+    case 'cancel_outcome':
+      return currentStatus === 'cancel_approved' ? 'rejected' : 'waiting';
+
+    case 'final_upload_outcome':
+      if (finalUploadRejected) return 'rejected';
+      if (currentStatus === 'done') return 'approved';
+      return 'waiting';
+
+    case 'pending':
+      return 'pending';
+
+    default:
+      return null;
+  }
+}
+
+function resolveActiveCircleClass({
+  key,
+  currentStatus,
+  hasNoData,
+  hasThesis,
+  isFinalThesisGrayActive,
+  conclusionRejected,
+  finalUploadRejected,
+}) {
+  if ((hasNoData && key === 'pending') || isFinalThesisGrayActive) {
+    return 'waiting';
+  }
+
+  return resolveOutcomeCircleClass(key, currentStatus, hasThesis, conclusionRejected, finalUploadRejected) || 'pending';
+}
+
+function resolveStepVisualState({
+  key,
+  isCompleted,
+  isActive,
+  currentStatus,
+  hasNoData,
+  hasThesis,
+  isFinalThesisGrayActive,
+  conclusionRejected,
+  finalUploadRejected,
+}) {
+  if (isCompleted) {
+    return { circleClass: 'approved', titleClass: 'completed' };
+  }
+
+  if (!isActive) {
+    return { circleClass: 'inactive', titleClass: '' };
+  }
+
+  return {
+    circleClass: resolveActiveCircleClass({
+      key,
+      currentStatus,
+      hasNoData,
+      hasThesis,
+      isFinalThesisGrayActive,
+      conclusionRejected,
+      finalUploadRejected,
+    }),
+    titleClass: 'active',
+  };
+}
+
+function shouldShowTimestampForStep(
+  historyEntry,
+  currentStatus,
+  isCompleted,
+  key,
+  specialOutcomeActive,
+  isFinalUploadOutcomeWaiting,
+) {
+  return (
+    Boolean(historyEntry) &&
+    (currentStatus !== 'ongoing' || isCompleted || key === specialOutcomeActive || isFinalUploadOutcomeWaiting)
+  );
+}
+
+function decorateSingleStep({
+  step,
+  stepIndexByKey,
+  baseActiveStep,
+  baseActiveIndex,
+  specialOutcomeActive,
+  currentStatus,
+  visibleHistory,
+  hasNoData,
+  hasThesis,
+  conclusionRejected,
+  finalUploadRejected,
+}) {
+  const key = step.key;
+  const thisIndex = stepIndexByKey.get(key) ?? -1;
+  const isFinalThesisGrayActive = currentStatus === 'final_exam' && key === 'final_thesis';
+  const waitingFlags = getWaitingOutcomeFlags(currentStatus, key, hasNoData);
+  const isWaitingOutcome = hasWaitingOutcomeFlag(waitingFlags);
+
+  const isActive =
+    key === baseActiveStep || isFinalThesisGrayActive || key === specialOutcomeActive || isWaitingOutcome;
+  const isCompleted = thisIndex < baseActiveIndex;
+  const isFuture = thisIndex > baseActiveIndex && key !== specialOutcomeActive && !isWaitingOutcome;
+
+  const historyEntry = getHistoryForStep(visibleHistory, key);
+  const shouldShowTimestamp = shouldShowTimestampForStep(
+    historyEntry,
+    currentStatus,
+    isCompleted,
+    key,
+    specialOutcomeActive,
+    waitingFlags.isFinalUploadOutcomeWaiting,
+  );
+
+  const { circleClass, titleClass } = resolveStepVisualState({
+    key,
+    isCompleted,
+    isActive,
+    currentStatus,
+    hasNoData,
+    hasThesis,
+    isFinalThesisGrayActive,
+    conclusionRejected,
+    finalUploadRejected,
+  });
+
+  return {
+    ...step,
+    ui: {
+      isActive,
+      isCompleted,
+      isFuture,
+      circleClass,
+      titleClass,
+      disabledClass: hasNoData && key !== 'pending' ? 'disabled' : '',
+      fadedClass: isFuture ? 'faded' : '',
+      shouldShowTimestamp,
+      timestampText: shouldShowTimestamp ? moment(historyEntry.changeDate).format('DD/MM/YYYY - HH:mm') : null,
+    },
+  };
+}
+
 function decorateSteps({
   steps,
   currentStatus,
@@ -364,111 +595,29 @@ function decorateSteps({
   finalUploadRejected,
 }) {
   const stepKeys = steps.map(s => s.key);
+  const stepIndexByKey = new Map(stepKeys.map((key, index) => [key, index]));
 
   const mappedBaseActiveStep = mapStatusToBaseEffectiveActiveStep(currentStatus);
   const baseActiveStep = hasNoData ? 'pending' : mappedBaseActiveStep;
-  const baseActiveIndex = currentStatus === 'done' ? stepKeys.length : Math.max(stepKeys.indexOf(baseActiveStep), 0);
+  const mappedBaseIndex = stepIndexByKey.get(baseActiveStep) ?? -1;
+  const baseActiveIndex = currentStatus === 'done' ? stepKeys.length : Math.max(mappedBaseIndex, 0);
+  const specialOutcomeActive = getSpecialOutcomeActiveStep(currentStatus, conclusionRejected, finalUploadRejected);
 
-  const specialOutcomeActive =
-    currentStatus === 'conclusion_requested'
-      ? null
-      : currentStatus === 'ongoing' && finalUploadRejected
-        ? 'final_upload_outcome'
-        : currentStatus === 'ongoing' && conclusionRejected
-          ? 'conclusion_outcome'
-          : null;
-
-  return steps.map(step => {
-    const key = step.key;
-    const thisIndex = stepKeys.indexOf(key);
-    const isFinalThesisGrayActive = currentStatus === 'final_exam' && key === 'final_thesis';
-
-    const isApplicationOutcomeWaiting = !hasNoData && currentStatus === 'pending' && key === 'application_outcome';
-    const isCancelOutcomeWaiting = currentStatus === 'cancel_requested' && key === 'cancel_outcome';
-    const isConclusionOutcomeWaiting = currentStatus === 'conclusion_requested' && key === 'conclusion_outcome';
-    const isFinalUploadOutcomeWaiting = currentStatus === 'final_thesis' && key === 'final_upload_outcome';
-
-    const isActive =
-      key === baseActiveStep ||
-      isFinalThesisGrayActive ||
-      key === specialOutcomeActive ||
-      isApplicationOutcomeWaiting ||
-      isCancelOutcomeWaiting ||
-      isConclusionOutcomeWaiting ||
-      isFinalUploadOutcomeWaiting;
-
-    // Completion uses ONLY the baseActiveIndex (never specialOutcomeActive)
-    const isCompleted = thisIndex < baseActiveIndex;
-
-    // Future is after base progress, but don't fade the special outcome active or waiting outcome
-    const isFuture =
-      thisIndex > baseActiveIndex &&
-      key !== specialOutcomeActive &&
-      !isApplicationOutcomeWaiting &&
-      !isCancelOutcomeWaiting &&
-      !isConclusionOutcomeWaiting &&
-      !isFinalUploadOutcomeWaiting;
-
-    const historyEntry = getHistoryForStep(visibleHistory, key);
-
-    const shouldShowTimestamp =
-      Boolean(historyEntry) &&
-      (currentStatus !== 'ongoing' || isCompleted || key === specialOutcomeActive || isFinalUploadOutcomeWaiting);
-
-    let circleClass = 'inactive';
-    let titleClass = '';
-
-    if (isCompleted) {
-      circleClass = 'approved';
-      titleClass = 'completed';
-    } else if (isActive) {
-      titleClass = 'active';
-
-      if (hasNoData && key === 'pending') {
-        circleClass = 'waiting';
-      } else if (isFinalThesisGrayActive) {
-        circleClass = 'waiting';
-      } else if (key === 'application_outcome') {
-        if (hasThesis) circleClass = 'approved';
-        else if (currentStatus === 'approved') circleClass = 'approved';
-        else if (currentStatus === 'rejected') circleClass = 'rejected';
-        else if (currentStatus === 'cancelled') circleClass = 'cancelled';
-        else circleClass = 'waiting';
-      } else if (key === 'conclusion_outcome') {
-        if (conclusionRejected) circleClass = 'rejected';
-        else if (currentStatus === 'conclusion_approved') circleClass = 'approved';
-        else circleClass = 'waiting';
-      } else if (key === 'cancel_outcome') {
-        circleClass = currentStatus === 'cancel_approved' ? 'rejected' : 'waiting';
-      } else if (key === 'final_upload_outcome') {
-        if (finalUploadRejected) circleClass = 'rejected';
-        else if (currentStatus === 'done') circleClass = 'approved';
-        else circleClass = 'waiting';
-      } else if (key === 'pending') {
-        circleClass = 'pending';
-      } else {
-        circleClass = 'pending';
-      }
-    }
-
-    const disabledClass = hasNoData && key !== 'pending' ? 'disabled' : '';
-    const fadedClass = isFuture ? 'faded' : '';
-
-    return {
-      ...step,
-      ui: {
-        isActive,
-        isCompleted,
-        isFuture,
-        circleClass,
-        titleClass,
-        disabledClass,
-        fadedClass,
-        shouldShowTimestamp,
-        timestampText: shouldShowTimestamp ? moment(historyEntry.changeDate).format('DD/MM/YYYY - HH:mm') : null,
-      },
-    };
-  });
+  return steps.map(step =>
+    decorateSingleStep({
+      step,
+      stepIndexByKey,
+      baseActiveStep,
+      baseActiveIndex,
+      specialOutcomeActive,
+      currentStatus,
+      visibleHistory,
+      hasNoData,
+      hasThesis,
+      conclusionRejected,
+      finalUploadRejected,
+    }),
+  );
 }
 
 function computeSortedDeadlines(deadlines) {

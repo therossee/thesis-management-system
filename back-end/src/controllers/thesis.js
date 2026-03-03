@@ -10,6 +10,119 @@ const {
 } = require('../models');
 const thesisSchema = require('../schemas/Thesis');
 const toSnakeCase = require('../utils/snakeCase');
+const selectTeacherAttributes = require('../utils/selectTeacherAttributes');
+
+const toISOStringOrNull = value => (value ? value.toISOString() : null);
+
+const getThesisSupervisorData = async thesisId => {
+  const supervisorLinks = await ThesisSupervisorCoSupervisor.findAll({
+    where: { thesis_id: thesisId, scope: 'live' },
+  });
+
+  let supervisorData = null;
+  const coSupervisorsData = [];
+
+  for (const link of supervisorLinks) {
+    const teacher = await Teacher.findByPk(link.teacher_id, {
+      attributes: selectTeacherAttributes(true),
+    });
+    if (!teacher) {
+      continue;
+    }
+
+    if (link.is_supervisor) {
+      supervisorData = teacher.toJSON();
+    } else {
+      coSupervisorsData.push(teacher.toJSON());
+    }
+  }
+
+  return { supervisorData, coSupervisorsData };
+};
+
+const getThesisCompanyData = async thesisData => {
+  if (!thesisData.company_id) {
+    return null;
+  }
+
+  return Company.findByPk(thesisData.company_id);
+};
+
+const getThesisStatusHistoryData = async thesisApplicationId => {
+  const statusHistoryRecords = await ThesisApplicationStatusHistory.findAll({
+    where: { thesis_application_id: thesisApplicationId },
+  });
+  return statusHistoryRecords.map(r => r.toJSON());
+};
+
+const buildLoggedStudentThesisResponsePayload = async thesisData => {
+  const { supervisorData, coSupervisorsData } = await getThesisSupervisorData(thesisData.id);
+  const studentData = await Student.findByPk(thesisData.student_id);
+  const companyData = await getThesisCompanyData(thesisData);
+  const statusHistoryData = await getThesisStatusHistoryData(thesisData.thesis_application_id);
+
+  return {
+    id: thesisData.id,
+    topic: thesisData.topic,
+    student: studentData || null,
+    title: thesisData.title,
+    title_eng: thesisData.title_eng,
+    abstract: thesisData.abstract,
+    abstract_eng: thesisData.abstract_eng,
+    supervisor: supervisorData,
+    co_supervisors: coSupervisorsData,
+    company: companyData || null,
+    application_status_history: statusHistoryData,
+    status: thesisData.status,
+    thesis_start_date: thesisData.thesis_start_date.toISOString(),
+    thesis_conclusion_request_date: toISOStringOrNull(thesisData.thesis_conclusion_request_date),
+    thesis_conclusion_confirmation_date: toISOStringOrNull(thesisData.thesis_conclusion_confirmation_date),
+    thesis_draft_date: toISOStringOrNull(thesisData.thesis_draft_date),
+    thesis_file_path: thesisData.thesis_file_path,
+    thesis_summary_path: thesisData.thesis_summary_path,
+    additional_zip_path: thesisData.additional_zip_path,
+  };
+};
+
+const createLiveThesisSupervisorLinks = async (thesisId, thesisData, transaction) => {
+  const supervisorEntries = [
+    {
+      thesis_id: thesisId,
+      teacher_id: thesisData.supervisor.id,
+      scope: 'live',
+      is_supervisor: true,
+    },
+    ...(thesisData.co_supervisors || []).map(coSupervisor => ({
+      thesis_id: thesisId,
+      teacher_id: coSupervisor.id,
+      scope: 'live',
+      is_supervisor: false,
+    })),
+  ];
+
+  for (const entry of supervisorEntries) {
+    await ThesisSupervisorCoSupervisor.create(entry, { transaction });
+  }
+};
+
+const buildCreatedThesisResponsePayload = async (completeThesis, thesisData) => {
+  const { supervisorData, coSupervisorsData } = await getThesisSupervisorData(completeThesis.id);
+  const studentData = await Student.findByPk(completeThesis.student_id);
+
+  return {
+    id: completeThesis.id,
+    topic: completeThesis.topic,
+    student: studentData ? studentData.toJSON() : null,
+    supervisor: supervisorData,
+    co_supervisors: coSupervisorsData,
+    company: thesisData.company ? thesisData.company.toJSON() : null,
+    status: completeThesis.status,
+    thesis_start_date: completeThesis.thesis_start_date.toISOString(),
+    thesis_conclusion_request_date: completeThesis.thesis_conclusion_request_date,
+    thesis_conclusion_confirmation_date: completeThesis.thesis_conclusion_confirmation_date,
+    thesis_draft_date: completeThesis.thesis_draft_date,
+  };
+};
 
 const getLoggedStudentThesis = async (req, res) => {
   try {
@@ -29,68 +142,7 @@ const getLoggedStudentThesis = async (req, res) => {
       return res.status(404).json({ message: 'Thesis not found for the logged-in student.' });
     }
 
-    // Fetch supervisor and co-supervisors
-    const supervisorLinks = await ThesisSupervisorCoSupervisor.findAll({
-      where: { thesis_id: thesisData.id, scope: 'live' },
-    });
-
-    const selectTeacherAttributes = require('../utils/selectTeacherAttributes');
-
-    let supervisorData = null;
-    const coSupervisorsData = [];
-
-    for (const link of supervisorLinks) {
-      const teacher = await Teacher.findByPk(link.teacher_id, {
-        attributes: selectTeacherAttributes(true),
-      });
-      if (teacher) {
-        if (link.is_supervisor) {
-          supervisorData = teacher.toJSON();
-        } else {
-          coSupervisorsData.push(teacher.toJSON());
-        }
-      }
-    }
-
-    // Fetch student
-    const studentData = await Student.findByPk(thesisData.student_id);
-
-    // Fetch company if exists
-    let companyData = null;
-    if (thesisData.company_id) {
-      companyData = await Company.findByPk(thesisData.company_id);
-    }
-
-    const statusHistoryRecords = await ThesisApplicationStatusHistory.findAll({
-      where: { thesis_application_id: thesisData.thesis_application_id },
-    });
-    const statusHistoryData = statusHistoryRecords.map(r => r.toJSON());
-
-    const responsePayload = {
-      id: thesisData.id,
-      topic: thesisData.topic,
-      student: studentData ? studentData : null,
-      title: thesisData.title,
-      title_eng: thesisData.title_eng,
-      abstract: thesisData.abstract,
-      abstract_eng: thesisData.abstract_eng,
-      supervisor: supervisorData,
-      co_supervisors: coSupervisorsData,
-      company: companyData ? companyData : null,
-      application_status_history: statusHistoryData,
-      status: thesisData.status,
-      thesis_start_date: thesisData.thesis_start_date.toISOString(),
-      thesis_conclusion_request_date: thesisData.thesis_conclusion_request_date
-        ? thesisData.thesis_conclusion_request_date.toISOString()
-        : null,
-      thesis_conclusion_confirmation_date: thesisData.thesis_conclusion_confirmation_date
-        ? thesisData.thesis_conclusion_confirmation_date.toISOString()
-        : null,
-      thesis_draft_date: thesisData.thesis_draft_date ? thesisData.thesis_draft_date.toISOString() : null,
-      thesis_file_path: thesisData.thesis_file_path,
-      thesis_summary_path: thesisData.thesis_summary_path,
-      additional_zip_path: thesisData.additional_zip_path,
-    };
+    const responsePayload = await buildLoggedStudentThesisResponsePayload(thesisData);
 
     const thesisResponse = thesisSchema.parse(responsePayload);
     return res.status(200).json(thesisResponse);
@@ -124,70 +176,13 @@ const createStudentThesis = async (req, res) => {
       { transaction: t },
     );
 
-    const supervisorEntry = {
-      thesis_id: newThesis.id,
-      teacher_id: thesis_data.supervisor.id,
-      scope: 'live',
-      is_supervisor: true,
-    };
-    await ThesisSupervisorCoSupervisor.create(supervisorEntry, { transaction: t });
-
-    if (thesis_data.co_supervisors && thesis_data.co_supervisors.length > 0) {
-      for (const coSupervisor of thesis_data.co_supervisors) {
-        const coSupervisorEntry = {
-          thesis_id: newThesis.id,
-          teacher_id: coSupervisor.id,
-          scope: 'live',
-          is_supervisor: false,
-        };
-        await ThesisSupervisorCoSupervisor.create(coSupervisorEntry, { transaction: t });
-      }
-    }
+    await createLiveThesisSupervisorLinks(newThesis.id, thesis_data, t);
 
     await t.commit();
 
     // Fetch complete thesis data with all relations
     const completeThesis = await Thesis.findByPk(newThesis.id);
-
-    // Fetch supervisor and co-supervisors
-    const supervisorLinks = await ThesisSupervisorCoSupervisor.findAll({
-      where: { thesis_id: newThesis.id, scope: 'live' },
-    });
-
-    const selectTeacherAttributes = require('../utils/selectTeacherAttributes');
-
-    let supervisorData = null;
-    const coSupervisorsData = [];
-
-    for (const link of supervisorLinks) {
-      const teacher = await Teacher.findByPk(link.teacher_id, {
-        attributes: selectTeacherAttributes(true),
-      });
-      if (teacher) {
-        if (link.is_supervisor) {
-          supervisorData = teacher.toJSON();
-        } else {
-          coSupervisorsData.push(teacher.toJSON());
-        }
-      }
-    }
-
-    // Fetch student
-    const studentData = await Student.findByPk(completeThesis.student_id);
-
-    const responsePayload = {
-      id: completeThesis.id,
-      topic: completeThesis.topic,
-      student: studentData ? studentData.toJSON() : null,
-      supervisor: supervisorData,
-      co_supervisors: coSupervisorsData,
-      company: thesis_data.company ? thesis_data.company.toJSON() : null,
-      status: completeThesis.status,
-      thesis_start_date: completeThesis.thesis_start_date.toISOString(),
-      thesis_conclusion_request_date: completeThesis.thesis_conclusion_request_date,
-      thesis_conclusion_confirmation_date: completeThesis.thesis_conclusion_confirmation_date,
-      thesis_draft_date: completeThesis.thesis_draft_date,
-    };
+    const responsePayload = await buildCreatedThesisResponsePayload(completeThesis, thesis_data);
 
     const thesisResponse = thesisSchema.parse(responsePayload);
     return res.status(201).json(thesisResponse);

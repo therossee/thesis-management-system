@@ -97,10 +97,6 @@
   background: color-mix(in srgb, var(#2563eb) 90%, transparent);
 }
 
-.modal-cancel {
-  color: var(--border);
-}
-
 .modal-footer .btn {
   font-family: var(--font-family, 'Montserrat', sans-serif);
 }

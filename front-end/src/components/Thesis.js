@@ -24,6 +24,174 @@ import NoApplicationSection from './thesis-page/NoApplicationSection';
 import ThesisSummaryCard from './thesis-page/ThesisSummaryCard';
 import ThesisTopicCard from './thesis-page/ThesisTopicCard';
 
+const APPLICATION_VARIANT_BY_STATUS = {
+  rejected: 'application_rejected',
+  cancelled: 'application_cancelled',
+};
+
+const buildModalConfig = isThesis => {
+  if (isThesis) {
+    return {
+      title: 'carriera.tesi.modal_cancel.title',
+      body: 'carriera.tesi.modal_cancel.body',
+      confirmText: 'carriera.tesi.modal_cancel.confirm_text',
+      confirmIcon: 'fa-regular fa-trash-can',
+    };
+  }
+
+  return {
+    title: 'carriera.tesi.cancel_application',
+    body: 'carriera.tesi.cancel_application_content',
+    confirmText: 'carriera.tesi.confirm_cancel',
+    confirmIcon: 'fa-regular fa-xmark',
+  };
+};
+
+function ThesisNextActionCard({ t, appliedTheme, isEligible, onOpenRequest, thesis, thesisApplication }) {
+  if (thesis) {
+    if (thesis.status !== 'cancel_approved') {
+      return <LinkCard />;
+    }
+
+    return (
+      <NextStepsCard
+        t={t}
+        appliedTheme={appliedTheme}
+        variant="thesis_cancel_approved"
+        isEligible={isEligible}
+        onOpenRequest={onOpenRequest}
+      />
+    );
+  }
+
+  if (!thesisApplication) {
+    return <LinkCard />;
+  }
+
+  const variant = APPLICATION_VARIANT_BY_STATUS[thesisApplication.status];
+  if (!variant) {
+    return <LinkCard />;
+  }
+
+  return (
+    <NextStepsCard
+      t={t}
+      appliedTheme={appliedTheme}
+      variant={variant}
+      isEligible={isEligible}
+      onOpenRequest={onOpenRequest}
+    />
+  );
+}
+
+ThesisNextActionCard.propTypes = {
+  t: PropTypes.func.isRequired,
+  appliedTheme: PropTypes.string.isRequired,
+  isEligible: PropTypes.bool,
+  onOpenRequest: PropTypes.func.isRequired,
+  thesis: PropTypes.object,
+  thesisApplication: PropTypes.object,
+};
+
+function ThesisDetailContent({
+  thesis,
+  thesisApplication,
+  data,
+  t,
+  appliedTheme,
+  isEligible,
+  setShowRequestModal,
+  normalizedTopic,
+  showFullAbstract,
+  setShowFullAbstract,
+  showFullTopic,
+  setShowFullTopic,
+  requiredSummary,
+  handleDownload,
+  supervisors,
+}) {
+  if (!thesis && !thesisApplication) {
+    return null;
+  }
+
+  return (
+    <Col md={8} lg={8}>
+      {thesis && hasReachedConclusionRequest(thesis.status) && (
+        <ThesisSummaryCard
+          t={t}
+          thesis={thesis}
+          requiredSummary={requiredSummary}
+          showFullAbstract={showFullAbstract}
+          setShowFullAbstract={setShowFullAbstract}
+          onDownload={handleDownload}
+        />
+      )}
+
+      <ThesisTopicCard
+        t={t}
+        normalizedTopic={normalizedTopic}
+        showFullTopic={showFullTopic}
+        setShowFullTopic={setShowFullTopic}
+        company={data?.company}
+      />
+
+      <Row className="mb-3">
+        {thesis && (
+          <>
+            <Col md={7} lg={7}>
+              {supervisors && <TeacherContactCard supervisor={data.supervisor} coSupervisors={data.coSupervisors} />}
+            </Col>
+            <Col md={5} lg={5}>
+              <ThesisNextActionCard
+                t={t}
+                appliedTheme={appliedTheme}
+                isEligible={isEligible}
+                onOpenRequest={() => setShowRequestModal(true)}
+                thesis={thesis}
+              />
+            </Col>
+          </>
+        )}
+
+        {thesisApplication && (
+          <>
+            <Col>
+              {supervisors && <TeacherContactCard supervisor={data.supervisor} coSupervisors={data.coSupervisors} />}
+            </Col>
+            <Col md={5}>
+              <ThesisNextActionCard
+                t={t}
+                appliedTheme={appliedTheme}
+                isEligible={isEligible}
+                onOpenRequest={() => setShowRequestModal(true)}
+                thesisApplication={thesisApplication}
+              />
+            </Col>
+          </>
+        )}
+      </Row>
+    </Col>
+  );
+}
+
+ThesisDetailContent.propTypes = {
+  thesis: PropTypes.object,
+  thesisApplication: PropTypes.object,
+  data: PropTypes.object,
+  t: PropTypes.func.isRequired,
+  appliedTheme: PropTypes.string.isRequired,
+  isEligible: PropTypes.bool,
+  setShowRequestModal: PropTypes.func.isRequired,
+  normalizedTopic: PropTypes.string,
+  showFullAbstract: PropTypes.bool.isRequired,
+  setShowFullAbstract: PropTypes.func.isRequired,
+  showFullTopic: PropTypes.bool.isRequired,
+  setShowFullTopic: PropTypes.func.isRequired,
+  requiredSummary: PropTypes.bool,
+  handleDownload: PropTypes.func.isRequired,
+  supervisors: PropTypes.array,
+};
+
 export default function Thesis(props) {
   const {
     thesis,
@@ -64,11 +232,7 @@ export default function Thesis(props) {
   const downloadThesisFile = useThesisDownloader({ API, showToast, t });
 
   const normalizedTopic = useMemo(() => normalizeTopic(data?.topic), [data?.topic]);
-
-  const modalTitle = thesis ? 'carriera.tesi.modal_cancel.title' : 'carriera.tesi.cancel_application';
-  const modalBody = thesis ? 'carriera.tesi.modal_cancel.body' : 'carriera.tesi.cancel_application_content';
-  const modalConfirmText = thesis ? 'carriera.tesi.modal_cancel.confirm_text' : 'carriera.tesi.confirm_cancel';
-  const modalConfirmIcon = thesis ? 'fa-regular fa-trash-can' : 'fa-regular fa-xmark';
+  const modalConfig = buildModalConfig(Boolean(thesis));
 
   const cancelThesis = () => {
     API.requestThesisCancelation()
@@ -107,8 +271,8 @@ export default function Thesis(props) {
   };
 
   const handleCancel = () => {
-    if (thesis) cancelThesis();
-    else cancelApplication();
+    const cancelHandler = thesis ? cancelThesis : cancelApplication;
+    cancelHandler();
   };
 
   const handleDownload = ({ fileType, filePath }) => {
@@ -143,94 +307,33 @@ export default function Thesis(props) {
             />
           )}
 
-          {(thesis || thesisApplication) && (
-            <Col md={8} lg={8}>
-              {thesis && hasReachedConclusionRequest(thesis.status) && (
-                <ThesisSummaryCard
-                  t={t}
-                  thesis={thesis}
-                  requiredSummary={requiredSummary}
-                  showFullAbstract={showFullAbstract}
-                  setShowFullAbstract={setShowFullAbstract}
-                  onDownload={handleDownload}
-                />
-              )}
-
-              <ThesisTopicCard
-                t={t}
-                normalizedTopic={normalizedTopic}
-                showFullTopic={showFullTopic}
-                setShowFullTopic={setShowFullTopic}
-                company={data?.company}
-              />
-
-              <Row className="mb-3">
-                {thesis && (
-                  <>
-                    <Col md={7} lg={7}>
-                      {supervisors && (
-                        <TeacherContactCard supervisor={data.supervisor} coSupervisors={data.coSupervisors} />
-                      )}
-                    </Col>
-                    <Col md={5} lg={5}>
-                      {thesis.status === 'cancel_approved' ? (
-                        <NextStepsCard
-                          t={t}
-                          appliedTheme={appliedTheme}
-                          variant="thesis_cancel_approved"
-                          isEligible={isEligible}
-                          onOpenRequest={() => setShowRequestModal(true)}
-                        />
-                      ) : (
-                        <LinkCard />
-                      )}
-                    </Col>
-                  </>
-                )}
-
-                {thesisApplication && (
-                  <>
-                    <Col>
-                      {supervisors && (
-                        <TeacherContactCard supervisor={data.supervisor} coSupervisors={data.coSupervisors} />
-                      )}
-                    </Col>
-                    <Col md={5}>
-                      {thesisApplication.status === 'rejected' ? (
-                        <NextStepsCard
-                          t={t}
-                          appliedTheme={appliedTheme}
-                          variant="application_rejected"
-                          isEligible={isEligible}
-                          onOpenRequest={() => setShowRequestModal(true)}
-                        />
-                      ) : thesisApplication.status === 'cancelled' ? (
-                        <NextStepsCard
-                          t={t}
-                          appliedTheme={appliedTheme}
-                          variant="application_cancelled"
-                          isEligible={isEligible}
-                          onOpenRequest={() => setShowRequestModal(true)}
-                        />
-                      ) : (
-                        <LinkCard />
-                      )}
-                    </Col>
-                  </>
-                )}
-              </Row>
-            </Col>
-          )}
+          <ThesisDetailContent
+            thesis={thesis}
+            thesisApplication={thesisApplication}
+            data={data}
+            t={t}
+            appliedTheme={appliedTheme}
+            isEligible={isEligible}
+            setShowRequestModal={setShowRequestModal}
+            normalizedTopic={normalizedTopic}
+            showFullAbstract={showFullAbstract}
+            setShowFullAbstract={setShowFullAbstract}
+            showFullTopic={showFullTopic}
+            setShowFullTopic={setShowFullTopic}
+            requiredSummary={requiredSummary}
+            handleDownload={handleDownload}
+            supervisors={supervisors}
+          />
         </Row>
 
         <CustomModal
           show={showModal}
           handleClose={() => setShowModal(false)}
           handleConfirm={handleCancel}
-          titleText={modalTitle}
-          bodyText={modalBody}
-          confirmText={modalConfirmText}
-          confirmIcon={modalConfirmIcon}
+          titleText={modalConfig.title}
+          bodyText={modalConfig.body}
+          confirmText={modalConfig.confirmText}
+          confirmIcon={modalConfig.confirmIcon}
         />
 
         <ThesisRequestModal

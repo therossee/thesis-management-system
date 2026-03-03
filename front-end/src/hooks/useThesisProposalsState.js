@@ -6,6 +6,40 @@ import API from '../API';
 import useDebounce from './useDebounce';
 
 const STORAGE_KEY = 'thesisProposalsState';
+const LOADING_MIN_MS = 500;
+
+const getProposalApiMethod = tab => {
+  return tab === 'course' ? API.getTargetedThesisProposals : API.getThesisProposals;
+};
+
+const fetchProposalData = ({ apiMethod, language, currentPage, proposalsPerPage, filters, searchQuery, sorting }) => {
+  return apiMethod(language, currentPage, proposalsPerPage, filters, searchQuery, sorting);
+};
+
+const resolveAdjustedCurrentPage = (currentPage, totalPages) => {
+  if (totalPages > 0 && currentPage > totalPages) {
+    return totalPages;
+  }
+
+  if (totalPages === 0 && currentPage !== 1) {
+    return 1;
+  }
+
+  return null;
+};
+
+const updateCurrentPage = (setState, currentPage) => {
+  setState(prevState => ({
+    ...prevState,
+    currentPage,
+  }));
+};
+
+const applyFetchedProposalData = (data, setPageProposals, setCount, setTotalPages) => {
+  setPageProposals(data.thesisProposals);
+  setCount(data.count);
+  setTotalPages(data.totalPages);
+};
 
 export default function useThesisProposalsState() {
   const { i18n } = useTranslation();
@@ -51,49 +85,31 @@ export default function useThesisProposalsState() {
 
     const handleFetchCompletion = () => {
       const elapsedTime = Date.now() - startTime;
-      const remainingTime = Math.max(500 - elapsedTime, 0);
+      const remainingTime = Math.max(LOADING_MIN_MS - elapsedTime, 0);
       setTimeout(() => setLoading(false), remainingTime);
     };
 
-    const fetchProposals = apiMethod => {
-      apiMethod(
-        i18n.language,
-        state.currentPage,
-        state.proposalsPerPage,
-        state.filters,
-        debouncedSearchQuery,
-        state.sorting,
-      )
-        .then(data => {
-          if (data.totalPages > 0 && state.currentPage > data.totalPages) {
-            setState(prevState => ({
-              ...prevState,
-              currentPage: data.totalPages,
-            }));
-            return;
-          }
+    const apiMethod = getProposalApiMethod(state.tab);
+    fetchProposalData({
+      apiMethod,
+      language: i18n.language,
+      currentPage: state.currentPage,
+      proposalsPerPage: state.proposalsPerPage,
+      filters: state.filters,
+      searchQuery: debouncedSearchQuery,
+      sorting: state.sorting,
+    })
+      .then(data => {
+        const adjustedPage = resolveAdjustedCurrentPage(state.currentPage, data.totalPages);
+        if (adjustedPage !== null) {
+          updateCurrentPage(setState, adjustedPage);
+          return;
+        }
 
-          if (data.totalPages === 0 && state.currentPage !== 1) {
-            setState(prevState => ({
-              ...prevState,
-              currentPage: 1,
-            }));
-            return;
-          }
-
-          setPageProposals(data.thesisProposals);
-          setCount(data.count);
-          setTotalPages(data.totalPages);
-        })
-        .catch(error => console.error('Error fetching thesis proposals:', error))
-        .finally(handleFetchCompletion);
-    };
-
-    if (state.tab === 'course') {
-      fetchProposals(API.getTargetedThesisProposals);
-    } else {
-      fetchProposals(API.getThesisProposals);
-    }
+        applyFetchedProposalData(data, setPageProposals, setCount, setTotalPages);
+      })
+      .catch(error => console.error('Error fetching thesis proposals:', error))
+      .finally(handleFetchCompletion);
   }, [
     i18n.language,
     isLoaded,
