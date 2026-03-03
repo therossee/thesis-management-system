@@ -236,7 +236,7 @@ export default function StepSubmit() {
                   title={t('carriera.conclusione_tesi.submit_labels.embargo_duration')}
                   ignoreMoreLines
                 >
-                  {embargoPeriod || '-'}
+                  {t(`carriera.conclusione_tesi.embargo_period.${embargoPeriod}`)} || {'-'}
                 </CustomBlock>
               </>
             )}

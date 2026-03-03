@@ -8,8 +8,8 @@ describe('Thesis proposals overview page', () => {
   });
 
   const openFiltersDropdown = () => {
-    cy.get('#dropdown-filters .custom-dropdown-toggle').should('be.visible').click({ force: true });
-    cy.get('#dropdown-filters .dropdown-menu').should('be.visible');
+    cy.get('#dropdown-filters .custom-dropdown-toggle').should('be.visible');
+    cy.get('#dropdown-filters .custom-dropdown-toggle').click();
   };
 
   it('should toggle between course proposals and all proposals', () => {
