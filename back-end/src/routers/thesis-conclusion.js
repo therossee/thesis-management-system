@@ -25,6 +25,7 @@ const upload = multer({
       cb(null, `${Date.now()}_${safeName}`);
     },
   }),
+  limits: { fileSize: 200 * 1024 * 1024 }, // 200 MB limit
 });
 
 router.post(
