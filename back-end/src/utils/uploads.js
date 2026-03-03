@@ -6,7 +6,7 @@ const ensureDirExists = async dirPath => {
 };
 
 // Normalizes path separators to forward slashes for consistent storage/comparison.
-const normalizePathSeparators = filePath => String(filePath || '').replace(/\\/g, '/');
+const normalizePathSeparators = filePath => String(filePath || '').replaceAll(/\\/g, '/');
 
 const resolveValidDraftFilePath = async (filePath, studentId, baseDir) => {
   if (!filePath) return null;

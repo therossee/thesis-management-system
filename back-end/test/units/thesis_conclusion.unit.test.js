@@ -1434,6 +1434,11 @@ describe('Thesis Conclusion Controller', () => {
         { motivation_id: 2, other_motivation: null },
         { motivation_id: 7, other_motivation: 'Accordo aziendale' },
       ]);
+      ThesisKeyword.findAll.mockResolvedValue([
+        { keyword_id: 8, keyword_other: null },
+        { keyword_id: null, keyword_other: 'free-keyword' },
+      ]);
+      Keyword.findAll.mockResolvedValue([{ id: 8, keyword: 'AI' }]);
 
       await getThesisConclusionRequestDraft(req, res);
 
@@ -1481,6 +1486,10 @@ describe('Thesis Conclusion Controller', () => {
             ],
           },
           sdgs: [{ goalId: 5, level: 'primary' }],
+          keywords: [
+            { id: 8, keyword: 'AI' },
+            { id: null, keyword: 'free-keyword' },
+          ],
         }),
       );
     });

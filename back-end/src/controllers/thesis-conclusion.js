@@ -402,7 +402,7 @@ const getThesisConclusionRequestDraft = async (req, res) => {
         }
 
         const otherKeyword = String(keyword.keyword_other || '').trim();
-        return otherKeyword.length > 0 ? otherKeyword : null;
+        return otherKeyword.length > 0 ? { id: null, keyword: otherKeyword } : null;
       })
       .filter(Boolean);
 

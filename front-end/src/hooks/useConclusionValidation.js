@@ -69,13 +69,13 @@ export default function useConclusionValidation({
   const baseValid = detailsValid && allDeclarationsChecked() && uploadsValid;
 
   const denyValid =
-    authorization !== 'deny'
+    authorization === 'authorize'
       ? true
       : embargoMotivations.length > 0 &&
         String(embargoPeriod || '').trim().length > 0 &&
         (!embargoMotivations.includes(7) || String(otherEmbargoReason || '').trim().length > 0);
 
-  const authorizeValid = authorization !== 'authorize' ? true : String(licenseChoice || '').trim().length > 0;
+  const authorizeValid = authorization === 'deny' ? true : String(licenseChoice || '').trim().length > 0;
   const authorizationSelected = authorization === 'authorize' || authorization === 'deny';
 
   const canSubmit = baseValid && denyValid && authorizeValid;

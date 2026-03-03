@@ -292,70 +292,68 @@ export default function Thesis(props) {
   }
 
   return (
-    <>
-      <div className="proposals-container">
-        <Row className="mb-3">
-          <Col md={4} lg={4}>
-            <Timeline
-              activeStep={activeStep}
-              statusHistory={appStatusHistory}
-              conclusionRequestDate={thesis ? thesis.thesisConclusionRequestDate : null}
-              conclusionConfirmedDate={thesis ? thesis.thesisConclusionConfirmedDate : null}
-              session={sessionDeadlines}
-            />
-          </Col>
+    <div className="proposals-container">
+      <Row className="mb-3">
+        <Col md={4} lg={4}>
+          <Timeline
+            activeStep={activeStep}
+            statusHistory={appStatusHistory}
+            conclusionRequestDate={thesis ? thesis.thesisConclusionRequestDate : null}
+            conclusionConfirmedDate={thesis ? thesis.thesisConclusionConfirmedDate : null}
+            session={sessionDeadlines}
+          />
+        </Col>
 
-          {!thesis && !thesisApplication && (
-            <NoApplicationSection
-              t={t}
-              appliedTheme={appliedTheme}
-              isEligible={isEligible}
-              onOpenRequest={() => setShowRequestModal(true)}
-            />
-          )}
-
-          <ThesisDetailContent
-            thesis={thesis}
-            thesisApplication={thesisApplication}
-            data={data}
+        {!thesis && !thesisApplication && (
+          <NoApplicationSection
             t={t}
             appliedTheme={appliedTheme}
             isEligible={isEligible}
-            setShowRequestModal={setShowRequestModal}
-            normalizedTopic={normalizedTopic}
-            showFullAbstract={showFullAbstract}
-            setShowFullAbstract={setShowFullAbstract}
-            showFullTopic={showFullTopic}
-            setShowFullTopic={setShowFullTopic}
-            requiredSummary={requiredSummary}
-            handleDownload={handleDownload}
-            supervisors={supervisors}
+            onOpenRequest={() => setShowRequestModal(true)}
           />
-        </Row>
+        )}
 
-        <CustomModal
-          show={showModal}
-          handleClose={() => setShowModal(false)}
-          handleConfirm={handleCancel}
-          titleText={modalConfig.title}
-          bodyText={modalConfig.body}
-          confirmText={modalConfig.confirmText}
-          confirmIcon={modalConfig.confirmIcon}
+        <ThesisDetailContent
+          thesis={thesis}
+          thesisApplication={thesisApplication}
+          data={data}
+          t={t}
+          appliedTheme={appliedTheme}
+          isEligible={isEligible}
+          setShowRequestModal={setShowRequestModal}
+          normalizedTopic={normalizedTopic}
+          showFullAbstract={showFullAbstract}
+          setShowFullAbstract={setShowFullAbstract}
+          showFullTopic={showFullTopic}
+          setShowFullTopic={setShowFullTopic}
+          requiredSummary={requiredSummary}
+          handleDownload={handleDownload}
+          supervisors={supervisors}
         />
+      </Row>
 
-        <ThesisRequestModal
-          show={showRequestModal}
-          setShow={setShowRequestModal}
-          onSubmitResult={onRequestSubmitResult}
-        />
+      <CustomModal
+        show={showModal}
+        handleClose={() => setShowModal(false)}
+        handleConfirm={handleCancel}
+        titleText={modalConfig.title}
+        bodyText={modalConfig.body}
+        confirmText={modalConfig.confirmText}
+        confirmIcon={modalConfig.confirmIcon}
+      />
 
-        <FinalThesisUpload
-          show={showFinalThesis}
-          setShow={setShowFinalThesis}
-          onSubmitResult={onFinalThesisUploadResult}
-        />
-      </div>
-    </>
+      <ThesisRequestModal
+        show={showRequestModal}
+        setShow={setShowRequestModal}
+        onSubmitResult={onRequestSubmitResult}
+      />
+
+      <FinalThesisUpload
+        show={showFinalThesis}
+        setShow={setShowFinalThesis}
+        onSubmitResult={onFinalThesisUploadResult}
+      />
+    </div>
   );
 }
 

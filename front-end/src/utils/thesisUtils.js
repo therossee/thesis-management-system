@@ -11,12 +11,12 @@ export const thesisStatusOrder = [
   'done',
 ];
 
-export const normalizeTopic = topic => String(topic || '').replace(/(?:\r?\n){2,}/g, '\n');
+export const normalizeTopic = topic => String(topic || '').replaceAll(/(?:\r?\n){2,}/g, '\n');
 
 export const getFileNameFromPath = path => {
   if (!path) return '';
   const chunks = String(path).split('/');
-  return chunks[chunks.length - 1] || '';
+  return chunks.at(chunks.length - 1) || '';
 };
 
 export const hasReachedConclusionRequest = thesisStatus => {
