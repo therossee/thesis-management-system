@@ -2,9 +2,47 @@ import React, { useState } from 'react';
 
 import { Button, Col, Row } from 'react-bootstrap';
 
+import PropTypes from 'prop-types';
+
 import CustomBadge from '../CustomBadge';
 import CustomBlock from '../CustomBlock';
 import { useConclusionRequest } from './ConclusionRequestContext';
+
+const TITLE_MAX = 90;
+const ABSTRACT_MAX = 180;
+
+const normalizeText = value => String(value || '').trim() || '-';
+
+function ExpandableText({ text, expanded, onToggle, maxLength, t }) {
+  const hasOverflow = text.length > maxLength;
+  const visibleText = hasOverflow && !expanded ? `${text.substring(0, maxLength - 3)}... ` : text;
+
+  return (
+    <>
+      {visibleText}
+      {hasOverflow && (
+        <Button
+          variant="link"
+          onClick={onToggle}
+          aria-expanded={expanded}
+          className="p-0 custom-link d-inline-flex align-items-center gap-1 align-baseline"
+          style={{ fontSize: 'inherit', lineHeight: 'inherit', verticalAlign: 'baseline' }}
+        >
+          <i className={`fa-regular fa-chevron-${expanded ? 'up' : 'down'} cosupervisor-button`} />
+          <span className="cosupervisor-button">{t(`carriera.tesi.${expanded ? 'show_less' : 'show_more'}`)}</span>
+        </Button>
+      )}
+    </>
+  );
+}
+
+ExpandableText.propTypes = {
+  text: PropTypes.string.isRequired,
+  expanded: PropTypes.bool.isRequired,
+  onToggle: PropTypes.func.isRequired,
+  maxLength: PropTypes.number.isRequired,
+  t: PropTypes.func.isRequired,
+};
 
 export default function StepSubmit() {
   const {
@@ -37,12 +75,22 @@ export default function StepSubmit() {
   const [showFullAbstract, setShowFullAbstract] = useState(false);
   const [showFullAbstractEng, setShowFullAbstractEng] = useState(false);
 
-  const normalizeText = value => String(value || '').trim() || '-';
-  const TITLE_MAX = 90;
-  const ABSTRACT_MAX = 180;
+  const normalizedTitleText = normalizeText(titleText);
+  const normalizedTitleEngText = normalizeText(titleEngText);
+  const normalizedAbstractText = normalizeText(abstractText);
+  const normalizedAbstractEngText = normalizeText(abstractEngText);
+
   const summaryFileName = summaryPdf?.name || draftUploadedFiles?.summary?.fileName || '-';
   const thesisFileName = pdfFile?.name || draftUploadedFiles?.thesis?.fileName || '-';
   const additionalFileName = supplementaryZip?.name || draftUploadedFiles?.additional?.fileName || '-';
+
+  const authorizationLabel =
+    authorization === 'authorize'
+      ? t('carriera.conclusione_tesi.authorization_authorize')
+      : authorization === 'deny'
+        ? t('carriera.conclusione_tesi.authorization_deny')
+        : '-';
+  const embargoDurationLabel = embargoPeriod ? t(`carriera.conclusione_tesi.embargo_period.${embargoPeriod}`) : '-';
 
   return (
     <div className="cr-section cr-submit-summary">
@@ -82,25 +130,13 @@ export default function StepSubmit() {
               title={t('carriera.conclusione_tesi.submit_labels.title_original')}
               ignoreMoreLines
             >
-              <>
-                {normalizeText(titleText).length > TITLE_MAX && !showFullTitle
-                  ? `${normalizeText(titleText).substring(0, TITLE_MAX - 3)}... `
-                  : normalizeText(titleText)}
-                {normalizeText(titleText).length > TITLE_MAX && (
-                  <Button
-                    variant="link"
-                    onClick={() => setShowFullTitle(!showFullTitle)}
-                    aria-expanded={showFullTitle}
-                    className="p-0 custom-link d-inline-flex align-items-center gap-1 align-baseline"
-                    style={{ fontSize: 'inherit', lineHeight: 'inherit', verticalAlign: 'baseline' }}
-                  >
-                    <i className={`fa-regular fa-chevron-${showFullTitle ? 'up' : 'down'} cosupervisor-button`} />
-                    <span className="cosupervisor-button">
-                      {t(`carriera.tesi.${showFullTitle ? 'show_less' : 'show_more'}`)}
-                    </span>
-                  </Button>
-                )}
-              </>
+              <ExpandableText
+                text={normalizedTitleText}
+                maxLength={TITLE_MAX}
+                expanded={showFullTitle}
+                onToggle={() => setShowFullTitle(prev => !prev)}
+                t={t}
+              />
             </CustomBlock>
 
             {lang !== 'en' && (
@@ -109,25 +145,13 @@ export default function StepSubmit() {
                 title={t('carriera.conclusione_tesi.submit_labels.title_english')}
                 ignoreMoreLines
               >
-                <>
-                  {normalizeText(titleEngText).length > TITLE_MAX && !showFullTitleEng
-                    ? `${normalizeText(titleEngText).substring(0, TITLE_MAX - 3)}... `
-                    : normalizeText(titleEngText)}
-                  {normalizeText(titleEngText).length > TITLE_MAX && (
-                    <Button
-                      variant="link"
-                      onClick={() => setShowFullTitleEng(!showFullTitleEng)}
-                      aria-expanded={showFullTitleEng}
-                      className="p-0 custom-link d-inline-flex align-items-center gap-1 align-baseline"
-                      style={{ fontSize: 'inherit', lineHeight: 'inherit', verticalAlign: 'baseline' }}
-                    >
-                      <i className={`fa-regular fa-chevron-${showFullTitleEng ? 'up' : 'down'} cosupervisor-button`} />
-                      <span className="cosupervisor-button">
-                        {t(`carriera.tesi.${showFullTitleEng ? 'show_less' : 'show_more'}`)}
-                      </span>
-                    </Button>
-                  )}
-                </>
+                <ExpandableText
+                  text={normalizedTitleEngText}
+                  maxLength={TITLE_MAX}
+                  expanded={showFullTitleEng}
+                  onToggle={() => setShowFullTitleEng(prev => !prev)}
+                  t={t}
+                />
               </CustomBlock>
             )}
 
@@ -136,25 +160,13 @@ export default function StepSubmit() {
               title={t('carriera.conclusione_tesi.submit_labels.abstract_original')}
               ignoreMoreLines
             >
-              <>
-                {normalizeText(abstractText).length > ABSTRACT_MAX && !showFullAbstract
-                  ? `${normalizeText(abstractText).substring(0, ABSTRACT_MAX - 3)}... `
-                  : normalizeText(abstractText)}
-                {normalizeText(abstractText).length > ABSTRACT_MAX && (
-                  <Button
-                    variant="link"
-                    onClick={() => setShowFullAbstract(!showFullAbstract)}
-                    aria-expanded={showFullAbstract}
-                    className="p-0 custom-link d-inline-flex align-items-center gap-1 align-baseline"
-                    style={{ fontSize: 'inherit', lineHeight: 'inherit', verticalAlign: 'baseline' }}
-                  >
-                    <i className={`fa-regular fa-chevron-${showFullAbstract ? 'up' : 'down'} cosupervisor-button`} />
-                    <span className="cosupervisor-button">
-                      {t(`carriera.tesi.${showFullAbstract ? 'show_less' : 'show_more'}`)}
-                    </span>
-                  </Button>
-                )}
-              </>
+              <ExpandableText
+                text={normalizedAbstractText}
+                maxLength={ABSTRACT_MAX}
+                expanded={showFullAbstract}
+                onToggle={() => setShowFullAbstract(prev => !prev)}
+                t={t}
+              />
             </CustomBlock>
 
             {lang !== 'en' && (
@@ -163,27 +175,13 @@ export default function StepSubmit() {
                 title={t('carriera.conclusione_tesi.submit_labels.abstract_english')}
                 ignoreMoreLines
               >
-                <>
-                  {normalizeText(abstractEngText).length > ABSTRACT_MAX && !showFullAbstractEng
-                    ? `${normalizeText(abstractEngText).substring(0, ABSTRACT_MAX - 3)}... `
-                    : normalizeText(abstractEngText)}
-                  {normalizeText(abstractEngText).length > ABSTRACT_MAX && (
-                    <Button
-                      variant="link"
-                      onClick={() => setShowFullAbstractEng(!showFullAbstractEng)}
-                      aria-expanded={showFullAbstractEng}
-                      className="p-0 custom-link d-inline-flex align-items-center gap-1 align-baseline"
-                      style={{ fontSize: 'inherit', lineHeight: 'inherit', verticalAlign: 'baseline' }}
-                    >
-                      <i
-                        className={`fa-regular fa-chevron-${showFullAbstractEng ? 'up' : 'down'} cosupervisor-button`}
-                      />
-                      <span className="cosupervisor-button">
-                        {t(`carriera.tesi.${showFullAbstractEng ? 'show_less' : 'show_more'}`)}
-                      </span>
-                    </Button>
-                  )}
-                </>
+                <ExpandableText
+                  text={normalizedAbstractEngText}
+                  maxLength={ABSTRACT_MAX}
+                  expanded={showFullAbstractEng}
+                  onToggle={() => setShowFullAbstractEng(prev => !prev)}
+                  t={t}
+                />
               </CustomBlock>
             )}
           </div>
@@ -206,23 +204,19 @@ export default function StepSubmit() {
               {selectedSdgLabels.length > 0 ? <CustomBadge variant="sdg" content={selectedSdgLabels} /> : '-'}
             </CustomBlock>
             <CustomBlock icon="lock" title={t('carriera.conclusione_tesi.submit_labels.authorization')} ignoreMoreLines>
-              {authorization
-                ? authorization === 'authorize'
-                  ? t('carriera.conclusione_tesi.authorization_authorize')
-                  : t('carriera.conclusione_tesi.authorization_deny')
-                : '-'}
+              {authorizationLabel}
             </CustomBlock>
 
-            {authorization && authorization === 'authorize' && (
+            {authorization === 'authorize' && (
               <CustomBlock
                 icon="copyright"
                 title={t('carriera.conclusione_tesi.submit_labels.license')}
                 ignoreMoreLines
               >
-                {selectedLicenseLabel}
+                {selectedLicenseLabel || '-'}
               </CustomBlock>
             )}
-            {authorization && authorization === 'deny' && (
+            {authorization === 'deny' && (
               <>
                 <CustomBlock
                   icon="circle-question"
@@ -236,7 +230,7 @@ export default function StepSubmit() {
                   title={t('carriera.conclusione_tesi.submit_labels.embargo_duration')}
                   ignoreMoreLines
                 >
-                  {t(`carriera.conclusione_tesi.embargo_period.${embargoPeriod}`)} || {'-'}
+                  {embargoDurationLabel}
                 </CustomBlock>
               </>
             )}

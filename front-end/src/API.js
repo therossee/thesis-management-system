@@ -237,7 +237,6 @@ const getSustainableDevelopmentGoals = async () => {
 };
 
 const getAvailableLicenses = async lang => {
-  console.log(lang);
   try {
     const response = await axios.get(`${URL}/thesis-conclusion/licenses`, {
       params: { lang },

@@ -34,10 +34,8 @@ export default function ConclusionRequest({ onSubmitResult, saveDraftTrigger = 0
   const { showToast } = useContext(ToastContext);
   const appliedTheme = theme === 'auto' ? getSystemTheme() : theme;
 
-  //eslint-disable-next-line no-unused-vars
   const [error, setError] = useState('');
 
-  // form state (rimane qui, ma ora è “solo stato”)
   const [titleText, setTitleText] = useState('');
   const [titleEngText, setTitleEngText] = useState('');
   const [abstractText, setAbstractText] = useState('');
@@ -737,6 +735,11 @@ export default function ConclusionRequest({ onSubmitResult, saveDraftTrigger = 0
         <Card className="mb-3 roundCard py-2 d-flex justify-content-center align-items-center cr-form-card">
           <Card.Body className="cr-form-body w-100" ref={formBodyRef}>
             <div className="conclusion-process-content cr-clean">
+              {error && (
+                <div className="alert alert-danger mb-3" role="alert">
+                  {error}
+                </div>
+              )}
               <ConclusionRequestProvider value={contextValue}>
                 <Form>
                   {currentStep === 0 && <StepDetails />}
