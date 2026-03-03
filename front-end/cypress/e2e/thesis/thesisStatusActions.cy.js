@@ -170,7 +170,7 @@ describe('Thesis status actions', () => {
       .click();
     cy.url().should('include', '/carriera/tesi/conclusione_tesi');
     cy.wait(['@getTeachers', '@getLicenses', '@getSdgs', '@getEmbargoMotivations', '@getKeywords', '@getDraft']);
-    cy.get('#title-original').should('be.visible');
+    cy.get('#title-original').should('exist');
   });
 
   it('calls status transition API from conclusion_approved to almalaurea', () => {

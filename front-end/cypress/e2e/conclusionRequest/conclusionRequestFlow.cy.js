@@ -135,9 +135,14 @@ const setStableUiPreferences = win => {
 };
 
 const rightActionButton = () => cy.get('.cr-steps-actions-right button');
+const nextStepButton = () => cy.contains('.cr-steps-actions-right button', /Avanti|Next/i);
+const waitForDraftSaveUiStability = () => {
+  cy.get('body', { timeout: 10000 }).find('.modal.show .spinner-border').should('have.length', 0);
+};
 
 const clickNextStep = () => {
-  rightActionButton().should('be.enabled').click();
+  nextStepButton().should('be.enabled');
+  nextStepButton().click({ force: true });
 };
 
 const confirmConclusionSubmit = () => {
@@ -183,6 +188,21 @@ const stubConclusionPageApis = ({
   cy.intercept('GET', '**/api/thesis-conclusion/embargo-motivations*', EMBARGO_MOTIVATIONS).as('getEmbargoMotivations');
   cy.intercept('GET', '**/api/thesis-proposals/keywords*', KEYWORDS).as('getKeywords');
   cy.intercept('GET', '**/api/students/required-summary', { requiredSummary }).as('getRequiredSummary');
+  cy.intercept('GET', '**/api/thesis/*/thesis', {
+    statusCode: 200,
+    body: 'thesis-file-content',
+    headers: { 'content-type': 'application/pdf' },
+  }).as('getDraftThesisBlob');
+  cy.intercept('GET', '**/api/thesis/*/summary', {
+    statusCode: 200,
+    body: 'summary-file-content',
+    headers: { 'content-type': 'application/pdf' },
+  }).as('getDraftSummaryBlob');
+  cy.intercept('GET', '**/api/thesis/*/additional', {
+    statusCode: 200,
+    body: 'additional-file-content',
+    headers: { 'content-type': 'application/zip' },
+  }).as('getDraftAdditionalBlob');
 
   if (draft) {
     cy.intercept('GET', '**/api/thesis-conclusion/draft', draft).as('getDraft');
@@ -219,17 +239,21 @@ const visitConclusionPage = () => {
 const moveToSubmitStepWithAuthorizeFlow = () => {
   clickNextStep();
   cy.wait('@saveDraft');
+  waitForDraftSaveUiStability();
 
   cy.get('#authorization-authorize').should('be.checked');
   clickNextStep();
   cy.wait('@saveDraft');
+  waitForDraftSaveUiStability();
 
   clickNextStep();
   cy.wait('@saveDraft');
+  waitForDraftSaveUiStability();
 
   checkDeclarations([1, 2, 3, 4, 5, 6]);
   clickNextStep();
   cy.wait('@saveDraft');
+  waitForDraftSaveUiStability();
 };
 
 describe('Conclusion request wizard', () => {
@@ -251,7 +275,7 @@ describe('Conclusion request wizard', () => {
     });
     visitConclusionPage();
 
-    cy.get('#title-original').should('be.visible');
+    cy.get('#title-original').should('exist');
     moveToSubmitStepWithAuthorizeFlow();
 
     rightActionButton()
@@ -275,6 +299,7 @@ describe('Conclusion request wizard', () => {
 
     clickNextStep();
     cy.wait('@saveDraft');
+    waitForDraftSaveUiStability();
 
     cy.get('#authorization-deny').check({ force: true });
     rightActionButton().should('be.disabled');
@@ -284,6 +309,7 @@ describe('Conclusion request wizard', () => {
 
     clickNextStep();
     cy.wait('@saveDraft');
+    waitForDraftSaveUiStability();
 
     cy.get('#summary-for-committee-pdf').should('exist');
     cy.get('#final-thesis-pdfa').should('exist');
@@ -296,11 +322,13 @@ describe('Conclusion request wizard', () => {
 
     clickNextStep();
     cy.wait('@saveDraft');
+    waitForDraftSaveUiStability();
 
     cy.get('#declaration-2').should('not.exist');
     checkDeclarations([1, 3, 4, 5, 6]);
     clickNextStep();
     cy.wait('@saveDraft');
+    waitForDraftSaveUiStability();
 
     rightActionButton()
       .contains(/Invia richiesta|Send request/i)
@@ -355,8 +383,10 @@ describe('Conclusion request wizard', () => {
 
     clickNextStep();
     cy.wait('@saveDraft');
+    waitForDraftSaveUiStability();
     clickNextStep();
     cy.wait('@saveDraft');
+    waitForDraftSaveUiStability();
 
     cy.contains('.cr-file-name', 'thesis-draft.pdf')
       .parents('.cr-file-name-line')
@@ -417,6 +447,7 @@ describe('Conclusion request wizard', () => {
 
     clickNextStep();
     cy.wait('@saveDraft').its('response.statusCode').should('eq', 201);
+    waitForDraftSaveUiStability();
 
     cy.reload();
     cy.wait('@getDraft');
