@@ -276,7 +276,7 @@ describe('Thesis request flows', () => {
 
     visitTesiPage();
     cy.wait('@getApplicationHistory');
-    cy.contains(/La tua candidatura per la tesi è stata respinta/i).should('be.visible');
+    cy.contains(/La tua candidatura per la tesi è stata respinta dal relatore./i).should('be.visible');
     cy.contains('button', /Nuova Richiesta Tesi|application form/i)
       .should('be.visible')
       .click();
