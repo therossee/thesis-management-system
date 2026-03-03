@@ -431,33 +431,43 @@ function hasWaitingOutcomeFlag(waitingFlags) {
   );
 }
 
+function resolveApplicationOutcomeCircleClass(currentStatus, hasThesis) {
+  if (hasThesis || currentStatus === 'approved') return 'approved';
+  if (currentStatus === 'rejected') return 'rejected';
+  if (currentStatus === 'cancelled') return 'cancelled';
+  return 'waiting';
+}
+
+function resolveConclusionOutcomeCircleClass(currentStatus, conclusionRejected) {
+  if (conclusionRejected) return 'rejected';
+  if (currentStatus === 'conclusion_approved') return 'approved';
+  return 'waiting';
+}
+
+function resolveCancelOutcomeCircleClass(currentStatus) {
+  return currentStatus === 'cancel_approved' ? 'rejected' : 'waiting';
+}
+
+function resolveFinalUploadOutcomeCircleClass(currentStatus, finalUploadRejected) {
+  if (finalUploadRejected) return 'rejected';
+  if (currentStatus === 'done') return 'approved';
+  return 'waiting';
+}
+
 function resolveOutcomeCircleClass(key, currentStatus, hasThesis, conclusionRejected, finalUploadRejected) {
-  switch (key) {
-    case 'application_outcome':
-      if (hasThesis || currentStatus === 'approved') return 'approved';
-      if (currentStatus === 'rejected') return 'rejected';
-      if (currentStatus === 'cancelled') return 'cancelled';
-      return 'waiting';
-
-    case 'conclusion_outcome':
-      if (conclusionRejected) return 'rejected';
-      if (currentStatus === 'conclusion_approved') return 'approved';
-      return 'waiting';
-
-    case 'cancel_outcome':
-      return currentStatus === 'cancel_approved' ? 'rejected' : 'waiting';
-
-    case 'final_upload_outcome':
-      if (finalUploadRejected) return 'rejected';
-      if (currentStatus === 'done') return 'approved';
-      return 'waiting';
-
-    case 'pending':
-      return 'pending';
-
-    default:
-      return null;
+  if (key === 'pending') {
+    return 'pending';
   }
+
+  const resolvers = {
+    application_outcome: () => resolveApplicationOutcomeCircleClass(currentStatus, hasThesis),
+    conclusion_outcome: () => resolveConclusionOutcomeCircleClass(currentStatus, conclusionRejected),
+    cancel_outcome: () => resolveCancelOutcomeCircleClass(currentStatus),
+    final_upload_outcome: () => resolveFinalUploadOutcomeCircleClass(currentStatus, finalUploadRejected),
+  };
+
+  const resolver = resolvers[key];
+  return resolver ? resolver() : null;
 }
 
 function resolveActiveCircleClass({
