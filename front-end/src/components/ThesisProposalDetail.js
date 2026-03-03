@@ -82,7 +82,6 @@ function ThesisProposalDetail(props) {
       supervisor: props.thesisProposal.supervisor,
       coSupervisors: internalCoSupervisors,
     };
-    console.log(applicationData);
     setSending(true);
     API.createThesisApplication(applicationData)
       .then(() => {

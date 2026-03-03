@@ -163,7 +163,6 @@ const createStudentThesis = async (req, res) => {
     const loggedStudent = await Student.findByPk(logged.student_id);
 
     const thesis_data = toSnakeCase(req.body);
-    console.log('Creating thesis with data: ' + JSON.stringify(thesis_data, null, 2));
 
     const t = await sequelize.transaction();
 
