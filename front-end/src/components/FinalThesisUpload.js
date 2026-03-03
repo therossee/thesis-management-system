@@ -41,7 +41,7 @@ function UploadCard({
           ref={inputRef}
           type="file"
           accept={accept}
-          onChange={e => onFileChange(e.target.files && e.target.files[0] ? e.target.files[0] : null)}
+          onChange={e => onFileChange(e.target.files?.[0] ?? null)}
           disabled={isSubmitting}
           id={id}
           className="d-none"

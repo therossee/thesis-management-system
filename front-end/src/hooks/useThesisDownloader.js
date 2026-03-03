@@ -19,7 +19,7 @@ export default function useThesisDownloader({ API, showToast, t }) {
       link.setAttribute('download', fileName);
       document.body.appendChild(link);
       link.click();
-      document.body.removeChild(link);
+      link.remove();
       globalThis.URL.revokeObjectURL(url);
     } catch (error) {
       console.error(`Error downloading ${fileType}:`, error);

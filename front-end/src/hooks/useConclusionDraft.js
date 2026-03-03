@@ -1,6 +1,22 @@
 // components/conclusion-request/hooks/useConclusionDraft.js
 import { useCallback, useEffect, useRef } from 'react';
 
+const resolveDraftUploadedFile = ({ shouldRemove, file, previousValue, fileType, canPreview }) => {
+  if (shouldRemove) {
+    return null;
+  }
+
+  if (file) {
+    return {
+      fileType,
+      fileName: file.name,
+      canPreview,
+    };
+  }
+
+  return previousValue;
+};
+
 export default function useConclusionDraft({
   API,
   saveDraftTrigger,
@@ -23,21 +39,27 @@ export default function useConclusionDraft({
       await API.saveThesisConclusionDraft(formData);
 
       setDraftUploadedFiles(prev => ({
-        thesis: draftFilesToRemove.thesis
-          ? null
-          : pdfFile
-            ? { fileType: 'thesis', fileName: pdfFile.name, canPreview: true }
-            : prev.thesis,
-        summary: draftFilesToRemove.summary
-          ? null
-          : summaryPdf
-            ? { fileType: 'summary', fileName: summaryPdf.name, canPreview: true }
-            : prev.summary,
-        additional: draftFilesToRemove.additional
-          ? null
-          : supplementaryZip
-            ? { fileType: 'additional', fileName: supplementaryZip.name, canPreview: false }
-            : prev.additional,
+        thesis: resolveDraftUploadedFile({
+          shouldRemove: draftFilesToRemove.thesis,
+          file: pdfFile,
+          previousValue: prev.thesis,
+          fileType: 'thesis',
+          canPreview: true,
+        }),
+        summary: resolveDraftUploadedFile({
+          shouldRemove: draftFilesToRemove.summary,
+          file: summaryPdf,
+          previousValue: prev.summary,
+          fileType: 'summary',
+          canPreview: true,
+        }),
+        additional: resolveDraftUploadedFile({
+          shouldRemove: draftFilesToRemove.additional,
+          file: supplementaryZip,
+          previousValue: prev.additional,
+          fileType: 'additional',
+          canPreview: false,
+        }),
       }));
 
       setDraftFilesToRemove({ thesis: false, summary: false, additional: false });

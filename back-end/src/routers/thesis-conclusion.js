@@ -1,7 +1,7 @@
 const express = require('express');
 const multer = require('multer');
-const fs = require('fs');
-const path = require('path');
+const fs = require('node:fs');
+const path = require('node:path');
 const router = express.Router();
 const {
   sendThesisConclusionRequest,

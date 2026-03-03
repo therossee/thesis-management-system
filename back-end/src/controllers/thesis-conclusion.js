@@ -135,7 +135,12 @@ const getSessionDeadlines = async (req, res) => {
     order: [['submission_date', 'DESC']],
   });
 
-  const effectiveType = thesis ? 'thesis' : activeApplication ? 'application' : 'no_application';
+  let effectiveType = 'no_application';
+  if (thesis) {
+    effectiveType = 'thesis';
+  } else if (activeApplication) {
+    effectiveType = 'application';
+  }
   const deadlineType = deadlineTypeByEffectiveType[effectiveType];
 
   let shouldForceNextSession = false;

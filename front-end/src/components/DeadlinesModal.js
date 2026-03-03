@@ -38,16 +38,21 @@ export default function DeadlinesModal({ show, onHide, graduationSession, sorted
     };
   };
 
+  let modalTitle = t('carriera.tesi.no_deadlines_available');
+  if (graduationSession) {
+    if (i18n.language === 'en') {
+      modalTitle = graduationSession.session_name_en;
+    } else {
+      modalTitle = graduationSession.session_name;
+    }
+  }
+
   return (
     <Modal show={show} onHide={onHide} centered>
       <Modal.Header closeButton>
         <Modal.Title>
           <i className="fa-regular fa-calendar-clock fa-lg me-1" />
-          {graduationSession
-            ? i18n.language === 'en'
-              ? graduationSession.session_name_en
-              : graduationSession.session_name
-            : t('carriera.tesi.no_deadlines_available')}
+          {modalTitle}
         </Modal.Title>
       </Modal.Header>
       <Modal.Body className="deadline-modal-body">

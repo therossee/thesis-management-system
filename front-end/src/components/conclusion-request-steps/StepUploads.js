@@ -76,11 +76,20 @@ function UploadCard({
   onRemoveDraft,
 }) {
   const fileInputRef = useRef(null);
+  const selectedFileName = file?.name;
+  const draftFileName = draftFile?.fileName;
+
+  let displayedFileName = t('carriera.conclusione_tesi.no_file_selected');
+  if (selectedFileName) {
+    displayedFileName = trimFileName(selectedFileName);
+  } else if (draftFileName) {
+    displayedFileName = trimFileName(draftFileName);
+  }
 
   const handleRemove = () => {
     onRemove();
-    if (draftFile && onRemoveDraft) {
-      onRemoveDraft();
+    if (draftFile) {
+      onRemoveDraft?.();
     }
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
@@ -101,7 +110,7 @@ function UploadCard({
           ref={fileInputRef}
           type="file"
           accept={accept}
-          onChange={e => onFileChange(e.target.files && e.target.files[0] ? e.target.files[0] : null)}
+          onChange={e => onFileChange(e.target.files?.[0] ?? null)}
           disabled={isSubmitting}
           id={id}
           className="d-none"
@@ -112,13 +121,7 @@ function UploadCard({
             {t('carriera.conclusione_tesi.select_file')}
           </Form.Label>
           <div className="text-muted cr-file-name-line">
-            <span className="cr-file-name">
-              {file
-                ? trimFileName(file.name)
-                : draftFile?.fileName
-                  ? trimFileName(draftFile.fileName)
-                  : t('carriera.conclusione_tesi.no_file_selected')}
-            </span>
+            <span className="cr-file-name">{displayedFileName}</span>
             {file && (
               <ActionIconButton
                 id={`${id}-remove-local`}

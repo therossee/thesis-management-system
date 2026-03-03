@@ -387,7 +387,10 @@ const getLastStudentApplication = async (req, res) => {
       where: {
         student_id: loggedStudent.id,
       },
-      order: [['submission_date', 'DESC']],
+      order: [
+        ['submission_date', 'DESC'],
+        ['id', 'DESC'],
+      ],
       limit: 1,
       include: [{ model: Company, as: 'company' }],
     });

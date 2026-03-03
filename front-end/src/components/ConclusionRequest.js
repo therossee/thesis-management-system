@@ -325,16 +325,20 @@ export default function ConclusionRequest({ onSubmitResult, saveDraftTrigger = 0
           if (submissionOutcome === 'error') return { label: step.label, status: 'error' };
         }
 
+        let status = 'todo';
+        if (index < currentStep) {
+          if (stepValidity[index]) {
+            status = 'done';
+          } else {
+            status = 'in-progress';
+          }
+        } else if (index === currentStep) {
+          status = 'current';
+        }
+
         return {
           label: step.label,
-          status:
-            index < currentStep
-              ? stepValidity[index]
-                ? 'done'
-                : 'in-progress'
-              : index === currentStep
-                ? 'current'
-                : 'todo',
+          status,
         };
       }),
     [steps, submitStepIndex, currentStep, submissionOutcome, stepValidity],
@@ -460,7 +464,10 @@ export default function ConclusionRequest({ onSubmitResult, saveDraftTrigger = 0
       const coSupervisorsPayload = (coSupervisors || []).map(toTeacher).filter(Boolean);
       formData.append('coSupervisors', JSON.stringify(coSupervisorsPayload));
 
-      const keywordPayload = (keywords || []).map(toKeywordPayload).filter(Boolean);
+      const keywordPayload = (keywords || [])
+        .map(toKeywordPayload)
+        .filter(Boolean)
+        .map(keyword => (Number.isInteger(keyword.id) && keyword.id > 0 ? keyword : keyword.keyword));
       formData.append('keywords', JSON.stringify(keywordPayload));
 
       appendAuthorizationPayload(

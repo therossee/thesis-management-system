@@ -3,7 +3,7 @@ import { useContext } from 'react';
 import { ThemeContext } from '../App';
 
 export const getSystemTheme = () => {
-  if (globalThis.matchMedia && globalThis.matchMedia('(prefers-color-scheme: dark)').matches) return 'dark';
+  if (globalThis.matchMedia?.('(prefers-color-scheme: dark)')?.matches) return 'dark';
   return 'light';
 };
 

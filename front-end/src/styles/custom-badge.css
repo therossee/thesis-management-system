@@ -47,13 +47,6 @@
   min-height: 40px;
 }
 
-.teacher_inline_light,
-.teacher_inline_light:focus {
-  color: var(--info-700);
-  background-color: var(--info-200);
-  border: 0;
-}
-
 .teacher_light.clickable:hover,
 .teacher_light.clickable.active {
   color: var(--info-700) !important;
@@ -76,13 +69,6 @@
   border: 0;
   padding: 0.45rem 0.85rem;
   min-height: 40px;
-}
-
-.teacher_inline_dark,
-.teacher_inline_dark:focus {
-  color: var(--info-800);
-  background-color: var(--info-200);
-  border: 0;
 }
 
 .teacher_dark.clickable:hover,

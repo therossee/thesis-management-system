@@ -214,8 +214,7 @@ export default function Test() {
                 <Card.Header className="border-0 d-flex justify-content-between align-items-center">
                   <div>
                     <h5 className="mb-1 thesis-topic">
-                      <i className="fa-solid fa-graduation-cap me-2" />
-                      Application ID: {application.id}
+                      <i className="fa-solid fa-graduation-cap me-2" /> Application ID: {application.id}
                     </h5>
                   </div>
                   <CustomBadge variant="app_status" content={application.status} />
@@ -223,20 +222,17 @@ export default function Test() {
                 <Card.Body>
                   <div className="mb-3">
                     <strong>
-                      <i className="fa-solid fa-user me-2" />
-                      Studente:
+                      <i className="fa-solid fa-user me-2" /> Studente:
                     </strong>{' '}
                     {application.student?.firstName} {application.student?.lastName}
                     <br />
                     <strong>
-                      <i className="fa-solid fa-chalkboard-user me-2" />
-                      Relatore:
+                      <i className="fa-solid fa-chalkboard-user me-2" /> Relatore:
                     </strong>{' '}
                     {application.supervisor?.firstName} {application.supervisor?.lastName}
                     <br />
                     <strong>
-                      <i className="fa-solid fa-calendar me-2" />
-                      Data presentazione:
+                      <i className="fa-solid fa-calendar me-2" /> Data presentazione:
                     </strong>{' '}
                     {new Date(application.submissionDate).toLocaleDateString('it-IT')}
                   </div>
@@ -259,24 +255,21 @@ export default function Test() {
                           disabled={application.status === 'approved'}
                           onClick={() => openStatusChangeModal(application, 'approved')}
                         >
-                          <i className="fa-solid fa-check me-1" />
-                          Approve
+                          <i className="fa-solid fa-check me-1" /> Approve
                         </Button>
                         <Button
                           variant="outline-danger"
                           disabled={application.status === 'rejected'}
                           onClick={() => openStatusChangeModal(application, 'rejected')}
                         >
-                          <i className="fa-solid fa-xmark me-1" />
-                          Reject
+                          <i className="fa-solid fa-xmark me-1" /> Reject
                         </Button>
                         <Button
                           variant="outline-secondary"
                           disabled={application.status === 'cancelled'}
                           onClick={() => openStatusChangeModal(application, 'cancelled')}
                         >
-                          <i className="fa-solid fa-ban me-1" />
-                          Cancel
+                          <i className="fa-solid fa-ban me-1" /> Cancel
                         </Button>
                       </ButtonGroup>
                     </div>
@@ -295,8 +288,7 @@ export default function Test() {
                   <Card.Header className="border-0 d-flex justify-content-between align-items-center">
                     <div>
                       <h5 className="mb-1 thesis-topic">
-                        <i className="fa-solid fa-book me-2" />
-                        Thesis ID: {thesis.id}
+                        <i className="fa-solid fa-book me-2" /> Thesis ID: {thesis.id}
                       </h5>
                     </div>
                     <CustomBadge variant="app_status" content={status} />
@@ -304,14 +296,12 @@ export default function Test() {
                   <Card.Body>
                     <div className="mb-3">
                       <strong>
-                        <i className="fa-solid fa-user me-2" />
-                        Studente:
+                        <i className="fa-solid fa-user me-2" /> Studente:
                       </strong>{' '}
                       {student ? `${student.firstName} ${student.lastName}` : thesis.student_id}
                       <br />
                       <strong>
-                        <i className="fa-solid fa-tag me-2" />
-                        Stato:
+                        <i className="fa-solid fa-tag me-2" /> Stato:
                       </strong>{' '}
                       {getThesisStatusLabel(status)}
                     </div>
@@ -326,8 +316,7 @@ export default function Test() {
                               variant={action.variant}
                               onClick={() => openThesisStatusChangeModal(thesis, action.status)}
                             >
-                              <i className={`fa-solid fa-${action.icon} me-1`} />
-                              {action.label}
+                              <i className={`fa-solid fa-${action.icon} me-1`} /> {action.label}
                             </Button>
                           ))}
                         </ButtonGroup>
@@ -344,8 +333,7 @@ export default function Test() {
       <Modal show={showModal} onHide={handleCloseModal} centered>
         <Modal.Header closeButton>
           <Modal.Title>
-            <i className="fa-solid fa-pen-to-square me-2" />
-            Cambia stato candidatura
+            <i className="fa-solid fa-pen-to-square me-2" /> Cambia stato candidatura
           </Modal.Title>
         </Modal.Header>
         <Modal.Body>
@@ -356,12 +344,10 @@ export default function Test() {
         </Modal.Body>
         <Modal.Footer>
           <Button variant="secondary" onClick={handleCloseModal}>
-            <i className="fa-solid fa-xmark me-1" />
-            Annulla
+            <i className="fa-solid fa-xmark me-1" /> Annulla
           </Button>
           <Button variant={getStatusBadgeVariant(selectedStatus)} onClick={handleConfirmStatusChange}>
-            <i className="fa-solid fa-check me-1" />
-            Conferma
+            <i className="fa-solid fa-check me-1" /> Conferma
           </Button>
         </Modal.Footer>
       </Modal>
@@ -369,8 +355,7 @@ export default function Test() {
       <Modal show={showThesisModal} onHide={handleCloseThesisModal} centered>
         <Modal.Header closeButton>
           <Modal.Title>
-            <i className="fa-solid fa-pen-to-square me-2" />
-            Cambia stato tesi
+            <i className="fa-solid fa-pen-to-square me-2" /> Cambia stato tesi
           </Modal.Title>
         </Modal.Header>
         <Modal.Body>
@@ -381,12 +366,10 @@ export default function Test() {
         </Modal.Body>
         <Modal.Footer>
           <Button variant="secondary" onClick={handleCloseThesisModal}>
-            <i className="fa-solid fa-xmark me-1" />
-            Annulla
+            <i className="fa-solid fa-xmark me-1" /> Annulla
           </Button>
           <Button variant={getStatusBadgeVariant('approved')} onClick={handleConfirmThesisStatusChange}>
-            <i className="fa-solid fa-check me-1" />
-            Conferma
+            <i className="fa-solid fa-check me-1" /> Conferma
           </Button>
         </Modal.Footer>
       </Modal>

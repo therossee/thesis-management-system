@@ -84,12 +84,12 @@ export default function StepSubmit() {
   const thesisFileName = pdfFile?.name || draftUploadedFiles?.thesis?.fileName || '-';
   const additionalFileName = supplementaryZip?.name || draftUploadedFiles?.additional?.fileName || '-';
 
-  const authorizationLabel =
-    authorization === 'authorize'
-      ? t('carriera.conclusione_tesi.authorization_authorize')
-      : authorization === 'deny'
-        ? t('carriera.conclusione_tesi.authorization_deny')
-        : '-';
+  let authorizationLabel = '-';
+  if (authorization === 'authorize') {
+    authorizationLabel = t('carriera.conclusione_tesi.authorization_authorize');
+  } else if (authorization === 'deny') {
+    authorizationLabel = t('carriera.conclusione_tesi.authorization_deny');
+  }
   const embargoDurationLabel = embargoPeriod ? t(`carriera.conclusione_tesi.embargo_period.${embargoPeriod}`) : '-';
 
   return (

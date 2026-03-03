@@ -3,7 +3,9 @@
   position: relative;
   width: 100%;
   min-height: auto;
+  margin: 0;
   padding: 8px 0;
+  list-style: none;
   display: flex;
   flex-direction: row;
   flex-wrap: nowrap;

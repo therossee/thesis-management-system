@@ -220,7 +220,14 @@ export default function Thesis(props) {
   const [showFullAbstract, setShowFullAbstract] = useState(false);
 
   const supervisors = data ? [data.supervisor, ...(data.coSupervisors || [])] : [];
-  const activeStep = data ? (thesis ? thesis.status : thesisApplication.status) : 'none';
+  let activeStep = 'none';
+  if (data) {
+    if (thesis) {
+      activeStep = thesis.status;
+    } else {
+      activeStep = thesisApplication.status;
+    }
+  }
 
   const { isLoading, sessionDeadlines, isEligible, requiredSummary, appStatusHistory } = useThesisPageData({
     thesis,

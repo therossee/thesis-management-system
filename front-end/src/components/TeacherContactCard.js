@@ -71,8 +71,8 @@ export default function TeacherContactCard({ supervisor, coSupervisors }) {
               <Collapse in={showCoSupervisors}>
                 <div className="mt-3">
                   <div className="d-flex flex-column gap-3">
-                    {coSupervisors.map((coSupervisor, index) => (
-                      <div key={index} className="contact-item d-flex align-items-start gap-3">
+                    {coSupervisors.map(coSupervisor => (
+                      <div key={coSupervisor.id} className="contact-item d-flex align-items-start gap-3">
                         <div className={`contact-avatar-${effectiveTheme}`}>
                           {getInitials(coSupervisor.firstName, coSupervisor.lastName)}
                         </div>

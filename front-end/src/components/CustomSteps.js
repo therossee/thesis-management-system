@@ -19,14 +19,14 @@ const STATUS_ICON = {
 
 function CustomSteps({ steps = DEFAULT_STEPS, title = 'Process steps' }) {
   return (
-    <div className="custom-steps" aria-label={title} role="list">
+    <ul className="custom-steps" aria-label={title}>
       {steps.map((step, index) => (
-        <div className={`custom-step custom-step--${step.status}`} key={`${step.label}-${index}`} role="listitem">
+        <li className={`custom-step custom-step--${step.status}`} key={`${step.label}-${index}`}>
           <span className="custom-step__dot">{STATUS_ICON[step.status] || null}</span>
           <span className="custom-step__label">{step.label}</span>
-        </div>
+        </li>
       ))}
-    </div>
+    </ul>
   );
 }
 

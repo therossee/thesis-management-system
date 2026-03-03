@@ -43,14 +43,18 @@ export default function Tesi({ initialActiveTab }) {
       setActiveTab('thesis');
     }
   }, [location.pathname]);
+
+  let thesisTabLabel = t('carriera.tesi.tabs.no_thesis');
+  if (thesis) {
+    thesisTabLabel = t('carriera.tesi.tabs.thesis');
+  } else if (thesisApplication) {
+    thesisTabLabel = t('carriera.tesi.tabs.thesis_application');
+  }
+
   const tabs = [
     {
       key: 'thesis',
-      label: thesis
-        ? t('carriera.tesi.tabs.thesis')
-        : thesisApplication
-          ? t('carriera.tesi.tabs.thesis_application')
-          : t('carriera.tesi.tabs.no_thesis'),
+      label: thesisTabLabel,
       value: 'thesis',
       onClick: () => {
         setActiveTab('thesis');

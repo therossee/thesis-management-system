@@ -43,7 +43,11 @@ export const makeTeacherOverviewPayload =
 export const toKeywordPayload = keyword => {
   if (typeof keyword === 'string') {
     const trimmed = keyword.trim();
-    return trimmed.length > 0 ? trimmed : null;
+    if (trimmed.length === 0) return null;
+    return {
+      id: null,
+      keyword: trimmed,
+    };
   }
   if (!keyword || typeof keyword !== 'object') return null;
 
@@ -63,7 +67,10 @@ export const toKeywordPayload = keyword => {
   }
 
   if (typeof keywordText === 'string' && keywordText.trim().length > 0) {
-    return keywordText.trim();
+    return {
+      id: null,
+      keyword: keywordText.trim(),
+    };
   }
 
   return null;

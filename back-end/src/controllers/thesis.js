@@ -136,6 +136,7 @@ const getLoggedStudentThesis = async (req, res) => {
       where: {
         student_id: loggedStudent.id,
       },
+      order: [['id', 'DESC']],
     });
 
     if (!thesisData) {
@@ -246,7 +247,7 @@ const sendThesisCancelRequest = async (req, res) => {
       return res.status(404).json({ error: 'Logged-in student not found' });
     }
 
-    const thesis = await Thesis.findOne({ where: { student_id: student.id } });
+    const thesis = await Thesis.findOne({ where: { student_id: student.id }, order: [['id', 'DESC']] });
     if (!thesis) {
       return res.status(404).json({ error: 'Thesis not found for the logged-in student.' });
     }
