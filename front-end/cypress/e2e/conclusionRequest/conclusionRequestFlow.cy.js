@@ -129,6 +129,25 @@ const DRAFT_WITH_FILES = {
   additionalZipPath: '/uploads/draft/additional-draft.zip',
 };
 
+const ENGLISH_DRAFT_WITH_FALLBACKS = {
+  ...AUTHORIZE_DRAFT,
+  language: 'en',
+  title: 'English title',
+  titleEng: '',
+  abstract: 'English abstract used as source text for fallback branches',
+  abstractEng: '',
+  keywords: [' Generative AI ', { id: 2, keyword: 'Data' }],
+  sdgs: [{ goalId: 18, level: 'primary' }],
+  coSupervisors: [
+    {
+      id: 99999,
+      firstName: 'Paola',
+      lastName: 'Neri',
+      email: 'paola.neri@example.com',
+    },
+  ],
+};
+
 const setStableUiPreferences = win => {
   win.localStorage.setItem('language', 'it');
   win.localStorage.setItem('theme', 'light');
@@ -148,8 +167,9 @@ const clickNextStep = () => {
 const confirmConclusionSubmit = () => {
   cy.get('.modal.show')
     .last()
-    .contains('button', /Si, invia la richiesta|Yes, send the request/i)
-    .click();
+    .contains('button', /S[iì], invia|Yes, send/i)
+    .should('be.visible')
+    .click({ force: true });
 };
 
 const attachPdf = (selector, fileName) => {
@@ -236,7 +256,7 @@ const visitConclusionPage = () => {
   ]);
 };
 
-const moveToSubmitStepWithAuthorizeFlow = () => {
+const moveToSubmitStepWithAuthorizeFlow = ({ attachFreshThesis = true } = {}) => {
   clickNextStep();
   cy.wait('@saveDraft');
   waitForDraftSaveUiStability();
@@ -246,6 +266,9 @@ const moveToSubmitStepWithAuthorizeFlow = () => {
   cy.wait('@saveDraft');
   waitForDraftSaveUiStability();
 
+  if (attachFreshThesis) {
+    attachPdf('#final-thesis-pdfa', 'tesi-definitiva.pdf');
+  }
   clickNextStep();
   cy.wait('@saveDraft');
   waitForDraftSaveUiStability();
@@ -276,7 +299,7 @@ describe('Conclusion request wizard', () => {
     visitConclusionPage();
 
     cy.get('#title-original').should('exist');
-    moveToSubmitStepWithAuthorizeFlow();
+    moveToSubmitStepWithAuthorizeFlow({ attachFreshThesis: true });
 
     rightActionButton()
       .contains(/Invia richiesta|Send request/i)
@@ -304,7 +327,9 @@ describe('Conclusion request wizard', () => {
     cy.get('#authorization-deny').check({ force: true });
     rightActionButton().should('be.disabled');
     cy.get('input[name="embargo-period"]').first().check({ force: true });
-    cy.get('.cr-section input[type="checkbox"]').first().check({ force: true });
+    cy.get('input[name="embargo-period"]').first().should('be.checked');
+    cy.get('.cr-section').find('input[type="checkbox"]').first().check({ force: true });
+    cy.get('.cr-section').find('input[type="checkbox"]').first().should('be.checked');
     rightActionButton().should('be.enabled');
 
     clickNextStep();
@@ -349,7 +374,7 @@ describe('Conclusion request wizard', () => {
     });
     visitConclusionPage();
 
-    moveToSubmitStepWithAuthorizeFlow();
+    moveToSubmitStepWithAuthorizeFlow({ attachFreshThesis: true });
     rightActionButton()
       .contains(/Invia richiesta|Send request/i)
       .should('be.enabled')
@@ -414,6 +439,37 @@ describe('Conclusion request wizard', () => {
 
     cy.contains('.cr-file-name', 'thesis-draft.pdf').should('not.exist');
     rightActionButton().should('be.disabled');
+  });
+
+  it('supports english draft details and not-applicable sdg fallback through submit flow', () => {
+    stubConclusionPageApis({
+      thesisStatus: 'ongoing',
+      requiredSummary: false,
+      draft: ENGLISH_DRAFT_WITH_FALLBACKS,
+      submitStatus: 201,
+    });
+    visitConclusionPage();
+
+    cy.get('#title-original').should('have.value', 'English title');
+    cy.get('#title-translation').should('not.exist');
+    cy.get('#abstract-translation').should('not.exist');
+
+    cy.get('.cr-sdg-toggle').click();
+    cy.get('.cr-sdg-toggle').should('have.attr', 'aria-expanded', 'true');
+    cy.get('.cr-sdg-toggle').click();
+    cy.get('.cr-sdg-toggle').should('have.attr', 'aria-expanded', 'false');
+
+    moveToSubmitStepWithAuthorizeFlow({ attachFreshThesis: true });
+    cy.contains('.info-detail', '6 / 6').should('exist');
+
+    rightActionButton()
+      .contains(/Invia richiesta|Send request/i)
+      .should('be.enabled')
+      .click();
+    confirmConclusionSubmit();
+
+    cy.wait('@submitConclusion').its('response.statusCode').should('eq', 201);
+    cy.contains(/Richiesta inviata con successo|Request submitted successfully/i).should('be.visible');
   });
 
   it('restores updated draft values after page reload', () => {
