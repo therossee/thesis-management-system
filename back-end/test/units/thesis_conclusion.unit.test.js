@@ -1517,6 +1517,8 @@ describe('Thesis Conclusion Controller', () => {
       resolveValidDraftFilePath.mockResolvedValue(null);
       ThesisSustainableDevelopmentGoal.findAll.mockResolvedValue([]);
       ThesisEmbargo.findOne.mockResolvedValue(null);
+      ThesisKeyword.findAll.mockResolvedValue([]);
+      Keyword.findAll.mockResolvedValue([]);
 
       await getThesisConclusionRequestDraft(req, res);
 
