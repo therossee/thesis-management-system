@@ -7,6 +7,11 @@ describe('Thesis proposals overview page', () => {
     cy.visit('/carriera/tesi/proposte_di_tesi');
   });
 
+  const openFiltersDropdown = () => {
+    cy.get('#dropdown-filters .custom-dropdown-toggle').should('be.visible').click({ force: true });
+    cy.get('#dropdown-filters .dropdown-menu').should('be.visible');
+  };
+
   it('should toggle between course proposals and all proposals', () => {
     // Step 1: Verify the initial state is course proposals
     cy.get('#course').should('be.checked');
@@ -102,7 +107,7 @@ describe('Thesis proposals overview page', () => {
     cy.intercept('GET', '**/api/thesis-proposals/targeted*').as('getTargetedThesisProposals');
 
     // Step 3: Open filters dropdown
-    cy.get('#dropdown-filters').should('be.visible').click();
+    openFiltersDropdown();
 
     // Step 4: Click on 'Select environment' select
     cy.get('#dropdown-filters > div > div > div:nth-child(4)').contains("Seleziona l'ambiente...").click();
@@ -122,7 +127,7 @@ describe('Thesis proposals overview page', () => {
     cy.get('.proposals-container .card-container .roundCard').should('have.length.greaterThan', 0);
 
     // Step 9: Reset the filter from dropdown actions
-    cy.get('#dropdown-filters').should('be.visible').click();
+    openFiltersDropdown();
     cy.get('#dropdown-filters')
       .contains('button', /Resetta|Reset/i)
       .click({ force: true });
@@ -139,7 +144,7 @@ describe('Thesis proposals overview page', () => {
     cy.intercept('GET', '**/api/thesis-proposals*').as('getThesisProposals');
 
     // Step 4: Open filters dropdown
-    cy.get('#dropdown-filters').should('be.visible').click();
+    openFiltersDropdown();
 
     // Step 5: Click on 'Select environment' select
     cy.get('#dropdown-filters > div > div > div:nth-child(4)').contains("Seleziona l'ambiente...").click();
@@ -180,7 +185,7 @@ describe('Thesis proposals overview page', () => {
     cy.intercept('GET', '**/api/thesis-proposals/targeted*').as('getTargetedThesisProposals');
 
     // Step 3: Open filters dropdown
-    cy.get('#dropdown-filters').should('be.visible').click();
+    openFiltersDropdown();
 
     // Step 4: Click on 'Select location' select
     cy.get('#dropdown-filters > div > div > div:nth-child(2)').contains('Seleziona il luogo...').click();
@@ -217,7 +222,7 @@ describe('Thesis proposals overview page', () => {
     });
 
     // Step 10: Reopen the filters dropdown
-    cy.get('#dropdown-filters').should('be.visible').click();
+    openFiltersDropdown();
 
     // Step 11: Reset filters from dropdown actions
     cy.get('#dropdown-filters')
@@ -240,7 +245,7 @@ describe('Thesis proposals overview page', () => {
     cy.intercept('GET', '**/api/thesis-proposals/targeted*').as('getTargetedThesisProposals');
 
     // Step 3: Open filters dropdown
-    cy.get('#dropdown-filters').should('be.visible').click();
+    openFiltersDropdown();
 
     // Step 4: Click on 'Select location' select
     cy.get('#dropdown-filters > div > div > div:nth-child(2)').contains('Seleziona il luogo...').click();
@@ -303,7 +308,7 @@ describe('Thesis proposals overview page', () => {
     cy.intercept('GET', '**/api/thesis-proposals/targeted*').as('getTargetedThesisProposals');
 
     // Step 3: Open filters dropdown
-    cy.get('#dropdown-filters').should('be.visible').click();
+    openFiltersDropdown();
 
     // Step 4: Click on 'Select keyword' select
     cy.get('#dropdown-filters > div > div > div:nth-child(10)').contains('Seleziona le parole chiave...').click();
@@ -323,7 +328,7 @@ describe('Thesis proposals overview page', () => {
     cy.get('.proposals-container .card-container .roundCard').should('have.length', 0);
 
     // Step 9: Reset the filters
-    cy.get('#dropdown-filters').should('be.visible').click();
+    openFiltersDropdown();
     cy.get('#dropdown-filters div > div > div.d-flex.w-100.justify-content-between > button')
       .contains('Resetta')
       .click();
@@ -340,7 +345,7 @@ describe('Thesis proposals overview page', () => {
     cy.intercept('GET', '**/api/thesis-proposals/targeted*').as('getTargetedThesisProposals');
 
     // Step 3: Open filters dropdown
-    cy.get('#dropdown-filters').should('be.visible').click();
+    openFiltersDropdown();
 
     // Step 4: Save current results count and type keyword
     cy.get('.proposals-container .card-container .roundCard').its('length').as('initialCardsCount');
@@ -385,7 +390,7 @@ describe('Thesis proposals overview page', () => {
     });
 
     // Step 9: Reopen and verify keyword reset badge exists
-    cy.get('#dropdown-filters').should('be.visible').click();
+    openFiltersDropdown();
     cy.get('#dropdown-filters div.custom-badge-container button')
       .contains(/testing/i)
       .should('be.visible');
@@ -399,7 +404,7 @@ describe('Thesis proposals overview page', () => {
     cy.intercept('GET', '**/api/thesis-proposals/targeted*').as('getTargetedThesisProposals');
 
     // Step 3: Open filters dropdown
-    cy.get('#dropdown-filters').should('be.visible').click();
+    openFiltersDropdown();
 
     // Step 4: Click on 'Select supervisors' select
     cy.get('#dropdown-filters > div > div > div:nth-child(8)').contains('Seleziona i relatori...').click();
@@ -452,7 +457,7 @@ describe('Thesis proposals overview page', () => {
     cy.intercept('GET', '**/api/thesis-proposals/targeted*').as('getTargetedThesisProposals');
 
     // Step 3: Open filters dropdown
-    cy.get('#dropdown-filters').should('be.visible').click();
+    openFiltersDropdown();
 
     // Step 4: Click on 'Select types' select
     cy.get('#dropdown-filters > div > div > div:nth-child(6)').contains('Seleziona le tipologie...').click();
@@ -482,7 +487,7 @@ describe('Thesis proposals overview page', () => {
     });
 
     // Step 10: Reset the filters
-    cy.get('#dropdown-filters').should('be.visible').click();
+    openFiltersDropdown();
     cy.get('#dropdown-filters div > div > div.d-flex.w-100.justify-content-between > button')
       .contains('Resetta')
       .click();
@@ -493,7 +498,7 @@ describe('Thesis proposals overview page', () => {
     cy.get('.proposals-container .card-container .roundCard').should('have.length.greaterThan', 0);
 
     // Step 2: Open filters dropdown
-    cy.get('#dropdown-filters').should('be.visible').click();
+    openFiltersDropdown();
 
     // Step 3: Apply internal proposals filter and remove it clicking on 'Resetta'
     cy.get('#dropdown-filters > div > div > div:nth-child(4)').contains("Seleziona l'ambiente...").click();
@@ -503,7 +508,7 @@ describe('Thesis proposals overview page', () => {
       .click({ force: true });
 
     // Step 4: Reopen dropdown after reset
-    cy.get('#dropdown-filters').should('be.visible').click();
+    openFiltersDropdown();
 
     // Step 5 Filter proposals by keyword 'europeizzazione'
     cy.get('#dropdown-filters > div > div > div:nth-child(10)').within(() => {
@@ -528,7 +533,7 @@ describe('Thesis proposals overview page', () => {
     cy.get('.proposals-container .card-container .roundCard').should('have.length', 0);
 
     // Step 10: Reset the filters
-    cy.get('#dropdown-filters').should('be.visible').click();
+    openFiltersDropdown();
     cy.get('#dropdown-filters div > div > div.d-flex.w-100.justify-content-between > button')
       .contains('Resetta')
       .click();

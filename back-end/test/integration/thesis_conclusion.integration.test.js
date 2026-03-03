@@ -11,6 +11,10 @@ let server;
 
 const DEFAULT_STUDENT_ID = '320213';
 const TMP_UPLOAD_DIR = path.join(__dirname, '..', '..', 'uploads', 'tmp');
+const VALID_PDFA_CONTENT = Buffer.from(
+  '%PDF-1.7\n<pdfaid:part>1</pdfaid:part>\n<pdfaid:conformance>B</pdfaid:conformance>\n',
+  'latin1',
+);
 
 const resetLoggedStudent = async () => {
   await sequelize.query('DELETE FROM logged_student');
@@ -130,6 +134,38 @@ describe('POST /api/thesis-conclusion/*', () => {
       })
       .attach('thesisSummary', Buffer.from('%PDF-1.4\nsummary-placeholder'), {
         filename: 'summary file?.pdf',
+        contentType: 'application/pdf',
+      });
+
+    expect(response.status).toBe(400);
+    expect(response.body).toEqual({ error: 'Thesis file must include PDF/A identification metadata' });
+  });
+
+  test('Should reject final thesis upload when thesis file does not start with PDF header', async () => {
+    const response = await request(server)
+      .post('/api/thesis-conclusion/upload-final-thesis')
+      .attach('thesisFile', Buffer.from('not-a-pdf'), {
+        filename: 'final-no-header.pdf',
+        contentType: 'application/pdf',
+      })
+      .attach('thesisSummary', VALID_PDFA_CONTENT, {
+        filename: 'summary-valid.pdf',
+        contentType: 'application/pdf',
+      });
+
+    expect(response.status).toBe(400);
+    expect(response.body).toEqual({ error: 'Thesis file must include PDF/A identification metadata' });
+  });
+
+  test('Should reject final thesis upload when summary file is not PDF/A', async () => {
+    const response = await request(server)
+      .post('/api/thesis-conclusion/upload-final-thesis')
+      .attach('thesisFile', VALID_PDFA_CONTENT, {
+        filename: 'final-valid.pdf',
+        contentType: 'application/pdf',
+      })
+      .attach('thesisSummary', Buffer.from('%PDF-1.4\nsummary-without-pdfa'), {
+        filename: 'summary-invalid.pdf',
         contentType: 'application/pdf',
       });
 
