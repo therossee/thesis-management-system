@@ -394,8 +394,8 @@ describe('Thesis status actions', () => {
 
     visitTesiPage('en');
 
-    cy.contains('button', /Next deadlines|Prossime scadenze/i).click({ force: true });
-    cy.get('.modal.show').should('contain.text', 'March/April 2026');
+    cy.get('.timeline-deadlines-btn').should('be.visible').click({ force: true });
+    cy.get('[role="dialog"]').should('be.visible').and('contain.text', 'March/April 2026');
     cy.get('.deadline-status-overdue')
       .contains(/Overdue|Scaduta/i)
       .should('be.visible');
