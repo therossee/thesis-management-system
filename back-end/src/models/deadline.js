@@ -1,4 +1,4 @@
-module.exports = (sequelize, DataTypes) => {
+module.exports = function define_deadline(sequelize, DataTypes) {
   const Deadline = sequelize.define(
     'deadline',
     {

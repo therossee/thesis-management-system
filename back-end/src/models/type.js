@@ -1,4 +1,4 @@
-module.exports = (sequelize, DataTypes) => {
+module.exports = function define_type(sequelize, DataTypes) {
   const Type = sequelize.define(
     'type',
     {

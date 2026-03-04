@@ -1,4 +1,4 @@
-module.exports = (sequelize, DataTypes) => {
+module.exports = function define_thesis_sustainable_development_goal(sequelize, DataTypes) {
   const ThesisSustainableDevelopmentGoal = sequelize.define(
     'thesis_sustainable_development_goal',
     {

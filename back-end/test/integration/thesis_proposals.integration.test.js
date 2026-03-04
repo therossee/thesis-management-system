@@ -33,17 +33,9 @@ describe('GET /api/thesis-proposals', () => {
     expect(response.body.thesisProposals.length).toEqual(7);
     expect(response.body.currentPage).toEqual(1);
     expect(response.body.totalPages).toEqual(1);
-    let previousId = null;
-
-    response.body.thesisProposals.forEach(proposal => {
-      const id = proposal.id;
-
-      if (previousId) {
-        // eslint-disable-next-line jest/no-conditional-expect
-        expect(id).toBeGreaterThan(previousId);
-      }
-      previousId = id;
-    });
+    const proposalIds = response.body.thesisProposals.map(proposal => proposal.id);
+    const sortedProposalIds = [...proposalIds].sort((a, b) => a - b);
+    expect(proposalIds).toEqual(sortedProposalIds);
   });
 
   test('Should filter thesis proposals by search', async () => {

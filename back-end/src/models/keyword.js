@@ -1,4 +1,4 @@
-module.exports = (sequelize, DataTypes) => {
+module.exports = function define_keyword(sequelize, DataTypes) {
   const Keyword = sequelize.define(
     'keyword',
     {

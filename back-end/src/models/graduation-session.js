@@ -1,4 +1,4 @@
-module.exports = (sequelize, DataTypes) => {
+module.exports = function define_graduation_session(sequelize, DataTypes) {
   const GraduationSession = sequelize.define(
     'graduation_session',
     {

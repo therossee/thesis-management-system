@@ -1,4 +1,4 @@
-module.exports = (sequelize, DataTypes) => {
+module.exports = function define_thesis_application_status_history(sequelize, DataTypes) {
   const ThesisApplicationStatusHistory = sequelize.define(
     'thesis-application-status-history',
     {

@@ -1,4 +1,4 @@
-module.exports = (sequelize, DataTypes) => {
+module.exports = function define_license(sequelize, DataTypes) {
   const License = sequelize.define(
     'license',
     {
