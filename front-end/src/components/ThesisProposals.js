@@ -45,6 +45,7 @@ export default function ThesisProposals({ showRequestModal, setShowRequestModal 
     handleSearchbarChange,
     handleTabChange,
   } = useThesisProposalsState();
+  const currentSorting = state?.sorting || { sortBy: 'id', orderBy: 'ASC' };
 
   const courseRef = useRef();
   const allRef = useRef();
@@ -86,14 +87,14 @@ export default function ThesisProposals({ showRequestModal, setShowRequestModal 
         {mapArrayToBadges(state.filters.type, 'type')}
         {mapArrayToBadges(state.filters.teacher, 'teacher')}
         {mapArrayToBadges(state.filters.keyword, 'keyword')}
-        {state.sorting.sortBy !== 'id' && (
+        {currentSorting.sortBy !== 'id' && (
           <CustomBadge
-            variant={'sorting-' + state.sorting.orderBy}
+            variant={'sorting-' + currentSorting.orderBy}
             content={{
               content:
                 t('carriera.proposte_di_tesi.sort_by') +
                 ': ' +
-                t('carriera.proposte_di_tesi.' + (sortI18nKeyByField[state.sorting.sortBy] || state.sorting.sortBy)),
+                t('carriera.proposte_di_tesi.' + (sortI18nKeyByField[currentSorting.sortBy] || currentSorting.sortBy)),
             }}
             type="reset"
             resetSorting={() => applySorting({ sortBy: 'id', orderBy: 'ASC' })}
@@ -138,7 +139,7 @@ export default function ThesisProposals({ showRequestModal, setShowRequestModal 
                 </InputGroup>
               </Form>
               <FiltersDropdown filters={state.filters} applyFilters={applyFilters} resetFilters={resetFilters} />
-              <SortDropdown sorting={state.sorting} applySorting={applySorting} />
+              <SortDropdown sorting={currentSorting} applySorting={applySorting} />
             </div>
           </div>
           {(state.filters.isAbroad != 0 ||
@@ -146,7 +147,7 @@ export default function ThesisProposals({ showRequestModal, setShowRequestModal 
             state.filters.type.length > 0 ||
             state.filters.teacher.length > 0 ||
             state.filters.keyword.length > 0 ||
-            state.sorting.sortBy !== 'id') && (
+            currentSorting.sortBy !== 'id') && (
             <div className="applied-filters-container">
               <div className="badge-group">{getFilterBadges()}</div>
             </div>

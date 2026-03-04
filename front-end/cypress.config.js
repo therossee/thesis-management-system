@@ -10,6 +10,8 @@ module.exports = defineConfig({
       return config;
     },
     baseUrl: 'http://localhost:3000',
+    specPattern: 'cypress/e2e/**/*.cy.{js,jsx,ts,tsx}',
+    supportFile: 'cypress/support/e2e.js',
     viewportHeight: 1080,
     viewportWidth: 1920,
   },
