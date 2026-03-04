@@ -1,4 +1,4 @@
-module.exports = (sequelize, DataTypes) => {
+module.exports = function define_collegio(sequelize, DataTypes) {
   const Collegio = sequelize.define(
     'collegio',
     {

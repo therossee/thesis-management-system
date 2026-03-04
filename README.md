@@ -103,6 +103,5 @@ See [Front-End Documentation](front-end/README.md) for details on running the Re
       <a href="https://github.com/Sylvie-Molinatto">Sylvie Molinatto</a>
       </li> | <a href="https://github.com/therossee">De Rossi Daniele</a>
       </li> | <a href="https://github.com/lucabubi">Barbato Luca</a>
-
     </p>
 </div>

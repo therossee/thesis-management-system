@@ -54,7 +54,7 @@ moment.locale('it');
  * @returns {JSX.Element} - The badge component.
  */
 
-const validVariants = [
+const validVariants = new Set([
   'teacher',
   'teacher_inline',
   'keyword',
@@ -75,9 +75,9 @@ const validVariants = [
   'error',
   'app_status',
   'recommended',
-];
+]);
 const validTypes = ['reset', 'truncated', 'single_select'];
-const validTypeContent = [
+const validTypeContent = new Set([
   'analisi dati',
   'data analysis',
   'analitica',
@@ -102,7 +102,7 @@ const validTypeContent = [
   'theoretical',
   'numerica',
   'numerical',
-];
+]);
 
 export default function CustomBadge({ variant, content, type, filters, applyFilters, removeProps, resetSorting }) {
   const { theme } = useContext(ThemeContext);
@@ -400,20 +400,20 @@ export default function CustomBadge({ variant, content, type, filters, applyFilt
   const isValidTypeContent = content => {
     if (Array.isArray(content)) {
       if (applyFilters) {
-        return content.every(item => validTypeContent.includes(item.content.toLowerCase()));
+        return content.every(item => validTypeContent.has(item.content.toLowerCase()));
       } else {
-        return content.every(item => validTypeContent.includes(item.toLowerCase()));
+        return content.every(item => validTypeContent.has(item.toLowerCase()));
       }
     }
     if (type === 'reset') {
-      return validTypeContent.includes(content.content.toLowerCase());
+      return validTypeContent.has(content.content.toLowerCase());
     } else {
-      return validTypeContent.includes(content.toLowerCase());
+      return validTypeContent.has(content.toLowerCase());
     }
   };
 
   if (
-    !validVariants.includes(variant) ||
+    !validVariants.has(variant) ||
     (type && !validTypes.includes(type)) ||
     ([
       'teacher',

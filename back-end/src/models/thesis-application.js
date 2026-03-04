@@ -1,4 +1,4 @@
-module.exports = (sequelize, DataTypes) => {
+module.exports = function define_thesis_application(sequelize, DataTypes) {
   const ThesisApplication = sequelize.define(
     'ThesisApplication',
     {

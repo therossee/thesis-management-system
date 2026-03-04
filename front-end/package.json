@@ -35,11 +35,12 @@
     "start": "react-scripts start",
     "start-instrumented": "react-app-rewired start",
     "build": "react-scripts build",
-    "test": "start-server-and-test start-instrumented http://127.0.0.1:3000 test-cypress:coverage",
-    "test-cypress": "cypress run",
+    "test": "start-server-and-test start-instrumented http://127.0.0.1:3000 test-cypress",
+    "test-cypress:run": "cypress run",
+    "test-cypress": "npm run coverage:clean && npm run test-cypress:run && npm run coverage:report",
     "coverage:clean": "rm -rf .nyc_output coverage",
-    "coverage:report": "nyc report --report-dir ./coverage",
-    "test-cypress:coverage": "npm run coverage:clean && cypress run && npm run coverage:report",
+    "coverage:report": "nyc report --report-dir ./coverage --reporter=html --reporter=text-summary --reporter=lcov && node -e \"const fs=require('fs');const l=fs.readFileSync('./coverage/lcov.info','utf8');const count=(l.match(/^SF:/gm)||[]).length;console.log('LCOV source files:', count);\"",
+    "test-cypress:coverage": "npm run test-cypress",
     "eject": "react-scripts eject"
   },
   "browserslist": {

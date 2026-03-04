@@ -1,4 +1,4 @@
-module.exports = (sequelize, DataTypes) => {
+module.exports = function define_thesis_embargo(sequelize, DataTypes) {
   const ThesisEmbargo = sequelize.define(
     'thesis_embargo',
     {

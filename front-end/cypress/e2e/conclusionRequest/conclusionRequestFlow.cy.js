@@ -231,6 +231,12 @@ const DRAFT_WITH_NON_ARRAY_KEYWORDS_AND_SDGS = {
   sdgs: null,
 };
 
+const DRAFT_WITHOUT_AUTHORIZATION = {
+  ...DETAILS_ONLY_DRAFT,
+  licenseId: null,
+  embargo: null,
+};
+
 const setStableUiPreferences = (win, language = 'it') => {
   win.localStorage.setItem('language', language);
   win.localStorage.setItem('theme', 'light');
@@ -439,6 +445,35 @@ describe('Conclusion request wizard', () => {
     rightActionButton().should('not.exist');
   });
 
+  it('shows not-eligible state also with auto theme preference', () => {
+    stubConclusionPageApis({ thesisStatus: 'final_exam', draft: null });
+    cy.visit('/carriera/tesi/conclusione_tesi', {
+      onBeforeLoad: win => {
+        setStableUiPreferences(win, 'it');
+        win.localStorage.setItem('theme', 'auto');
+      },
+    });
+    cy.wait([
+      '@getStudents',
+      '@getLoggedStudent',
+      '@getThesis',
+      '@getTeachers',
+      '@getLicenses',
+      '@getSdgs',
+      '@getEmbargoMotivations',
+      '@getKeywords',
+      '@getRequiredSummary',
+      '@getDraft',
+    ]);
+
+    cy.contains(/Non idoneo|Not Eligible/i).should('be.visible');
+    cy.contains(/Non idoneo|Not Eligible/i)
+      .closest('.roundCard')
+      .find('button')
+      .filter(':visible')
+      .should('have.length.at.least', 1);
+  });
+
   it('shows bootstrap fallback when thesis payload is null', () => {
     stubConclusionPageApis({
       thesisStatus: 'ongoing',
@@ -467,6 +502,24 @@ describe('Conclusion request wizard', () => {
     visitConclusionPage();
     cy.get('#title-original').should('be.visible');
     nextStepButton().should('be.enabled');
+  });
+
+  it('keeps authorization unselected when draft has neither license nor embargo', () => {
+    stubConclusionPageApis({
+      thesisStatus: 'ongoing',
+      requiredSummary: false,
+      draft: DRAFT_WITHOUT_AUTHORIZATION,
+      submitStatus: 201,
+    });
+    visitConclusionPage();
+
+    clickNextStep();
+    cy.wait('@saveDraft');
+    waitForDraftSaveUiStability();
+
+    cy.get('#authorization-authorize').should('not.be.checked');
+    cy.get('#authorization-deny').should('not.be.checked');
+    rightActionButton().should('be.disabled');
   });
 
   it('requires english translations when draft language is italian', () => {
@@ -723,6 +776,64 @@ describe('Conclusion request wizard', () => {
     rightActionButton().should('be.disabled');
   });
 
+  it('does not trigger draft file fetch actions when thesis id is missing', () => {
+    stubConclusionPageApis({
+      thesisStatus: 'ongoing',
+      requiredSummary: true,
+      draft: DRAFT_WITH_FILES,
+      submitStatus: 201,
+      thesisOverride: {
+        id: null,
+      },
+    });
+    visitConclusionPage();
+    moveToUploadsStepWithAuthorizeFlow();
+
+    cy.contains('.cr-file-name', 'thesis-draft.pdf')
+      .parents('.cr-file-name-line')
+      .within(() => {
+        cy.get('button[aria-label="Apri file"], button[aria-label="Open file"]').click({ force: true });
+      });
+
+    cy.get('@getDraftThesisBlob.all').should('have.length', 0);
+  });
+
+  it('submits using draft files when file responses have no content-type header', () => {
+    stubConclusionPageApis({
+      thesisStatus: 'ongoing',
+      requiredSummary: false,
+      draft: DRAFT_WITH_FILES,
+      submitStatus: 201,
+    });
+
+    cy.intercept('GET', '**/api/thesis/701/thesis', {
+      statusCode: 200,
+      body: 'raw-thesis-data',
+    }).as('getDraftThesisRaw');
+    cy.intercept('GET', '**/api/thesis/701/summary', {
+      statusCode: 200,
+      body: 'raw-summary-data',
+    }).as('getDraftSummaryRaw');
+    cy.intercept('GET', '**/api/thesis/701/additional', {
+      statusCode: 200,
+      body: 'raw-additional-data',
+    }).as('getDraftAdditionalRaw');
+
+    visitConclusionPage();
+    moveToSubmitStepWithAuthorizeFlow({ attachFreshThesis: false });
+
+    rightActionButton()
+      .contains(/Invia richiesta|Send request/i)
+      .should('be.enabled')
+      .click();
+    confirmConclusionSubmit();
+
+    cy.wait('@getDraftThesisRaw').its('response.statusCode').should('eq', 200);
+    cy.wait('@getDraftSummaryRaw').its('response.statusCode').should('eq', 200);
+    cy.wait('@getDraftAdditionalRaw').its('response.statusCode').should('eq', 200);
+    cy.wait('@submitConclusion').its('response.statusCode').should('eq', 201);
+  });
+
   it('shows download error toast when a draft upload fetch fails', () => {
     stubConclusionPageApis({
       thesisStatus: 'ongoing',
@@ -777,6 +888,51 @@ describe('Conclusion request wizard', () => {
 
     cy.wait('@submitConclusion').its('response.statusCode').should('eq', 201);
     cy.contains(/Richiesta inviata con successo|Request submitted successfully/i).should('be.visible');
+  });
+
+  it('uses snake_case co_supervisors fallback and tolerates null reference lists', () => {
+    stubConclusionPageApis({
+      thesisStatus: 'ongoing',
+      requiredSummary: false,
+      draft: AUTHORIZE_DRAFT,
+      submitStatus: 201,
+      thesisOverride: {
+        coSupervisors: undefined,
+        co_supervisors: [TEACHERS[1]],
+      },
+    });
+
+    cy.intercept('GET', '**/api/thesis-proposals/teachers*', {
+      statusCode: 200,
+      body: null,
+    }).as('getTeachers');
+    cy.intercept('GET', '**/api/thesis-conclusion/licenses*', {
+      statusCode: 200,
+      body: null,
+    }).as('getLicenses');
+    cy.intercept('GET', '**/api/thesis-conclusion/sdgs*', {
+      statusCode: 200,
+      body: null,
+    }).as('getSdgs');
+    cy.intercept('GET', '**/api/thesis-conclusion/embargo-motivations*', {
+      statusCode: 200,
+      body: null,
+    }).as('getEmbargoMotivations');
+    cy.intercept('GET', '**/api/thesis-proposals/keywords*', {
+      statusCode: 200,
+      body: null,
+    }).as('getKeywords');
+    cy.intercept('GET', '**/api/students/required-summary', {
+      statusCode: 200,
+      body: null,
+    }).as('getRequiredSummary');
+
+    visitConclusionPage();
+
+    cy.get('.select-cosupervisors')
+      .should('contain.text', TEACHERS[1].lastName)
+      .and('contain.text', TEACHERS[1].firstName);
+    cy.get('#title-original').should('be.visible');
   });
 
   it('renders authorization motivations and licenses in english', () => {

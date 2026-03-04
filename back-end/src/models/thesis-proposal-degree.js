@@ -1,4 +1,4 @@
-module.exports = (sequelize, DataTypes) => {
+module.exports = function define_thesis_proposal_degree(sequelize, DataTypes) {
   const ThesisProposalDegree = sequelize.define(
     'thesis_proposal_degree',
     {

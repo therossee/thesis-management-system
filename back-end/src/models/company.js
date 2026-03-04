@@ -1,4 +1,4 @@
-module.exports = (sequelize, DataTypes) => {
+module.exports = function define_company(sequelize, DataTypes) {
   const Company = sequelize.define(
     'company',
     {

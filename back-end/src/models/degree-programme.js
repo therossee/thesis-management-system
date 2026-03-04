@@ -1,4 +1,4 @@
-module.exports = (sequelize, DataTypes) => {
+module.exports = function define_degree_programme(sequelize, DataTypes) {
   const DegreeProgramme = sequelize.define(
     'degree-programme',
     {

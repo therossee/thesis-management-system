@@ -1,4 +1,4 @@
-module.exports = (sequelize, DataTypes) => {
+module.exports = function define_student(sequelize, DataTypes) {
   const Student = sequelize.define(
     'student',
     {

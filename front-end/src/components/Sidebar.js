@@ -103,7 +103,7 @@ function NavItems({ mobile, handleClose }) {
           textKey={textKey}
           mobile={mobile}
           handleClose={handleClose}
-          isActive={activeLink && activeLink.to === to}
+          isActive={activeLink?.to === to}
         />
       ))}
       <NavItem to="#" />

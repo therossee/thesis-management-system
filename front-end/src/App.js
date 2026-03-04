@@ -49,7 +49,7 @@ function App() {
 
   const updateTheme = theme => {
     const appliedTheme = theme === 'auto' ? getSystemTheme() : theme;
-    document.documentElement.setAttribute('data-theme', appliedTheme);
+    document.documentElement.dataset.theme = appliedTheme;
     document
       .querySelector('meta[name="theme-color"]')
       .setAttribute(

@@ -6,6 +6,7 @@ const { sequelize } = require('../../src/models');
 const request = require('supertest');
 
 let server;
+const ORIGINAL_ENV = { ...process.env };
 
 const TEMP_APPROVED_APPLICATION_ID = 9001;
 const TEMP_REJECTED_APPLICATION_ID = 9002;
@@ -120,6 +121,50 @@ const waitForApplicationStatus = async ({ applicationId, expectedStatus, retries
   }
   const [rows] = await sequelize.query(`SELECT status FROM thesis_application WHERE id = ${applicationId}`);
   return rows.length ? rows[0].status : null;
+};
+
+const resetEnvironment = () => {
+  process.env = { ...ORIGINAL_ENV };
+};
+
+const setEnvironmentValue = (key, value) => {
+  if (value === undefined) {
+    delete process.env[key];
+    return;
+  }
+
+  process.env[key] = value;
+};
+
+const buildIsolatedApp = ({ nodeEnv, allowedOrigins }) => {
+  let isolatedApp;
+
+  jest.resetModules();
+  resetEnvironment();
+  setEnvironmentValue('NODE_ENV', nodeEnv);
+  setEnvironmentValue('CORS_ALLOWED_ORIGINS', allowedOrigins);
+
+  jest.isolateModules(() => {
+    const mockRouterFactory = () => {
+      const express = require('express');
+      const router = express.Router();
+      router.get('/health', (_req, res) => res.status(200).json({ ok: true }));
+      router.options('/health', (_req, res) => res.sendStatus(204));
+      return router;
+    };
+
+    jest.doMock('../../src/routers/thesis-proposals', () => mockRouterFactory());
+    jest.doMock('../../src/routers/students', () => mockRouterFactory());
+    jest.doMock('../../src/routers/thesis-applications', () => mockRouterFactory());
+    jest.doMock('../../src/routers/thesis', () => mockRouterFactory());
+    jest.doMock('../../src/routers/companies', () => mockRouterFactory());
+    jest.doMock('../../src/routers/test-router', () => mockRouterFactory());
+    jest.doMock('../../src/routers/thesis-conclusion', () => mockRouterFactory());
+
+    isolatedApp = require('../../src/app').app;
+  });
+
+  return isolatedApp;
 };
 
 beforeAll(async () => {
@@ -311,5 +356,89 @@ describe('PUT /api/test/thesis-conclusion', () => {
     `);
     expect(updatedThesisRows).toHaveLength(1);
     expect(updatedThesisRows[0].thesis_conclusion_confirmation_date).not.toBeNull();
+  });
+});
+
+describe('App and database config coverage through integration suite', () => {
+  afterEach(() => {
+    jest.resetModules();
+    jest.clearAllMocks();
+    resetEnvironment();
+  });
+
+  test('Should allow configured CORS origin from env list', async () => {
+    const isolatedApp = buildIsolatedApp({
+      nodeEnv: 'development',
+      allowedOrigins: 'https://a.example,https://b.example',
+    });
+
+    const response = await request(isolatedApp)
+      .options('/api/test/health')
+      .set('Origin', 'https://b.example')
+      .set('Access-Control-Request-Method', 'GET');
+
+    expect(response.status).toBe(204);
+    expect(response.headers['access-control-allow-origin']).toBe('https://b.example');
+  });
+
+  test('Should not return CORS allow-origin in production with empty allowlist', async () => {
+    const isolatedApp = buildIsolatedApp({
+      nodeEnv: 'production',
+      allowedOrigins: '',
+    });
+
+    const response = await request(isolatedApp)
+      .options('/api/test/health')
+      .set('Origin', 'https://blocked.example')
+      .set('Access-Control-Request-Method', 'GET');
+
+    expect(response.status).toBe(204);
+    expect(response.headers['access-control-allow-origin']).toBeUndefined();
+  });
+
+  test('Should allow requests without Origin and hide x-powered-by header', async () => {
+    const isolatedApp = buildIsolatedApp({
+      nodeEnv: 'development',
+      allowedOrigins: '',
+    });
+
+    const response = await request(isolatedApp).get('/api/test/health');
+
+    expect(response.status).toBe(200);
+    expect(response.body).toEqual({ ok: true });
+    expect(response.headers['x-powered-by']).toBeUndefined();
+  });
+
+  test('Should fallback to development database config when NODE_ENV is undefined', () => {
+    let SequelizeConstructor;
+
+    jest.resetModules();
+    resetEnvironment();
+    setEnvironmentValue('NODE_ENV', undefined);
+    setEnvironmentValue('DB_NAME', 'dev_db_name');
+    setEnvironmentValue('DB_NAME_TEST', 'test_db_name');
+    setEnvironmentValue('DB_USER', 'db_user');
+    setEnvironmentValue('DB_PASSWORD', 'db_password');
+    setEnvironmentValue('DB_HOST', 'db_host');
+
+    jest.isolateModules(() => {
+      jest.doMock('sequelize', () => ({
+        Sequelize: jest.fn().mockImplementation((...args) => ({ __constructorArgs: args })),
+      }));
+
+      require('../../src/config/database');
+      ({ Sequelize: SequelizeConstructor } = require('sequelize'));
+    });
+
+    expect(SequelizeConstructor).toHaveBeenCalledTimes(1);
+    expect(SequelizeConstructor).toHaveBeenCalledWith(
+      'dev_db_name',
+      'db_user',
+      'db_password',
+      expect.objectContaining({
+        host: 'db_host',
+        dialect: 'mysql',
+      }),
+    );
   });
 });
