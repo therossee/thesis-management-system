@@ -345,6 +345,7 @@
             "confirm_body": "Sei sicuro di voler inviare la richiesta di conclusione della tesi?",
             "confirm": "Si, invia la richiesta",
             "supervisor": "Relatore",
+            "no_supervisor": "Nessun relatore",
             "co_supervisors": "Co-relatori",
             "co_supervisors_help": "Per rimuovere un co-relatore, clicca sulla X del badge.",
             "language": "Lingua dell'elaborato",

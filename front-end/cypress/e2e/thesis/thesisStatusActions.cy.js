@@ -90,8 +90,8 @@ const DEADLINES = {
   ],
 };
 
-const setStableUiPreferences = win => {
-  win.localStorage.setItem('language', 'it');
+const setStableUiPreferences = (win, language = 'it') => {
+  win.localStorage.setItem('language', language);
   win.localStorage.setItem('theme', 'light');
 };
 
@@ -106,7 +106,7 @@ const attachPdf = (selector, fileName) => {
   );
 };
 
-const stubTesiPageApis = ({ thesisStatus = 'ongoing', requiredSummary = false }) => {
+const stubTesiPageApis = ({ thesisStatus = 'ongoing', requiredSummary = false, thesisOverride = {} }) => {
   cy.intercept('GET', '**/api/students', ALL_STUDENTS).as('getStudents');
   cy.intercept('GET', '**/api/students/logged-student', LOGGED_STUDENT).as('getLoggedStudent');
 
@@ -114,6 +114,7 @@ const stubTesiPageApis = ({ thesisStatus = 'ongoing', requiredSummary = false })
   cy.intercept('GET', '**/api/thesis', {
     ...BASE_THESIS,
     status: thesisStatus,
+    ...thesisOverride,
   }).as('getThesis');
 
   cy.intercept('GET', '**/api/thesis-applications/eligibility*', { eligible: true }).as('getEligibility');
@@ -149,8 +150,10 @@ const stubConclusionBootstrapForNavigation = () => {
   cy.intercept('POST', '**/api/thesis-conclusion', { statusCode: 201, body: { id: 900 } }).as('submitConclusion');
 };
 
-const visitTesiPage = () => {
-  cy.visit('/carriera/tesi', { onBeforeLoad: setStableUiPreferences });
+const visitTesiPage = (language = 'it') => {
+  cy.visit('/carriera/tesi', {
+    onBeforeLoad: win => setStableUiPreferences(win, language),
+  });
   cy.wait([
     '@getStudents',
     '@getLoggedStudent',
@@ -160,6 +163,13 @@ const visitTesiPage = () => {
     '@getDeadlines',
     '@getRequiredSummary',
   ]);
+};
+
+const isoDateWithOffsetDays = offsetDays => {
+  const date = new Date();
+  date.setUTCHours(0, 0, 0, 0);
+  date.setUTCDate(date.getUTCDate() + offsetDays);
+  return date.toISOString();
 };
 
 describe('Thesis status actions', () => {
@@ -360,6 +370,125 @@ describe('Thesis status actions', () => {
     cy.contains(/Errore durante il download|Download error/i).should('be.visible');
   });
 
+  it('renders deadlines modal overdue/today branches with english session title', () => {
+    stubTesiPageApis({ thesisStatus: 'ongoing', requiredSummary: false });
+    cy.intercept('GET', '**/api/thesis-conclusion/deadlines*', {
+      graduationSession: {
+        id: 1,
+        session_name: 'Marzo/Aprile 2026',
+        session_name_en: 'March/April 2026',
+      },
+      deadlines: [
+        {
+          deadline_type: 'conclusion_request',
+          graduation_session_id: 1,
+          deadline_date: isoDateWithOffsetDays(-1),
+        },
+        {
+          deadline_type: 'exams',
+          graduation_session_id: 1,
+          deadline_date: isoDateWithOffsetDays(0),
+        },
+      ],
+    }).as('getDeadlines');
+
+    visitTesiPage('en');
+
+    cy.contains('button', /Next deadlines|Prossime scadenze/i).click({ force: true });
+    cy.get('.modal.show').should('contain.text', 'March/April 2026');
+    cy.get('.deadline-status-overdue')
+      .contains(/Overdue|Scaduta/i)
+      .should('be.visible');
+    cy.get('.deadline-status-today')
+      .contains(/Today|Oggi/i)
+      .should('be.visible');
+  });
+
+  it('uses file path basename as download filename when content-disposition is missing', () => {
+    stubTesiPageApis({
+      thesisStatus: 'conclusion_approved',
+      requiredSummary: false,
+      thesisOverride: {
+        thesisFilePath: '/uploads/final/fallback-name.pdf',
+        thesisSummaryPath: null,
+        additionalZipPath: null,
+      },
+    });
+    cy.intercept('GET', '**/api/thesis/701/thesis', {
+      statusCode: 200,
+      body: 'thesis-content',
+      headers: {
+        'content-type': 'application/pdf',
+      },
+    }).as('downloadThesisNoDisposition');
+
+    visitTesiPage();
+
+    cy.window().then(win => {
+      cy.stub(win.URL, 'createObjectURL').returns('blob:download-url').as('createObjectUrl');
+      cy.stub(win.URL, 'revokeObjectURL').as('revokeObjectUrl');
+      cy.stub(win.HTMLAnchorElement.prototype, 'click').as('anchorClick');
+      cy.stub(win.HTMLAnchorElement.prototype, 'setAttribute').callThrough().as('setAttribute');
+    });
+
+    cy.contains('button', /Tesi in formato PDF\/A|Thesis in PDF\/A format/i).click();
+    cy.wait('@downloadThesisNoDisposition');
+    cy.get('@anchorClick').should('have.been.called');
+    cy.get('@setAttribute').then(setAttributeStub => {
+      const downloadCall = setAttributeStub.getCalls().find(call => call.args[0] === 'download');
+      expect(downloadCall, 'download attribute call').to.not.be.undefined;
+      expect(downloadCall.args[1]).to.eq('fallback-name.pdf');
+    });
+  });
+
+  it('uses topic fallback download filename when basename and content-disposition are unavailable', () => {
+    stubTesiPageApis({
+      thesisStatus: 'conclusion_approved',
+      requiredSummary: false,
+      thesisOverride: {
+        topic: 'Fallback Topic',
+        thesisFilePath: '/uploads/final/',
+        thesisSummaryPath: null,
+        additionalZipPath: null,
+      },
+    });
+    cy.intercept('GET', '**/api/thesis/701/thesis', {
+      statusCode: 200,
+      body: 'thesis-content',
+      headers: { 'content-type': 'application/pdf' },
+    }).as('downloadThesisFallbackTopic');
+
+    visitTesiPage();
+
+    cy.window().then(win => {
+      cy.stub(win.URL, 'createObjectURL').returns('blob:download-url').as('createObjectUrl');
+      cy.stub(win.URL, 'revokeObjectURL').as('revokeObjectUrl');
+      cy.stub(win.HTMLAnchorElement.prototype, 'click').as('anchorClick');
+      cy.stub(win.HTMLAnchorElement.prototype, 'setAttribute').callThrough().as('setAttribute');
+    });
+
+    cy.contains('button', /Tesi in formato PDF\/A|Thesis in PDF\/A format/i).click();
+    cy.wait('@downloadThesisFallbackTopic');
+    cy.get('@anchorClick').should('have.been.called');
+    cy.get('@setAttribute').then(setAttributeStub => {
+      const downloadCall = setAttributeStub.getCalls().find(call => call.args[0] === 'download');
+      expect(downloadCall, 'download attribute call').to.not.be.undefined;
+      expect(downloadCall.args[1]).to.eq('Fallback Topic_thesis');
+    });
+  });
+
+  it('keeps thesis page visible when eligibility check API fails', () => {
+    stubTesiPageApis({ thesisStatus: 'ongoing', requiredSummary: false });
+    cy.intercept('GET', '**/api/thesis-applications/eligibility*', {
+      statusCode: 500,
+      body: { error: 'eligibility unavailable' },
+    }).as('getEligibility');
+
+    visitTesiPage();
+    cy.get('.timeline-card').should('be.visible');
+    cy.contains('.thesis-topic', /Timeline|Cronologia/i).should('be.visible');
+  });
+
   it('shows placeholders for missing uploaded files when thesis is at conclusion stage', () => {
     cy.intercept('GET', '**/api/students', ALL_STUDENTS).as('getStudents');
     cy.intercept('GET', '**/api/students/logged-student', LOGGED_STUDENT).as('getLoggedStudent');
@@ -466,5 +595,145 @@ describe('Thesis status actions', () => {
       .click();
 
     cy.wait('@uploadFinalThesis').its('response.statusCode').should('eq', 201);
+  });
+
+  it('toggles show more/show less in thesis topic card for long topics', () => {
+    const longTopic = `${'Tema esteso per copertura topic card. '.repeat(40)}Fine tema.`;
+    stubTesiPageApis({
+      thesisStatus: 'ongoing',
+      requiredSummary: false,
+      thesisOverride: {
+        topic: longTopic,
+        abstract: 'Abstract breve',
+      },
+    });
+
+    visitTesiPage();
+
+    cy.contains('.roundCard .thesis-topic', /Argomento|Topic/i)
+      .closest('.roundCard')
+      .as('topicCard');
+
+    cy.get('@topicCard')
+      .contains('button', /Mostra di pi[uù]|Show more/i)
+      .should('have.attr', 'aria-expanded', 'false')
+      .click({ force: true });
+
+    cy.get('@topicCard')
+      .contains('button', /Mostra( di)? meno|Show less/i)
+      .should('have.attr', 'aria-expanded', 'true')
+      .click({ force: true });
+
+    cy.get('@topicCard')
+      .contains('button', /Mostra di pi[uù]|Show more/i)
+      .should('have.attr', 'aria-expanded', 'false');
+  });
+
+  it('shows conclusion rejected as active timeline outcome when status returns to ongoing', () => {
+    stubTesiPageApis({
+      thesisStatus: 'ongoing',
+      requiredSummary: false,
+      thesisOverride: {
+        applicationStatusHistory: [
+          ...BASE_THESIS.applicationStatusHistory,
+          {
+            oldStatus: 'ongoing',
+            newStatus: 'conclusion_requested',
+            changeDate: '2026-01-08T11:00:00',
+          },
+          {
+            oldStatus: 'conclusion_requested',
+            newStatus: 'ongoing',
+            changeDate: '2026-01-15T09:00:00',
+          },
+        ],
+      },
+    });
+
+    visitTesiPage();
+
+    cy.contains('.progress-step', /Conclusione respinta|Conclusion rejected/i)
+      .should('have.class', 'is-active-step')
+      .find('.progress-step-circle.rejected')
+      .should('exist');
+  });
+
+  it('shows final upload rejected as active timeline outcome when latest status returns to ongoing', () => {
+    stubTesiPageApis({
+      thesisStatus: 'ongoing',
+      requiredSummary: false,
+      thesisOverride: {
+        applicationStatusHistory: [
+          ...BASE_THESIS.applicationStatusHistory,
+          {
+            oldStatus: 'ongoing',
+            newStatus: 'conclusion_requested',
+            changeDate: '2026-01-08T11:00:00',
+          },
+          {
+            oldStatus: 'conclusion_requested',
+            newStatus: 'conclusion_approved',
+            changeDate: '2026-01-10T11:00:00',
+          },
+          {
+            oldStatus: 'conclusion_approved',
+            newStatus: 'almalaurea',
+            changeDate: '2026-01-11T11:00:00',
+          },
+          {
+            oldStatus: 'almalaurea',
+            newStatus: 'compiled_questionnaire',
+            changeDate: '2026-01-12T11:00:00',
+          },
+          {
+            oldStatus: 'compiled_questionnaire',
+            newStatus: 'final_exam',
+            changeDate: '2026-01-13T11:00:00',
+          },
+          {
+            oldStatus: 'final_exam',
+            newStatus: 'final_thesis',
+            changeDate: '2026-01-14T11:00:00',
+          },
+          {
+            oldStatus: 'final_thesis',
+            newStatus: 'ongoing',
+            changeDate: '2026-01-15T11:00:00',
+          },
+        ],
+      },
+    });
+
+    visitTesiPage();
+
+    cy.contains('.progress-step', /Tesi finale rifiutata|Final thesis rejected/i)
+      .should('have.class', 'is-active-step')
+      .find('.progress-step-circle.rejected')
+      .should('exist');
+  });
+
+  it('infers timeline status from history when thesis status is unknown', () => {
+    stubTesiPageApis({
+      thesisStatus: 'mystery_status',
+      requiredSummary: false,
+      thesisOverride: {
+        applicationStatusHistory: [
+          ...BASE_THESIS.applicationStatusHistory,
+          {
+            oldStatus: 'ongoing',
+            newStatus: 'cancel_requested',
+            changeDate: '2026-01-20T10:00:00',
+          },
+        ],
+      },
+    });
+
+    visitTesiPage();
+
+    cy.contains('.progress-step', /Annullamento richiesto|Cancellation requested/i).should(
+      'have.class',
+      'is-active-step',
+    );
+    cy.contains('.progress-step', /Esito annullamento|Cancellation outcome/i).should('be.visible');
   });
 });

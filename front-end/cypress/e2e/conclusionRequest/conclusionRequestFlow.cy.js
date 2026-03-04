@@ -193,8 +193,46 @@ const LEGACY_MIXED_DRAFT = {
   thesisFilePath: '/uploads/draft/legacy-thesis.pdf',
 };
 
-const setStableUiPreferences = win => {
-  win.localStorage.setItem('language', 'it');
+const AUTHORIZE_DRAFT_WITH_LICENSE_FALLBACKS = {
+  ...AUTHORIZE_DRAFT,
+  licenseId: 999,
+  keywords: [],
+  coSupervisors: [],
+};
+
+const DENY_DRAFT_WITH_UNKNOWN_EMBARGO_MOTIVATION = {
+  ...DETAILS_ONLY_DRAFT,
+  licenseId: null,
+  embargo: {
+    duration: '12_months',
+    motivations: [{ motivationId: 999 }],
+  },
+};
+
+const DRAFT_WITH_INVALID_COSUP_AND_TRAILING_PATHS = {
+  ...AUTHORIZE_DRAFT,
+  thesisDraftDate: '2026-02-20T10:00:00',
+  coSupervisors: [
+    {
+      id: 'abc',
+      firstName: 'Ghost',
+      lastName: 'Teacher',
+      email: 'ghost.teacher@example.com',
+    },
+  ],
+  thesisFilePath: '/uploads/draft/',
+  thesisSummaryPath: '/uploads/draft/',
+  additionalZipPath: '/uploads/draft/',
+};
+
+const DRAFT_WITH_NON_ARRAY_KEYWORDS_AND_SDGS = {
+  ...AUTHORIZE_DRAFT,
+  keywords: { keyword: 'invalid-keyword-shape' },
+  sdgs: null,
+};
+
+const setStableUiPreferences = (win, language = 'it') => {
+  win.localStorage.setItem('language', language);
   win.localStorage.setItem('theme', 'light');
 };
 
@@ -259,6 +297,7 @@ const stubConclusionPageApis = ({
   requiredSummary = false,
   draft = null,
   submitStatus = 201,
+  thesisOverride = {},
 }) => {
   cy.intercept('GET', '**/api/students', ALL_STUDENTS).as('getStudents');
   cy.intercept('GET', '**/api/students/logged-student', LOGGED_STUDENT).as('getLoggedStudent');
@@ -266,6 +305,7 @@ const stubConclusionPageApis = ({
   cy.intercept('GET', '**/api/thesis', {
     ...BASE_THESIS,
     status: thesisStatus,
+    ...thesisOverride,
   }).as('getThesis');
   cy.intercept('GET', '**/api/thesis-proposals/teachers*', TEACHERS).as('getTeachers');
   cy.intercept('GET', '**/api/thesis-conclusion/licenses*', LICENSES).as('getLicenses');
@@ -305,8 +345,10 @@ const stubConclusionPageApis = ({
   }).as('submitConclusion');
 };
 
-const visitConclusionPage = () => {
-  cy.visit('/carriera/tesi/conclusione_tesi', { onBeforeLoad: setStableUiPreferences });
+const visitConclusionPage = (language = 'it') => {
+  cy.visit('/carriera/tesi/conclusione_tesi', {
+    onBeforeLoad: win => setStableUiPreferences(win, language),
+  });
   cy.wait([
     '@getStudents',
     '@getLoggedStudent',
@@ -319,6 +361,14 @@ const visitConclusionPage = () => {
     '@getRequiredSummary',
     '@getDraft',
   ]);
+};
+
+const clearSdgByIndex = index => {
+  cy.get('.cr-sdg-sticky-selects .select-sdg', { timeout: 10000 })
+    .eq(index)
+    .find('.select__clear-indicator')
+    .should('exist')
+    .click({ force: true });
 };
 
 const moveToSubmitStepWithAuthorizeFlow = ({ attachFreshThesis = true } = {}) => {
@@ -355,6 +405,30 @@ const moveToUploadsStepWithAuthorizeFlow = () => {
   waitForDraftSaveUiStability();
 };
 
+const moveToSubmitStepWithDenyFlow = ({ attachFreshThesis = true } = {}) => {
+  clickNextStep();
+  cy.wait('@saveDraft');
+  waitForDraftSaveUiStability();
+
+  cy.get('#authorization-deny').should('be.checked');
+  rightActionButton().should('be.enabled');
+  clickNextStep();
+  cy.wait('@saveDraft');
+  waitForDraftSaveUiStability();
+
+  if (attachFreshThesis) {
+    attachPdf('#final-thesis-pdfa', 'tesi-definitiva.pdf');
+  }
+  clickNextStep();
+  cy.wait('@saveDraft');
+  waitForDraftSaveUiStability();
+
+  checkDeclarations([1, 3, 4, 5, 6]);
+  clickNextStep();
+  cy.wait('@saveDraft');
+  waitForDraftSaveUiStability();
+};
+
 describe('Conclusion request wizard', () => {
   it('shows not-eligible state when thesis status is not ongoing', () => {
     stubConclusionPageApis({ thesisStatus: 'final_exam', draft: null });
@@ -363,6 +437,36 @@ describe('Conclusion request wizard', () => {
     cy.contains(/Non idoneo|Not Eligible/i).should('be.visible');
     cy.contains(/Non sei idoneo|You are not eligible/i).should('be.visible');
     rightActionButton().should('not.exist');
+  });
+
+  it('shows bootstrap fallback when thesis payload is null', () => {
+    stubConclusionPageApis({
+      thesisStatus: 'ongoing',
+      requiredSummary: false,
+      draft: AUTHORIZE_DRAFT,
+      submitStatus: 201,
+    });
+    cy.intercept('GET', '**/api/thesis', { statusCode: 200, body: null }).as('getThesis');
+
+    visitConclusionPage();
+    cy.contains(/Non idoneo|Not Eligible/i).should('be.visible');
+  });
+
+  it('keeps details step usable when teachers bootstrap API fails', () => {
+    stubConclusionPageApis({
+      thesisStatus: 'ongoing',
+      requiredSummary: false,
+      draft: AUTHORIZE_DRAFT,
+      submitStatus: 201,
+    });
+    cy.intercept('GET', '**/api/thesis-proposals/teachers*', {
+      statusCode: 500,
+      body: { error: 'teachers unavailable' },
+    }).as('getTeachers');
+
+    visitConclusionPage();
+    cy.get('#title-original').should('be.visible');
+    nextStepButton().should('be.enabled');
   });
 
   it('requires english translations when draft language is italian', () => {
@@ -484,6 +588,28 @@ describe('Conclusion request wizard', () => {
     cy.contains(/Richiesta inviata con successo|Request submitted successfully/i).should('be.visible');
   });
 
+  it('disables deny flow progression again when an embargo motivation is unchecked', () => {
+    stubConclusionPageApis({
+      thesisStatus: 'ongoing',
+      requiredSummary: false,
+      draft: DETAILS_ONLY_DRAFT,
+      submitStatus: 201,
+    });
+    visitConclusionPage();
+
+    clickNextStep();
+    cy.wait('@saveDraft');
+    waitForDraftSaveUiStability();
+
+    cy.get('#authorization-deny').check({ force: true });
+    cy.get('input[name="embargo-period"]').eq(0).check({ force: true });
+    cy.get('.cr-section').find('input[type="checkbox"]').eq(0).check({ force: true });
+    rightActionButton().should('be.enabled');
+
+    cy.get('.cr-section').find('input[type="checkbox"]').eq(0).uncheck({ force: true });
+    rightActionButton().should('be.disabled');
+  });
+
   it('shows error outcome when submit fails', () => {
     stubConclusionPageApis({
       thesisStatus: 'ongoing',
@@ -597,6 +723,31 @@ describe('Conclusion request wizard', () => {
     rightActionButton().should('be.disabled');
   });
 
+  it('shows download error toast when a draft upload fetch fails', () => {
+    stubConclusionPageApis({
+      thesisStatus: 'ongoing',
+      requiredSummary: true,
+      draft: DRAFT_WITH_FILES,
+      submitStatus: 201,
+    });
+    cy.intercept('GET', '**/api/thesis/701/summary', {
+      statusCode: 500,
+      body: { error: 'summary download failed' },
+    }).as('getDraftSummaryFail');
+
+    visitConclusionPage();
+    moveToUploadsStepWithAuthorizeFlow();
+
+    cy.contains('.cr-file-name', 'summary-draft.pdf')
+      .parents('.cr-file-name-line')
+      .within(() => {
+        cy.get('button[aria-label="Apri file"], button[aria-label="Open file"]').click({ force: true });
+      });
+
+    cy.wait('@getDraftSummaryFail').its('response.statusCode').should('eq', 500);
+    cy.contains(/Errore durante il download|Download error/i).should('be.visible');
+  });
+
   it('supports english draft details and not-applicable sdg fallback through submit flow', () => {
     stubConclusionPageApis({
       thesisStatus: 'ongoing',
@@ -626,6 +777,270 @@ describe('Conclusion request wizard', () => {
 
     cy.wait('@submitConclusion').its('response.statusCode').should('eq', 201);
     cy.contains(/Richiesta inviata con successo|Request submitted successfully/i).should('be.visible');
+  });
+
+  it('renders authorization motivations and licenses in english', () => {
+    stubConclusionPageApis({
+      thesisStatus: 'ongoing',
+      requiredSummary: false,
+      draft: DETAILS_ONLY_DRAFT,
+      submitStatus: 201,
+    });
+    visitConclusionPage('en');
+
+    clickNextStep();
+    cy.wait('@saveDraft');
+    waitForDraftSaveUiStability();
+
+    cy.get('#authorization-deny').check({ force: true });
+    cy.contains(/Need to avoid disclosure of results/i).should('be.visible');
+    cy.contains(/Other/i).should('be.visible');
+
+    cy.get('#authorization-authorize').check({ force: true });
+    cy.contains(/Attribution - NonCommercial-NoDerivs CC BY-NC-ND/i).should('be.visible');
+    cy.contains(/License description/i).should('be.visible');
+  });
+
+  it('shows supervisor fallback and clears SDG selections from details step', () => {
+    stubConclusionPageApis({
+      thesisStatus: 'ongoing',
+      requiredSummary: false,
+      draft: AUTHORIZE_DRAFT,
+      submitStatus: 201,
+      thesisOverride: {
+        supervisor: null,
+        coSupervisors: [],
+      },
+    });
+    visitConclusionPage();
+
+    cy.get('.cr-supervisor-field .custom-badge-text')
+      .should('be.visible')
+      .invoke('text')
+      .then(supervisorText => {
+        const normalizedSupervisorText = supervisorText.trim();
+        expect(normalizedSupervisorText).to.have.length.greaterThan(0);
+        expect(normalizedSupervisorText).to.not.equal(`${TEACHERS[0].lastName} ${TEACHERS[0].firstName}`);
+      });
+
+    clearSdgByIndex(0);
+    clearSdgByIndex(1);
+    clearSdgByIndex(2);
+    nextStepButton().should('be.disabled');
+  });
+
+  it('shows submit summary fallbacks for missing co-supervisors, keywords and unknown license id', () => {
+    stubConclusionPageApis({
+      thesisStatus: 'ongoing',
+      requiredSummary: false,
+      draft: AUTHORIZE_DRAFT_WITH_LICENSE_FALLBACKS,
+      submitStatus: 201,
+    });
+    visitConclusionPage();
+
+    moveToSubmitStepWithAuthorizeFlow({ attachFreshThesis: true });
+
+    cy.contains('.title-container', /Co-relatori|Co-supervisors/i)
+      .closest('.info-container, .text-container')
+      .find('.info-detail')
+      .should('contain.text', '-');
+
+    cy.contains('.title-container', /Keywords/i)
+      .closest('.info-container, .text-container')
+      .find('.info-detail')
+      .should('contain.text', '-');
+
+    cy.contains('.title-container', /Licenza|License/i)
+      .closest('.info-container, .text-container')
+      .find('.info-detail')
+      .should('contain.text', '-');
+  });
+
+  it('goes back to previous step and closes submit confirmation modal without submitting', () => {
+    stubConclusionPageApis({
+      thesisStatus: 'ongoing',
+      requiredSummary: false,
+      draft: AUTHORIZE_DRAFT,
+      submitStatus: 201,
+    });
+    visitConclusionPage();
+
+    clickNextStep();
+    cy.wait('@saveDraft');
+    waitForDraftSaveUiStability();
+
+    cy.get('.cr-steps-actions-left button').should('be.visible').click({ force: true });
+    cy.get('#title-original').should('be.visible');
+
+    moveToSubmitStepWithAuthorizeFlow({ attachFreshThesis: true });
+    rightActionButton()
+      .contains(/Invia richiesta|Send request/i)
+      .should('be.enabled')
+      .click();
+    cy.get('.modal.show')
+      .last()
+      .contains('button', /Annulla|Cancel/i)
+      .click({ force: true });
+    cy.get('.modal.show').should('not.exist');
+  });
+
+  it('shows deny summary fallback when embargo motivations cannot be mapped', () => {
+    stubConclusionPageApis({
+      thesisStatus: 'ongoing',
+      requiredSummary: false,
+      draft: DENY_DRAFT_WITH_UNKNOWN_EMBARGO_MOTIVATION,
+      submitStatus: 201,
+    });
+    visitConclusionPage();
+
+    moveToSubmitStepWithDenyFlow({ attachFreshThesis: true });
+
+    cy.contains('.title-container', /Autorizzazione|Authorization/i)
+      .closest('.info-container, .text-container')
+      .find('.info-detail')
+      .invoke('text')
+      .should('match', /Non autorizzo|Do not authorize/i);
+
+    cy.contains('.title-container', /Motivazioni embargo|Embargo/i)
+      .closest('.info-container, .text-container')
+      .find('.info-detail')
+      .should('contain.text', '-');
+
+    cy.contains('.title-container', /Durata embargo|Embargo duration/i)
+      .closest('.info-container, .text-container')
+      .find('.info-detail')
+      .invoke('text')
+      .then(text => {
+        expect(text.trim()).to.not.equal('-');
+      });
+  });
+
+  it('removes local summary replacement together with existing draft summary when summary is required', () => {
+    stubConclusionPageApis({
+      thesisStatus: 'ongoing',
+      requiredSummary: true,
+      draft: DRAFT_WITH_FILES,
+      submitStatus: 201,
+    });
+    visitConclusionPage();
+
+    moveToUploadsStepWithAuthorizeFlow();
+
+    attachPdf('#summary-for-committee-pdf', 'riassunto-locale.pdf');
+    cy.get('#summary-for-committee-pdf')
+      .closest('.cr-upload-card')
+      .find('.cr-file-name')
+      .should('contain', 'riassunto-locale.pdf');
+
+    cy.get('#summary-for-committee-pdf')
+      .closest('.cr-upload-card')
+      .within(() => {
+        cy.get('button[aria-label="Rimuovi file"], button[aria-label="Remove file"]').click({ force: true });
+      });
+
+    cy.get('#summary-for-committee-pdf')
+      .closest('.cr-upload-card')
+      .contains(/Nessun file selezionato|No file selected/i)
+      .should('be.visible');
+    rightActionButton().should('be.disabled');
+  });
+
+  it('saves draft after removing all server draft files and replacing required uploads locally', () => {
+    stubConclusionPageApis({
+      thesisStatus: 'ongoing',
+      requiredSummary: true,
+      draft: DRAFT_WITH_FILES,
+      submitStatus: 201,
+    });
+    visitConclusionPage();
+
+    moveToUploadsStepWithAuthorizeFlow();
+
+    cy.contains('.cr-file-name', 'thesis-draft.pdf')
+      .parents('.cr-file-name-line')
+      .within(() => {
+        cy.get('button[aria-label="Rimuovi file"], button[aria-label="Remove file"]').click({ force: true });
+      });
+    cy.contains('.cr-file-name', 'summary-draft.pdf')
+      .parents('.cr-file-name-line')
+      .within(() => {
+        cy.get('button[aria-label="Rimuovi file"], button[aria-label="Remove file"]').click({ force: true });
+      });
+    cy.contains('.cr-file-name', 'additional-draft.zip')
+      .parents('.cr-file-name-line')
+      .within(() => {
+        cy.get('button[aria-label="Rimuovi file"], button[aria-label="Remove file"]').click({ force: true });
+      });
+
+    attachPdf('#final-thesis-pdfa', 'tesi-sostitutiva.pdf');
+    attachPdf('#summary-for-committee-pdf', 'riassunto-sostitutivo.pdf');
+    rightActionButton().should('be.enabled');
+
+    clickNextStep();
+    cy.wait('@saveDraft').its('response.statusCode').should('eq', 201);
+    waitForDraftSaveUiStability();
+
+    cy.contains('.cr-file-name', 'thesis-draft.pdf').should('not.exist');
+    cy.contains('.cr-file-name', 'summary-draft.pdf').should('not.exist');
+    cy.contains('.cr-file-name', 'additional-draft.zip').should('not.exist');
+  });
+
+  it('ignores invalid co-supervisor payload mapping and empty trailing draft file paths', () => {
+    stubConclusionPageApis({
+      thesisStatus: 'ongoing',
+      requiredSummary: true,
+      draft: DRAFT_WITH_INVALID_COSUP_AND_TRAILING_PATHS,
+      submitStatus: 201,
+    });
+    visitConclusionPage();
+
+    clickNextStep();
+    cy.wait('@saveDraft');
+    waitForDraftSaveUiStability();
+
+    clickNextStep();
+    cy.wait('@saveDraft');
+    waitForDraftSaveUiStability();
+
+    cy.get('#summary-for-committee-pdf')
+      .closest('.cr-upload-card')
+      .contains(/Nessun file selezionato|No file selected/i)
+      .should('be.visible');
+    cy.get('#final-thesis-pdfa')
+      .closest('.cr-upload-card')
+      .contains(/Nessun file selezionato|No file selected/i)
+      .should('be.visible');
+    cy.get('#supplementary-zip')
+      .closest('.cr-upload-card')
+      .contains(/Nessun file selezionato|No file selected/i)
+      .should('be.visible');
+    rightActionButton().should('be.disabled');
+  });
+
+  it('removes local optional supplementary upload and restores empty state', () => {
+    stubConclusionPageApis({
+      thesisStatus: 'ongoing',
+      requiredSummary: false,
+      draft: AUTHORIZE_DRAFT,
+      submitStatus: 201,
+    });
+    visitConclusionPage();
+
+    moveToUploadsStepWithAuthorizeFlow();
+
+    attachFile('#supplementary-zip', 'materiale.zip', 'application/zip');
+    cy.get('#supplementary-zip').closest('.cr-upload-card').find('.cr-file-name').should('contain', 'materiale.zip');
+
+    cy.get('#supplementary-zip')
+      .closest('.cr-upload-card')
+      .within(() => {
+        cy.get('button[aria-label="Rimuovi file"], button[aria-label="Remove file"]').click({ force: true });
+      });
+
+    cy.get('#supplementary-zip')
+      .closest('.cr-upload-card')
+      .contains(/Nessun file selezionato|No file selected/i)
+      .should('be.visible');
   });
 
   it('submits using already uploaded draft files when no new files are selected', () => {
@@ -701,6 +1116,40 @@ describe('Conclusion request wizard', () => {
       .should('be.enabled');
   });
 
+  it('handles non-array draft keywords and sdgs by keeping details step invalid', () => {
+    stubConclusionPageApis({
+      thesisStatus: 'ongoing',
+      requiredSummary: false,
+      draft: DRAFT_WITH_NON_ARRAY_KEYWORDS_AND_SDGS,
+      submitStatus: 201,
+    });
+    visitConclusionPage();
+
+    cy.get('#title-original').should('have.value', AUTHORIZE_DRAFT.title);
+    cy.get('.cr-sdg-sticky-selects .select__single-value').should('not.exist');
+    nextStepButton().should('be.disabled');
+  });
+
+  it('shows draft save failed toast when manual save trigger fails', () => {
+    stubConclusionPageApis({
+      thesisStatus: 'ongoing',
+      requiredSummary: false,
+      draft: AUTHORIZE_DRAFT,
+      submitStatus: 201,
+    });
+    cy.intercept('POST', '**/api/thesis-conclusion/draft', {
+      statusCode: 500,
+      body: { error: 'save failed' },
+    }).as('saveDraft');
+
+    visitConclusionPage();
+    cy.contains('button', /Salva bozza|Save draft/i)
+      .should('be.visible')
+      .click({ force: true });
+    cy.wait('@saveDraft').its('response.statusCode').should('eq', 500);
+    cy.contains(/Salvataggio bozza non riuscito|Failed to save draft/i).should('be.visible');
+  });
+
   it('covers details selectors and submit expand/collapse branches', () => {
     stubConclusionPageApis({
       thesisStatus: 'ongoing',
@@ -761,6 +1210,17 @@ describe('Conclusion request wizard', () => {
         expect(trimmed.length).to.eq(50);
       });
 
+    attachFile('#final-thesis-pdfa', `${'nomebase'.repeat(12)}.pdf`, 'application/pdf');
+    cy.get('#final-thesis-pdfa')
+      .closest('.cr-upload-card')
+      .find('.cr-file-name')
+      .invoke('text')
+      .then(fileName => {
+        const trimmed = fileName.trim();
+        expect(trimmed.endsWith('...pdf')).to.eq(true);
+        expect(trimmed.length).to.eq(50);
+      });
+
     cy.get('#final-thesis-pdfa')
       .closest('.cr-upload-card')
       .within(() => {
@@ -770,6 +1230,32 @@ describe('Conclusion request wizard', () => {
       .closest('.cr-upload-card')
       .contains(/Nessun file selezionato|No file selected/i)
       .should('exist');
+  });
+
+  it('removes both local and draft thesis file when a replacement is deleted', () => {
+    stubConclusionPageApis({
+      thesisStatus: 'ongoing',
+      requiredSummary: false,
+      draft: DRAFT_WITH_FILES,
+      submitStatus: 201,
+    });
+    visitConclusionPage();
+
+    moveToUploadsStepWithAuthorizeFlow();
+    attachPdf('#final-thesis-pdfa', 'tesi-locale.pdf');
+
+    cy.get('#final-thesis-pdfa').closest('.cr-upload-card').find('.cr-file-name').should('contain', 'tesi-locale.pdf');
+
+    cy.get('#final-thesis-pdfa')
+      .closest('.cr-upload-card')
+      .within(() => {
+        cy.get('button[aria-label="Rimuovi file"], button[aria-label="Remove file"]').click({ force: true });
+      });
+
+    cy.get('#final-thesis-pdfa')
+      .closest('.cr-upload-card')
+      .contains(/Nessun file selezionato|No file selected/i)
+      .should('be.visible');
   });
 
   it('restores updated draft values after page reload', () => {

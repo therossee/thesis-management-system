@@ -351,6 +351,7 @@
             "confirm_body": "Are you sure you want to send the thesis conclusion request?",
             "confirm": "Yes, send the request",
             "supervisor": "Supervisor",
+            "no_supervisor": "No supervisor",
             "co_supervisors": "Co-supervisors",
             "co_supervisors_help": "To remove a co-supervisor, click the X on the badge.",
             "language": "Thesis language",
