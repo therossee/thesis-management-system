@@ -182,15 +182,15 @@ const visitTesiPage = () => {
 describe('Thesis request flows', () => {
   it('submits a custom thesis request successfully from no-application state', () => {
     stubCommonShell();
-    let applicationCalls = 0;
+    let currentApplication = null;
     cy.intercept('GET', '**/api/thesis-applications', req => {
-      applicationCalls += 1;
-      req.reply(applicationCalls > 1 ? PENDING_APPLICATION : EMPTY_200_RESPONSE);
+      req.reply({ statusCode: 200, body: currentApplication });
     }).as('getLastApplication');
     cy.intercept('GET', '**/api/thesis', EMPTY_200_RESPONSE).as('getThesis');
-    cy.intercept('POST', '**/api/thesis-applications', { statusCode: 201, body: { id: 900 } }).as(
-      'createThesisApplication',
-    );
+    cy.intercept('POST', '**/api/thesis-applications', req => {
+      currentApplication = PENDING_APPLICATION;
+      req.reply({ statusCode: 201, body: { id: 900 } });
+    }).as('createThesisApplication');
 
     visitTesiPage();
     cy.wait('@getThesis');
@@ -261,6 +261,65 @@ describe('Thesis request flows', () => {
     cy.contains(/Errore durante l'invio della richiesta|Error while submitting the request/i).should('be.visible');
   });
 
+  it('cancels pending thesis application successfully', () => {
+    stubCommonShell();
+    let currentApplication = PENDING_APPLICATION;
+    cy.intercept('GET', '**/api/thesis-applications', req => {
+      req.reply({ statusCode: 200, body: currentApplication });
+    }).as('getLastApplication');
+    cy.intercept('GET', '**/api/thesis-applications/status-history*', []).as('getApplicationHistory');
+    cy.intercept('GET', '**/api/thesis', EMPTY_200_RESPONSE).as('getThesis');
+    cy.intercept('POST', '**/api/thesis-applications/cancel', req => {
+      currentApplication = CANCELLED_APPLICATION;
+      req.reply({ statusCode: 200, body: { ok: true } });
+    }).as('cancelApplication');
+
+    visitTesiPage();
+    cy.wait('@getApplicationHistory');
+
+    cy.contains('button', /Ritira candidatura|Cancel application/i)
+      .should('be.visible')
+      .click();
+    cy.get('.modal.show')
+      .last()
+      .contains('button', /S[iì], ritira|Yes, cancel/i)
+      .click({ force: true });
+
+    cy.wait('@cancelApplication')
+      .its('request.body')
+      .should(body => {
+        expect(body.id).to.eq(200);
+      });
+
+    cy.wait('@getLastApplication');
+    cy.contains(/Candidatura ritirata con successo|Application cancelled successfully/i).should('be.visible');
+  });
+
+  it('shows error toast when pending thesis application cancellation fails', () => {
+    stubCommonShell();
+    cy.intercept('GET', '**/api/thesis-applications', PENDING_APPLICATION).as('getLastApplication');
+    cy.intercept('GET', '**/api/thesis-applications/status-history*', []).as('getApplicationHistory');
+    cy.intercept('GET', '**/api/thesis', EMPTY_200_RESPONSE).as('getThesis');
+    cy.intercept('POST', '**/api/thesis-applications/cancel', {
+      statusCode: 500,
+      body: { error: 'cancel failed' },
+    }).as('cancelApplication');
+
+    visitTesiPage();
+    cy.wait('@getApplicationHistory');
+
+    cy.contains('button', /Ritira candidatura|Cancel application/i)
+      .should('be.visible')
+      .click();
+    cy.get('.modal.show')
+      .last()
+      .contains('button', /S[iì], ritira|Yes, cancel/i)
+      .click({ force: true });
+
+    cy.wait('@cancelApplication').its('response.statusCode').should('eq', 500);
+    cy.contains(/Errore durante il ritiro della candidatura|Error canceling application/i).should('be.visible');
+  });
+
   it('renders next steps card for rejected and cancelled applications', () => {
     stubCommonShell();
     let call = 0;
@@ -276,7 +335,7 @@ describe('Thesis request flows', () => {
 
     visitTesiPage();
     cy.wait('@getApplicationHistory');
-    cy.contains(/La tua candidatura per la tesi è stata respinta dal relatore./i).should('be.visible');
+    cy.contains(/una nuova richiesta di tesi personalizzata./i).should('be.visible');
     cy.contains('button', /Nuova Richiesta Tesi|application form/i)
       .should('be.visible')
       .click();

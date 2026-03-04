@@ -106,7 +106,7 @@ CustomCompanySingleValue.propTypes = {
 const NoIndicatorSeparator = () => null;
 
 const resolveIsClearable = (isClearable, fallbackValue) => {
-  return isClearable ? isClearable : fallbackValue;
+  return typeof isClearable === 'boolean' ? isClearable : fallbackValue;
 };
 
 const buildClassName = (baseClassName, className, error) => {

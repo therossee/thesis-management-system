@@ -18,7 +18,6 @@ import Opportunita from './pages/Opportunita';
 import PageNotFound from './pages/PageNotFound';
 import Servizi from './pages/Servizi';
 import ConclusioneTesi from './pages/carriera/ConclusioneTesi';
-import LaureaEdEsameFinale from './pages/carriera/LaureaEdEsameFinale';
 import PropostaDiTesi from './pages/carriera/PropostaDiTesi';
 import Tesi from './pages/carriera/Tesi';
 import Test from './pages/servizi/Test';
@@ -137,7 +136,6 @@ function App() {
                       <Route path="/home" element={<Homepage />} />
                       <Route path="/didattica" element={<Didattica />} />
                       <Route path="/carriera" element={<Carriera />} />
-                      <Route path="/carriera/laurea_ed_esame_finale" element={<LaureaEdEsameFinale />} />
                       <Route path="/opportunita" element={<Opportunita />} />
                       <Route path="/servizi" element={<Servizi />} />
                       <Route path="/help" element={<Help />} />

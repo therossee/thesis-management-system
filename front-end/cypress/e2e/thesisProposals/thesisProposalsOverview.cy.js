@@ -753,6 +753,159 @@ describe('Thesis proposals overview page', () => {
   });
 });
 
+describe('Thesis proposals API params branches', () => {
+  const extractArrayQueryParam = (query, key) => {
+    const direct = query[key];
+    const bracketed = query[`${key}[]`];
+    const value = direct ?? bracketed;
+
+    if (value === undefined || value === null) return [];
+    return (Array.isArray(value) ? value : [value]).map(item => String(item));
+  };
+
+  it('sends complex persisted filters as repeated API query params', () => {
+    const persistedState = {
+      currentPage: 2,
+      filters: {
+        isAbroad: 1,
+        isInternal: 2,
+        keyword: [
+          { id: 11, content: 'AI' },
+          { id: 22, content: 'Data' },
+        ],
+        teacher: [
+          { id: 101, content: 'Mario Rossi' },
+          { id: 202, content: 'Giulia Bianchi' },
+        ],
+        type: [
+          { id: 301, content: 'Applicativa' },
+          { id: 302, content: 'Sperimentale' },
+        ],
+      },
+      proposalsPerPage: 25,
+      searchQuery: 'robotics',
+      sorting: { sortBy: 'topic', orderBy: 'DESC' },
+      tab: 'course',
+    };
+
+    cy.intercept('GET', '**/api/students', []).as('getStudents');
+    cy.intercept('GET', '**/api/students/logged-student*', {}).as('getLoggedStudent');
+    cy.intercept('GET', '**/api/thesis-proposals/types*', []).as('getTypes');
+    cy.intercept('GET', '**/api/thesis-proposals/keywords*', []).as('getKeywords');
+    cy.intercept('GET', '**/api/thesis-proposals/teachers*', []).as('getTeachers');
+
+    cy.intercept('GET', '**/api/thesis-proposals/targeted*', req => {
+      if (req.query?.search === 'robotics') {
+        req.alias = 'getTargetedWithSearch';
+      }
+      req.reply({ thesisProposals: [], count: 50, totalPages: 5 });
+    }).as('getTargetedWithComplexParams');
+
+    cy.intercept('GET', /\/api\/thesis-proposals\?.*/, req => {
+      if (req.query?.search === 'robotics') {
+        req.alias = 'getAllWithSearch';
+      }
+      req.reply({ thesisProposals: [], count: 50, totalPages: 5 });
+    }).as('getAllWithComplexParams');
+
+    cy.visit('/carriera/tesi/proposte_di_tesi', {
+      onBeforeLoad(win) {
+        win.localStorage.setItem('language', 'it');
+        win.localStorage.setItem('theme', 'light');
+        win.localStorage.setItem('thesisProposalsState', JSON.stringify(persistedState));
+      },
+    });
+
+    cy.wait('@getTargetedWithSearch').then(({ request }) => {
+      const query = request.query;
+      const keywordIds = extractArrayQueryParam(query, 'keywordId');
+      const teacherIds = extractArrayQueryParam(query, 'teacherId');
+      const typeIds = extractArrayQueryParam(query, 'typeId');
+
+      expect(query.page).to.equal('2');
+      expect(query.limit).to.equal('25');
+      expect(query.search).to.equal('robotics');
+      expect(query.sortBy).to.equal('topic');
+      expect(query.orderBy).to.equal('DESC');
+      expect(['false', false]).to.include(query.isAbroad);
+      expect(['false', false]).to.include(query.isInternal);
+      expect(keywordIds).to.deep.equal(['11', '22']);
+      expect(teacherIds).to.deep.equal(['101', '202']);
+      expect(typeIds).to.deep.equal(['301', '302']);
+    });
+
+    cy.get('#all').click();
+    cy.wait('@getAllWithSearch').then(({ request }) => {
+      const query = request.query;
+      const keywordIds = extractArrayQueryParam(query, 'keywordId');
+      const teacherIds = extractArrayQueryParam(query, 'teacherId');
+      const typeIds = extractArrayQueryParam(query, 'typeId');
+
+      expect(query.page).to.equal('1');
+      expect(query.limit).to.equal('25');
+      expect(query.search).to.equal('robotics');
+      expect(query.sortBy).to.equal('topic');
+      expect(query.orderBy).to.equal('DESC');
+      expect(['false', false]).to.include(query.isAbroad);
+      expect(['false', false]).to.include(query.isInternal);
+      expect(keywordIds).to.deep.equal(['11', '22']);
+      expect(teacherIds).to.deep.equal(['101', '202']);
+      expect(typeIds).to.deep.equal(['301', '302']);
+    });
+  });
+
+  it('sends boolean mapped params and skips array/search params when filters are empty', () => {
+    const persistedState = {
+      currentPage: 1,
+      filters: {
+        isAbroad: 2,
+        isInternal: 1,
+        keyword: [],
+        teacher: [],
+        type: [],
+      },
+      proposalsPerPage: 10,
+      searchQuery: '',
+      sorting: { sortBy: 'id', orderBy: 'ASC' },
+      tab: 'course',
+    };
+
+    cy.intercept('GET', '**/api/students', []).as('getStudents');
+    cy.intercept('GET', '**/api/students/logged-student*', {}).as('getLoggedStudent');
+    cy.intercept('GET', '**/api/thesis-proposals/types*', []).as('getTypes');
+    cy.intercept('GET', '**/api/thesis-proposals/keywords*', []).as('getKeywords');
+    cy.intercept('GET', '**/api/thesis-proposals/teachers*', []).as('getTeachers');
+
+    cy.intercept('GET', '**/api/thesis-proposals/targeted*', req => {
+      req.reply({ thesisProposals: [], count: 0, totalPages: 0 });
+    }).as('getTargetedSimpleParams');
+
+    cy.visit('/carriera/tesi/proposte_di_tesi', {
+      onBeforeLoad(win) {
+        win.localStorage.setItem('language', 'it');
+        win.localStorage.setItem('theme', 'light');
+        win.localStorage.setItem('thesisProposalsState', JSON.stringify(persistedState));
+      },
+    });
+
+    cy.wait('@getTargetedSimpleParams').then(({ request }) => {
+      const query = request.query;
+      const keywordIds = extractArrayQueryParam(query, 'keywordId');
+      const teacherIds = extractArrayQueryParam(query, 'teacherId');
+      const typeIds = extractArrayQueryParam(query, 'typeId');
+
+      expect(query.page).to.equal('1');
+      expect(query.limit).to.equal('10');
+      expect(['true', true]).to.include(query.isAbroad);
+      expect(['true', true]).to.include(query.isInternal);
+      expect(keywordIds).to.have.length(0);
+      expect(teacherIds).to.have.length(0);
+      expect(typeIds).to.have.length(0);
+      expect(query.search).to.be.undefined;
+    });
+  });
+});
+
 describe('Thesis proposal overview page - responsiveness', () => {
   beforeEach(() => {
     // Reduce the viewport to mobile sizes

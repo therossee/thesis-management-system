@@ -277,6 +277,25 @@ describe('Thesis status actions', () => {
     cy.wait('@cancelThesis').its('response.statusCode').should('eq', 201);
   });
 
+  it('shows error toast when thesis cancellation request fails', () => {
+    stubTesiPageApis({ thesisStatus: 'ongoing', requiredSummary: false });
+    cy.intercept('POST', '**/api/thesis/cancel', { statusCode: 500, body: { error: 'cancel failed' } }).as(
+      'cancelThesis',
+    );
+    visitTesiPage();
+
+    cy.contains('button', /Richiedi annullamento tesi|Request thesis cancellation/i).click();
+    cy.get('.modal.show')
+      .last()
+      .contains('button', /Annulla tesi|Cancel thesis|S[iì]|Yes/i)
+      .click({ force: true });
+
+    cy.wait('@cancelThesis').its('response.statusCode').should('eq', 500);
+    cy.contains(
+      /Errore durante l'invio della richiesta di annullamento|Error while sending the thesis cancellation request/i,
+    ).should('be.visible');
+  });
+
   it('downloads thesis files and shows download error toast when a file fetch fails', () => {
     const longTopic = `${'Tema molto lungo. '.repeat(35)}\n\nDettaglio finale.`;
     const longAbstract = `${'Abstract molto lungo per coprire il branch show more. '.repeat(20)}Fine.`;
@@ -341,6 +360,35 @@ describe('Thesis status actions', () => {
     cy.contains(/Errore durante il download|Download error/i).should('be.visible');
   });
 
+  it('shows placeholders for missing uploaded files when thesis is at conclusion stage', () => {
+    cy.intercept('GET', '**/api/students', ALL_STUDENTS).as('getStudents');
+    cy.intercept('GET', '**/api/students/logged-student', LOGGED_STUDENT).as('getLoggedStudent');
+    cy.intercept('GET', '**/api/thesis-applications', BASE_APPLICATION).as('getLastApplication');
+    cy.intercept('GET', '**/api/thesis', {
+      ...BASE_THESIS,
+      status: 'conclusion_requested',
+      topic: 'Tema breve',
+      abstract: 'Abstract breve',
+      company: null,
+      thesisFilePath: null,
+      thesisSummaryPath: null,
+      additionalZipPath: null,
+    }).as('getThesis');
+    cy.intercept('GET', '**/api/thesis-applications/eligibility*', { eligible: true }).as('getEligibility');
+    cy.intercept('GET', '**/api/thesis-conclusion/deadlines*', DEADLINES).as('getDeadlines');
+    cy.intercept('GET', '**/api/students/required-summary', { requiredSummary: true }).as('getRequiredSummary');
+
+    visitTesiPage();
+
+    cy.contains(/Mostra di pi[uù]|Show more/i).should('not.exist');
+    cy.contains(/Riepilogo:\s*-|Summary:\s*-/i).should('exist');
+    cy.contains(/Tesi in formato PDF\/A:\s*-|Thesis in PDF\/A format:\s*-/i).should('exist');
+    cy.contains(/Allegato aggiuntivo:\s*-|Additional attachment:\s*-/i).should('exist');
+    cy.contains('button', /Riepilogo|Summary/i).should('not.exist');
+    cy.contains('button', /Tesi in formato PDF\/A|Thesis in PDF\/A format/i).should('not.exist');
+    cy.contains('button', /Allegato aggiuntivo|Additional attachment/i).should('not.exist');
+  });
+
   it('requires summary file and shows upload failure toast in final thesis modal', () => {
     stubTesiPageApis({ thesisStatus: 'final_exam', requiredSummary: true });
     cy.intercept('POST', '**/api/thesis-conclusion/upload-final-thesis', {
@@ -385,5 +433,38 @@ describe('Thesis status actions', () => {
     cy.contains(/Errore durante il caricamento della tesi definitiva|Error uploading the final thesis/i).should(
       'be.visible',
     );
+  });
+
+  it('uploads final thesis when required-summary endpoint fails and summary becomes optional', () => {
+    stubTesiPageApis({ thesisStatus: 'final_exam', requiredSummary: false });
+    cy.intercept('GET', '**/api/students/required-summary', {
+      statusCode: 500,
+      body: { error: 'required summary unavailable' },
+    }).as('getRequiredSummary');
+    cy.intercept('POST', '**/api/thesis-conclusion/upload-final-thesis', {
+      statusCode: 201,
+      body: { ok: true },
+    }).as('uploadFinalThesis');
+
+    visitTesiPage();
+
+    cy.contains('button', /Carica Tesi Definitiva|Upload Final Thesis/i)
+      .should('be.visible')
+      .click();
+    cy.get('.final-thesis-upload-modal').should('be.visible');
+
+    cy.get('#final-thesis-summary-pdfa').should('not.exist');
+    attachPdf('#final-thesis-pdfa', 'tesi-finale.pdf');
+    cy.get('.final-thesis-upload-modal')
+      .contains('button', /Carica documento|Upload document/i)
+      .should('be.enabled')
+      .click();
+
+    cy.get('.modal.show')
+      .last()
+      .contains('button', /Si, carica la tesi|Yes, upload the thesis/i)
+      .click();
+
+    cy.wait('@uploadFinalThesis').its('response.statusCode').should('eq', 201);
   });
 });

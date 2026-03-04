@@ -148,6 +148,51 @@ const ENGLISH_DRAFT_WITH_FALLBACKS = {
   ],
 };
 
+const ITALIAN_DRAFT_MISSING_TRANSLATIONS = {
+  ...AUTHORIZE_DRAFT,
+  language: 'it',
+  title: 'Titolo in italiano',
+  abstract: 'Abstract in italiano',
+  titleEng: '',
+  abstractEng: '',
+};
+
+const LONG_ITALIAN_DRAFT = {
+  ...AUTHORIZE_DRAFT,
+  language: 'it',
+  title: `Titolo molto lungo ${'A'.repeat(160)}`,
+  titleEng: `Very long english title ${'B'.repeat(160)}`,
+  abstract: `Abstract molto lungo ${'C'.repeat(260)}`,
+  abstractEng: `Very long english abstract ${'D'.repeat(260)}`,
+};
+
+const LEGACY_MIXED_DRAFT = {
+  ...BASE_DRAFT_DETAILS,
+  language: 'it',
+  title: 'Titolo legacy',
+  titleEng: '',
+  abstract: 'Abstract legacy',
+  abstractEng: '',
+  keywords: [
+    '  Cloud  ',
+    { value: 2 },
+    { id: 0, value: 'Edge AI' },
+    { id: 'legacy', keyword: 'Fallback keyword' },
+    { id: 999, label: 'Keyword da label' },
+  ],
+  sdgs: [
+    { goal_id: 18, level: 'primary' },
+    { goal_id: 18, level: 'secondary' },
+  ],
+  embargo: {
+    duration: '6_months',
+    motivations: [{ motivation_id: 7, other_motivation: 'Motivazione legacy personalizzata' }],
+  },
+  coSupervisors: [TEACHERS[1]],
+  thesisDraftDate: null,
+  thesisFilePath: '/uploads/draft/legacy-thesis.pdf',
+};
+
 const setStableUiPreferences = win => {
   win.localStorage.setItem('language', 'it');
   win.localStorage.setItem('theme', 'light');
@@ -181,6 +226,26 @@ const attachPdf = (selector, fileName) => {
     },
     { force: true },
   );
+};
+
+const attachFile = (selector, fileName, mimeType, contents = 'mock-file-content') => {
+  cy.get(selector).selectFile(
+    {
+      contents: Cypress.Buffer.from(contents),
+      fileName,
+      mimeType,
+    },
+    { force: true },
+  );
+};
+
+const toggleExpandableSummaryBlock = labelRegex => {
+  cy.contains('.title-container', labelRegex)
+    .closest('.info-container, .text-container')
+    .within(() => {
+      cy.contains('button', /Mostra di pi[uù]|Show more/i).click({ force: true });
+      cy.contains('button', /Mostra( di)? meno|Show less/i).click({ force: true });
+    });
 };
 
 const checkDeclarations = declarationIds => {
@@ -279,6 +344,17 @@ const moveToSubmitStepWithAuthorizeFlow = ({ attachFreshThesis = true } = {}) =>
   waitForDraftSaveUiStability();
 };
 
+const moveToUploadsStepWithAuthorizeFlow = () => {
+  clickNextStep();
+  cy.wait('@saveDraft');
+  waitForDraftSaveUiStability();
+
+  cy.get('#authorization-authorize').should('be.checked');
+  clickNextStep();
+  cy.wait('@saveDraft');
+  waitForDraftSaveUiStability();
+};
+
 describe('Conclusion request wizard', () => {
   it('shows not-eligible state when thesis status is not ongoing', () => {
     stubConclusionPageApis({ thesisStatus: 'final_exam', draft: null });
@@ -287,6 +363,32 @@ describe('Conclusion request wizard', () => {
     cy.contains(/Non idoneo|Not Eligible/i).should('be.visible');
     cy.contains(/Non sei idoneo|You are not eligible/i).should('be.visible');
     rightActionButton().should('not.exist');
+  });
+
+  it('requires english translations when draft language is italian', () => {
+    stubConclusionPageApis({
+      thesisStatus: 'ongoing',
+      requiredSummary: false,
+      draft: ITALIAN_DRAFT_MISSING_TRANSLATIONS,
+      submitStatus: 201,
+    });
+    visitConclusionPage();
+
+    cy.get('#title-original').should('have.value', 'Titolo in italiano');
+    cy.get('#title-translation').should('exist');
+    cy.get('#abstract-translation').should('exist');
+    nextStepButton().should('be.disabled');
+
+    cy.get('#title-translation').clear();
+    cy.get('#title-translation').type('English title from cypress');
+    cy.get('#abstract-translation').clear();
+    cy.get('#abstract-translation').type('English abstract from cypress');
+    nextStepButton().should('be.enabled');
+
+    clickNextStep();
+    cy.wait('@saveDraft');
+    waitForDraftSaveUiStability();
+    cy.get('#authorization-authorize').should('be.visible');
   });
 
   it('completes authorize flow and submits successfully', () => {
@@ -326,10 +428,27 @@ describe('Conclusion request wizard', () => {
 
     cy.get('#authorization-deny').check({ force: true });
     rightActionButton().should('be.disabled');
-    cy.get('input[name="embargo-period"]').first().check({ force: true });
-    cy.get('input[name="embargo-period"]').first().should('be.checked');
-    cy.get('.cr-section').find('input[type="checkbox"]').first().check({ force: true });
-    cy.get('.cr-section').find('input[type="checkbox"]').first().should('be.checked');
+
+    cy.get('input[name="embargo-period"]').eq(1).check({ force: true });
+    cy.get('input[name="embargo-period"]').eq(1).should('be.checked');
+    cy.get('.cr-section').find('input[type="checkbox"]').eq(1).check({ force: true });
+    const embargoReasonSelector = 'input[placeholder*="motivo"], input[placeholder*="reason"]';
+    cy.get(embargoReasonSelector).should('be.enabled');
+    cy.get(embargoReasonSelector).clear();
+    cy.get(embargoReasonSelector).type('Motivazione embargo personalizzata da Cypress');
+    rightActionButton().should('be.enabled');
+
+    cy.get('input[name="embargo-period"]').eq(2).check({ force: true });
+    cy.get('input[name="embargo-period"]').eq(2).should('be.checked');
+    cy.get('input[name="embargo-period"]').eq(3).check({ force: true });
+    cy.get('input[name="embargo-period"]').eq(3).should('be.checked');
+    cy.get('input[name="embargo-period"]').eq(0).check({ force: true });
+    cy.get('input[name="embargo-period"]').eq(0).should('be.checked');
+    cy.get('.cr-section').find('input[type="checkbox"]').eq(0).check({ force: true });
+
+    cy.get('#authorization-authorize').check({ force: true });
+    cy.get('#license-choice-1').check({ force: true });
+    cy.get('#authorization-deny').check({ force: true });
     rightActionButton().should('be.enabled');
 
     clickNextStep();
@@ -438,6 +557,43 @@ describe('Conclusion request wizard', () => {
       });
 
     cy.contains('.cr-file-name', 'thesis-draft.pdf').should('not.exist');
+
+    cy.contains('.cr-file-name', 'summary-draft.pdf')
+      .parents('.cr-file-name-line')
+      .within(() => {
+        cy.get('button[aria-label="Apri file"], button[aria-label="Open file"]').click();
+      });
+    cy.wait('@getDraftSummaryBlob');
+    cy.get('@windowOpen').should('have.callCount', 2);
+
+    cy.contains('.cr-file-name', 'summary-draft.pdf')
+      .parents('.cr-file-name-line')
+      .within(() => {
+        cy.get('button[aria-label="Scarica file"], button[aria-label="Download file"]').click();
+      });
+    cy.wait('@getDraftSummaryBlob');
+
+    cy.contains('.cr-file-name', 'summary-draft.pdf')
+      .parents('.cr-file-name-line')
+      .within(() => {
+        cy.get('button[aria-label="Rimuovi file"], button[aria-label="Remove file"]').click();
+      });
+    cy.contains('.cr-file-name', 'summary-draft.pdf').should('not.exist');
+
+    cy.contains('.cr-file-name', 'additional-draft.zip')
+      .parents('.cr-file-name-line')
+      .within(() => {
+        cy.get('button[aria-label="Scarica file"], button[aria-label="Download file"]').click();
+      });
+    cy.wait('@getDraftAdditionalBlob');
+
+    cy.contains('.cr-file-name', 'additional-draft.zip')
+      .parents('.cr-file-name-line')
+      .within(() => {
+        cy.get('button[aria-label="Rimuovi file"], button[aria-label="Remove file"]').click();
+      });
+    cy.contains('.cr-file-name', 'additional-draft.zip').should('not.exist');
+
     rightActionButton().should('be.disabled');
   });
 
@@ -470,6 +626,150 @@ describe('Conclusion request wizard', () => {
 
     cy.wait('@submitConclusion').its('response.statusCode').should('eq', 201);
     cy.contains(/Richiesta inviata con successo|Request submitted successfully/i).should('be.visible');
+  });
+
+  it('submits using already uploaded draft files when no new files are selected', () => {
+    stubConclusionPageApis({
+      thesisStatus: 'ongoing',
+      requiredSummary: false,
+      draft: DRAFT_WITH_FILES,
+      submitStatus: 201,
+    });
+    visitConclusionPage();
+
+    moveToSubmitStepWithAuthorizeFlow({ attachFreshThesis: false });
+
+    rightActionButton()
+      .contains(/Invia richiesta|Send request/i)
+      .should('be.enabled')
+      .click();
+    confirmConclusionSubmit();
+
+    cy.wait('@getDraftThesisBlob').its('response.statusCode').should('eq', 200);
+    cy.wait('@getDraftSummaryBlob').its('response.statusCode').should('eq', 200);
+    cy.wait('@getDraftAdditionalBlob').its('response.statusCode').should('eq', 200);
+    cy.wait('@submitConclusion').its('response.statusCode').should('eq', 201);
+    cy.contains(/Richiesta inviata con successo|Request submitted successfully/i).should('be.visible');
+  });
+
+  it('normalizes legacy draft payload shapes through details and authorization steps', () => {
+    stubConclusionPageApis({
+      thesisStatus: 'ongoing',
+      requiredSummary: false,
+      draft: LEGACY_MIXED_DRAFT,
+      submitStatus: 201,
+    });
+    visitConclusionPage();
+
+    cy.get('#title-original').should('have.value', 'Titolo legacy');
+    cy.get('#title-translation').should('exist');
+    cy.get('#title-translation').should('have.value', '');
+    nextStepButton().should('be.disabled');
+
+    cy.get('#title-translation').type('Legacy english title');
+    cy.get('#abstract-translation').type('Legacy english abstract');
+    nextStepButton().should('be.enabled');
+
+    clickNextStep();
+    cy.wait('@saveDraft');
+    waitForDraftSaveUiStability();
+
+    cy.get('#authorization-deny').should('be.checked');
+    cy.get('input[placeholder*="motivo"], input[placeholder*="reason"]').should(
+      'have.value',
+      'Motivazione legacy personalizzata',
+    );
+
+    cy.get('#authorization-authorize').check({ force: true });
+    rightActionButton().should('be.enabled');
+    clickNextStep();
+    cy.wait('@saveDraft');
+    waitForDraftSaveUiStability();
+
+    cy.contains('.cr-file-name', 'legacy-thesis.pdf').should('be.visible');
+    clickNextStep();
+    cy.wait('@saveDraft');
+    waitForDraftSaveUiStability();
+
+    checkDeclarations([1, 2, 3, 4, 5, 6]);
+    clickNextStep();
+    cy.wait('@saveDraft');
+    waitForDraftSaveUiStability();
+
+    rightActionButton()
+      .contains(/Invia richiesta|Send request/i)
+      .should('be.enabled');
+  });
+
+  it('covers details selectors and submit expand/collapse branches', () => {
+    stubConclusionPageApis({
+      thesisStatus: 'ongoing',
+      requiredSummary: false,
+      draft: LONG_ITALIAN_DRAFT,
+      submitStatus: 201,
+    });
+    visitConclusionPage();
+
+    cy.get('#title-translation').should('exist');
+    cy.get('#abstract-translation').should('exist');
+
+    cy.get('#abstract').clear();
+    cy.get('#abstract').type(`Abstract aggiornato ${'E'.repeat(220)}`);
+
+    moveToSubmitStepWithAuthorizeFlow({ attachFreshThesis: true });
+
+    toggleExpandableSummaryBlock(/Titolo originale|Original title/i);
+    toggleExpandableSummaryBlock(/Titolo inglese|English title/i);
+    toggleExpandableSummaryBlock(/Abstract originale|Original abstract/i);
+    toggleExpandableSummaryBlock(/Abstract inglese|English abstract/i);
+
+    rightActionButton()
+      .contains(/Invia richiesta|Send request/i)
+      .should('be.enabled');
+  });
+
+  it('trims long upload filenames and handles local remove reset', () => {
+    stubConclusionPageApis({
+      thesisStatus: 'ongoing',
+      requiredSummary: false,
+      draft: AUTHORIZE_DRAFT,
+      submitStatus: 201,
+    });
+    visitConclusionPage();
+
+    moveToUploadsStepWithAuthorizeFlow();
+
+    attachFile('#final-thesis-pdfa', 'nomefilemoltolungosenzapunto'.repeat(3), 'application/pdf');
+    cy.get('#final-thesis-pdfa')
+      .closest('.cr-upload-card')
+      .find('.cr-file-name')
+      .invoke('text')
+      .then(fileName => {
+        const trimmed = fileName.trim();
+        expect(trimmed.endsWith('...')).to.eq(true);
+        expect(trimmed.length).to.eq(50);
+      });
+
+    attachFile('#supplementary-zip', `tiny.${'x'.repeat(70)}`, 'application/zip');
+    cy.get('#supplementary-zip')
+      .closest('.cr-upload-card')
+      .find('.cr-file-name')
+      .invoke('text')
+      .then(fileName => {
+        const trimmed = fileName.trim();
+        expect(trimmed.startsWith('...')).to.eq(true);
+        expect(trimmed.length).to.eq(50);
+      });
+
+    cy.get('#final-thesis-pdfa')
+      .closest('.cr-upload-card')
+      .within(() => {
+        cy.get('button[aria-label="Rimuovi file"], button[aria-label="Remove file"]').click({ force: true });
+      });
+    cy.get('#final-thesis-pdfa')
+      .closest('.cr-upload-card')
+      .contains(/Nessun file selezionato|No file selected/i)
+      .should('exist');
   });
 
   it('restores updated draft values after page reload', () => {
