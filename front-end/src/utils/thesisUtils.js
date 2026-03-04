@@ -16,7 +16,7 @@ export const normalizeTopic = topic => String(topic || '').replaceAll(/(?:\r?\n)
 export const getFileNameFromPath = path => {
   if (!path) return '';
   const chunks = String(path).split('/');
-  return chunks.at(chunks.length - 1) || '';
+  return chunks.at(-1) || '';
 };
 
 export const hasReachedConclusionRequest = thesisStatus => {

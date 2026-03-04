@@ -67,6 +67,7 @@ jobs:
         uses: cypress-io/github-action@v6.7.14
         with:
           start: npm run start-instrumented
+          command: npm run test-cypress
           working-directory: ./front-end
           wait-on: 'http://localhost:3000'
         env:

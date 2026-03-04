@@ -169,7 +169,7 @@ export default function useThesisProposalsState() {
   );
 
   const handleProposalsPerPageChange = useCallback(event => {
-    const value = parseInt(event.target.value, 10);
+    const value = Number.parseInt(event.target.value, 10);
     setState(prevState => ({
       ...prevState,
       currentPage: 1,

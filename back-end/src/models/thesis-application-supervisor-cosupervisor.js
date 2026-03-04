@@ -1,4 +1,4 @@
-module.exports = (sequelize, DataTypes) => {
+module.exports = function define_thesis_application_supervisor_cosupervisor(sequelize, DataTypes) {
   const ThesisApplicationSupervisorCoSupervisor = sequelize.define(
     'thesis-application-supervisor-cosupervisor',
     {

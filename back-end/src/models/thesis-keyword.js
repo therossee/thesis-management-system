@@ -1,4 +1,4 @@
-module.exports = (sequelize, DataTypes) => {
+module.exports = function define_thesis_keyword(sequelize, DataTypes) {
   const ThesisKeyword = sequelize.define(
     'thesis-keyword',
     {
