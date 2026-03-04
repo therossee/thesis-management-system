@@ -30,15 +30,16 @@ export default function BaseCard(props) {
   }, [props.service, starClicked]);
 
   const handleStarClick = () => {
-    setStarClicked(!starClicked);
-    if (!starClicked) {
+    const isCurrentlyStarred = starClicked;
+    setStarClicked(!isCurrentlyStarred);
+    if (isCurrentlyStarred) {
+      setFavorites(favorites.filter(fav => JSON.parse(fav).service !== props.service));
+    } else {
       const service = props.service;
       const path = props.servicePath;
       const obj = { service, path };
       const favorite = JSON.stringify(obj);
       setFavorites([...favorites, favorite]);
-    } else {
-      setFavorites(favorites.filter(fav => JSON.parse(fav).service !== props.service));
     }
   };
 

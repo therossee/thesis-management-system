@@ -185,7 +185,7 @@ export default function CustomBadge({ variant, content, type, filters, applyFilt
   const renderTruncatedBadge = () => {
     const contentArray = Array.isArray(content) ? content : [content];
     const truncatedContentArray = contentArray.slice(2);
-    content = [...contentArray.slice(0, 2)];
+    content = contentArray.slice(0, 2);
     return (
       <>
         {renderSimpleBadge()}

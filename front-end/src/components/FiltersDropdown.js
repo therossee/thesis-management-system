@@ -40,6 +40,18 @@ FiltersOptionWithEmail.propTypes = {
   isFocused: PropTypes.bool.isRequired,
 };
 
+const formatFilter = (item, variant) => {
+  if (variant === 'teacher' || variant === 'supervisor') {
+    return {
+      value: item.id,
+      label: item.type || item.keyword || `${item.lastName} ${item.firstName}`,
+      email: item.email,
+      variant,
+    };
+  }
+  return { value: item.id, label: item.type || item.keyword || `${item.lastName} ${item.firstName}`, variant };
+};
+
 export default function FiltersDropdown({ filters, applyFilters, resetFilters }) {
   const { theme } = useContext(ThemeContext);
   const appliedTheme = theme === 'auto' ? getSystemTheme() : theme;
@@ -108,18 +120,6 @@ export default function FiltersDropdown({ filters, applyFilters, resetFilters })
       environment: getStaticOption('environment', filters.isInternal),
     });
   }, [filters]);
-
-  function formatFilter(item, variant) {
-    if (variant === 'teacher' || variant === 'supervisor') {
-      return {
-        value: item.id,
-        label: item.type || item.keyword || `${item.lastName} ${item.firstName}`,
-        email: item.email,
-        variant,
-      };
-    }
-    return { value: item.id, label: item.type || item.keyword || `${item.lastName} ${item.firstName}`, variant };
-  }
 
   function getStaticOption(type, value) {
     return options[type][value - 1];

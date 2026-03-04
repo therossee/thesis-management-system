@@ -66,8 +66,7 @@ export default function PaginationItem({
         </Dropdown>
         <span className="pagination-text">
           {t('carriera.proposte_di_tesi.showing')} {totalPages === 0 ? 0 : startIndex}{' '}
-          {t('carriera.proposte_di_tesi.to')}{' '}
-          {currentPage * proposalsPerPage > count ? count : currentPage * proposalsPerPage}{' '}
+          {t('carriera.proposte_di_tesi.to')} {Math.min(currentPage * proposalsPerPage, count)}{' '}
           {t('carriera.proposte_di_tesi.of')} {count}
         </span>
       </div>

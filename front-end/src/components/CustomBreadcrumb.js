@@ -59,7 +59,7 @@ export default function CustomBreadcrumb() {
   const { t } = useTranslation();
   const location = useLocation();
   const navigate = useNavigate();
-  const pathnames = location.pathname.split('/').filter(x => x);
+  const pathnames = location.pathname.split('/').filter(Boolean);
 
   const checkActiveElement = (value, index) => {
     if (value === 'proposta_di_tesi') {
