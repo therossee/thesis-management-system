@@ -1,16 +1,23 @@
 require('jest');
 
-const { sequelize } = require('../../src/models');
+const { sequelize, LoggedStudent, Student } = require('../../src/models');
 const {
   getStudentData,
   getStudents,
   getLoggedStudent,
   updateLoggedStudent,
+  getRequiredSummaryForLoggedStudent,
 } = require('../../src/controllers/students');
 
 jest.mock('../../src/models', () => ({
   sequelize: {
     query: jest.fn(),
+  },
+  LoggedStudent: {
+    findOne: jest.fn(),
+  },
+  Student: {
+    findOne: jest.fn(),
   },
 }));
 
@@ -300,5 +307,114 @@ describe('updateLoggedStudent', () => {
 
     expect(res.status).toHaveBeenCalledWith(500);
     expect(res.json).toHaveBeenCalledWith({ error: 'An error occurred' });
+  });
+});
+
+describe('getRequiredSummaryForLoggedStudent', () => {
+  test('should return 404 if logged student is not found', async () => {
+    LoggedStudent.findOne.mockResolvedValueOnce(null);
+
+    const res = {
+      json: jest.fn(),
+      status: jest.fn(() => res),
+    };
+
+    await getRequiredSummaryForLoggedStudent({}, res);
+
+    expect(res.status).toHaveBeenCalledWith(404);
+    expect(res.json).toHaveBeenCalledWith({ error: 'Logged student not found' });
+  });
+
+  test('should return 404 if student is not found', async () => {
+    LoggedStudent.findOne.mockResolvedValueOnce({ student_id: '1' });
+    Student.findOne.mockResolvedValueOnce(null);
+
+    const res = {
+      json: jest.fn(),
+      status: jest.fn(() => res),
+    };
+
+    await getRequiredSummaryForLoggedStudent({}, res);
+
+    expect(res.status).toHaveBeenCalledWith(404);
+    expect(res.json).toHaveBeenCalledWith({ error: 'Student not found' });
+  });
+
+  test('should return 404 if degree programme is not found', async () => {
+    LoggedStudent.findOne.mockResolvedValueOnce({ student_id: '1' });
+    Student.findOne.mockResolvedValueOnce({ id: '1', degree_id: '37-18' });
+    sequelize.query.mockResolvedValueOnce([]);
+
+    const res = {
+      json: jest.fn(),
+      status: jest.fn(() => res),
+    };
+
+    await getRequiredSummaryForLoggedStudent({}, res);
+
+    expect(res.status).toHaveBeenCalledWith(404);
+    expect(res.json).toHaveBeenCalledWith({ error: 'Degree programme not found' });
+  });
+
+  test('should return requiredSummary true for collegio CL003', async () => {
+    LoggedStudent.findOne.mockResolvedValueOnce({ student_id: '1' });
+    Student.findOne.mockResolvedValueOnce({ id: '1', degree_id: '37-18' });
+    sequelize.query.mockResolvedValueOnce([{ collegioId: 'CL003' }]);
+
+    const res = {
+      json: jest.fn(),
+      status: jest.fn(() => res),
+    };
+
+    await getRequiredSummaryForLoggedStudent({}, res);
+
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(res.json).toHaveBeenCalledWith({ requiredSummary: true });
+  });
+
+  test('should return requiredSummary false for non-required collegio', async () => {
+    LoggedStudent.findOne.mockResolvedValueOnce({ student_id: '1' });
+    Student.findOne.mockResolvedValueOnce({ id: '1', degree_id: '32-1' });
+    sequelize.query.mockResolvedValueOnce([{ collegioId: 'CL009' }]);
+
+    const res = {
+      json: jest.fn(),
+      status: jest.fn(() => res),
+    };
+
+    await getRequiredSummaryForLoggedStudent({}, res);
+
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(res.json).toHaveBeenCalledWith({ requiredSummary: false });
+  });
+
+  test('should return 404 on student data not found error branch', async () => {
+    LoggedStudent.findOne.mockRejectedValueOnce(new Error('Student data not found'));
+
+    const res = {
+      json: jest.fn(),
+      status: jest.fn(() => res),
+    };
+
+    await getRequiredSummaryForLoggedStudent({}, res);
+
+    expect(res.status).toHaveBeenCalledWith(404);
+    expect(res.json).toHaveBeenCalledWith({ error: 'Student data not found' });
+  });
+
+  test('should return 500 on unexpected error', async () => {
+    LoggedStudent.findOne.mockResolvedValueOnce({ student_id: '1' });
+    Student.findOne.mockResolvedValueOnce({ id: '1', degree_id: '37-18' });
+    sequelize.query.mockRejectedValueOnce(new Error('Unexpected error'));
+
+    const res = {
+      json: jest.fn(),
+      status: jest.fn(() => res),
+    };
+
+    await getRequiredSummaryForLoggedStudent({}, res);
+
+    expect(res.status).toHaveBeenCalledWith(500);
+    expect(res.json).toHaveBeenCalledWith({ error: 'Unexpected error' });
   });
 });

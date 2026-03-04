@@ -1,6 +1,8 @@
 const { QueryTypes } = require('sequelize');
-const { sequelize } = require('../models');
+const { sequelize, LoggedStudent, Student } = require('../models');
 const StudentSchema = require('../schemas/Student');
+
+const REQUIRED_SUMMARY_COLLEGIO_IDS = new Set(['CL003']);
 
 const getStudentData = async () => {
   const studentData = await sequelize.query(
@@ -114,4 +116,44 @@ const updateLoggedStudent = async (req, res) => {
   }
 };
 
-module.exports = { getStudentData, getStudents, getLoggedStudent, updateLoggedStudent };
+const getRequiredSummaryForLoggedStudent = async (_req, res) => {
+  try {
+    const loggedStudent = await LoggedStudent.findOne();
+    if (!loggedStudent) {
+      return res.status(404).json({ error: 'Logged student not found' });
+    }
+    const student = await Student.findOne({ where: { id: loggedStudent.student_id } });
+    if (!student) {
+      return res.status(404).json({ error: 'Student not found' });
+    }
+    const collegio_id = await sequelize.query(
+      `
+      SELECT d.id_collegio AS collegioId
+      FROM degree_programme d
+      WHERE d.id = :degreeId
+      `,
+      { replacements: { degreeId: student.degree_id }, type: QueryTypes.SELECT },
+    );
+
+    if (!collegio_id.length) {
+      return res.status(404).json({ error: 'Degree programme not found' });
+    }
+
+    const collegioId = collegio_id[0].collegioId;
+    const requiredSummary = REQUIRED_SUMMARY_COLLEGIO_IDS.has(collegioId);
+    res.status(200).json({ requiredSummary });
+  } catch (error) {
+    if (error.message === 'Student data not found') {
+      return res.status(404).json({ error: error.message });
+    }
+    return res.status(500).json({ error: error.message });
+  }
+};
+
+module.exports = {
+  getStudentData,
+  getStudents,
+  getLoggedStudent,
+  updateLoggedStudent,
+  getRequiredSummaryForLoggedStudent,
+};

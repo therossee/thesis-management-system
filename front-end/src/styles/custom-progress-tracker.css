@@ -1,0 +1,394 @@
+.timeline-scroll {
+  max-height: none;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-right: 0;
+  border-radius: 6px;
+  background-color: var(--background);
+  flex: 1;
+  min-height: 0;
+}
+
+.timeline-card {
+  height: min(760px, calc(100vh - 320px));
+  max-height: calc(100vh - 320px);
+  min-height: 320px;
+  overflow: hidden;
+}
+
+.timeline-card-body {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.timeline-header-row {
+  flex-wrap: nowrap;
+  min-width: 0;
+}
+
+.timeline-deadlines-btn {
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+@media (max-width: 1230px) and (min-width: 768px) {
+  .timeline-header-row {
+    flex-wrap: wrap;
+    row-gap: 0.35rem;
+    align-items: flex-start !important;
+  }
+
+  .timeline-header-row .timeline-deadlines-btn {
+    margin-left: 0 !important;
+    flex: 0 0 auto;
+    width: auto;
+    max-width: none;
+  }
+}
+
+@media (max-width: 348px) {
+  .timeline-header-row {
+    flex-wrap: wrap;
+    row-gap: 0.35rem;
+    align-items: flex-start !important;
+  }
+
+  .timeline-header-row .timeline-deadlines-btn {
+    margin-left: 0 !important;
+    flex: 0 0 auto;
+    width: auto;
+    max-width: none;
+  }
+}
+
+@media (max-width: 991px) {
+  .timeline-card {
+    height: auto;
+    max-height: none;
+    min-height: 0;
+  }
+}
+
+.progress-tracker-container {
+  margin-bottom: 0;
+  padding: 1rem;
+  background-color: transparent;
+  border-radius: 0;
+  position: relative;
+}
+
+.progress-step {
+  display: flex;
+  margin-bottom: 1rem;
+  color: var(--primary);
+  position: relative;
+  z-index: 1;
+}
+
+.progress-step::after {
+  content: '';
+  position: absolute;
+  left: 12px;
+  top: 24px;
+  bottom: -1rem;
+  width: 2px;
+  background-image: linear-gradient(to bottom, var(--gray-500) 50%, transparent 50%);
+  background-size: 2px 8px;
+  background-repeat: repeat-y;
+  z-index: 0;
+}
+
+.progress-step:last-child::after {
+  content: none;
+}
+
+.progress-step.faded {
+  opacity: 1;
+}
+
+.progress-step.faded .progress-step-title,
+.progress-step.faded .progress-step-description,
+.progress-step.faded .progress-step-date {
+  color: var(--text-muted);
+}
+
+.progress-step.faded .progress-step-circle {
+  border-color: var(--gray-300);
+  background-color: var(--gray-100);
+  color: var(--gray-400);
+}
+
+.progress-step-marker {
+  min-width: 24px;
+  margin-right: 1rem;
+}
+
+.progress-step-circle {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  position: relative;
+  transition: all 0.3s ease;
+}
+
+.progress-step-circle.pending {
+  border: 2px solid var(--primary-400);
+  background-color: var(--primary-200);
+  color: var(--primary-700);
+}
+
+.progress-step-circle.approved {
+  border: 2px solid var(--green-700);
+  background-color: var(--green-200);
+  color: var(--green-700);
+}
+
+.progress-step-circle.rejected {
+  border: 2px solid var(--red-700);
+  background-color: var(--red-200);
+  color: var(--red-700);
+}
+
+.progress-step-circle.cancelled {
+  border: 2px solid var(--red-700);
+  background-color: var(--red-200);
+  color: var(--red-700);
+}
+
+.progress-step-circle.inactive {
+  border: 2px solid var(--gray-500);
+  background-color: var(--gray-100);
+  color: var(--gray-500);
+}
+
+.progress-step-circle.waiting {
+  border: 2px solid var(--gray-600);
+  background-color: var(--gray-200);
+  color: var(--gray-700);
+}
+
+.progress-step-circle.completed {
+  border: 2px solid var(--primary-200);
+  background-color: var(--background);
+}
+
+.progress-step-content {
+  flex-grow: 1;
+}
+
+.progress-step-title {
+  margin-bottom: 0.4rem;
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-semibold);
+  color: var(--text);
+  transition: all 0.3s ease;
+}
+
+.progress-step-description {
+  margin-bottom: 0;
+  font-size: var(--font-size-xs);
+  color: var(--text);
+  line-height: 1.4;
+}
+
+.progress-step-date {
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+  margin-top: 0.5rem;
+  display: flex;
+  align-items: center;
+}
+
+.progress-step-note-toggle {
+  font-size: var(--font-size-xs);
+  color: var(--primary);
+  margin-top: 0.5rem;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  user-select: none;
+  transition: opacity 0.2s ease;
+  font-weight: var(--font-weight-medium);
+}
+
+.progress-step-note-toggle:hover {
+  opacity: 0.8;
+  text-decoration: underline;
+}
+
+.progress-step-note {
+  font-size: var(--font-size-xs);
+  color: var(--text);
+  padding: 0.75rem;
+  background-color: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--border-radius);
+  margin-top: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  line-height: 1.4;
+  width: auto;
+}
+
+.progress-step-note-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  user-select: none;
+  transition: opacity 0.2s ease;
+}
+
+.progress-step-note-header:hover {
+  opacity: 0.8;
+}
+
+.progress-step-note-header i.fa-chevron-up,
+.progress-step-note-header i.fa-chevron-down {
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+  transition: transform 0.2s ease;
+}
+
+.progress-step-note p {
+  margin: 0;
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+  line-height: 1.5;
+  border-top: 1px solid var(--border);
+}
+
+.progress-step-circle i {
+  color: inherit;
+  display: inline-flex;
+  line-height: 1;
+  position: absolute;
+}
+
+.deadline-modal-body {
+  padding-top: 0.5rem;
+}
+
+.deadline-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.next-deadline-card {
+  border: 1px solid var(--primary-300);
+  background-color: var(--primary-100);
+  border-radius: 10px;
+  padding: 0.75rem;
+}
+
+.next-deadline-header {
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  color: var(--primary-700);
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.next-deadline-title {
+  margin-top: 0.2rem;
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-semibold);
+  color: var(--text);
+}
+
+.next-deadline-meta {
+  margin-top: 0.35rem;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: var(--font-size-sm);
+  color: var(--text-muted);
+}
+
+.next-deadline-separator {
+  color: var(--gray-500);
+}
+
+.next-deadline-meta span:first-child {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--primary-700);
+  background-color: transparent;
+  border: 0;
+  border-radius: 0;
+  padding: 0;
+  line-height: 1.3;
+}
+
+.deadline-row {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 0.65rem 0.75rem;
+  background-color: var(--surface);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.deadline-row-main {
+  min-width: 0;
+}
+
+.deadline-row-title {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--text);
+}
+
+.deadline-row-date {
+  display: inline-block;
+  margin-top: 0.2rem;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  color: var(--primary-700);
+  background-color: transparent;
+  border: 0;
+  border-radius: 0;
+  padding: 0;
+  line-height: 1.3;
+}
+
+.deadline-status {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 0.2rem 0.6rem;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  white-space: nowrap;
+}
+
+.deadline-status-overdue {
+  color: var(--red-700);
+  background-color: var(--red-100);
+}
+
+.deadline-status-today {
+  color: var(--orange-800);
+  background-color: var(--orange-100);
+}
+
+.deadline-status-soon {
+  color: var(--orange-700);
+  background-color: var(--orange-100);
+}
+
+.deadline-status-upcoming {
+  color: var(--gray-700);
+  background-color: var(--gray-200);
+}
+
+.deadline-status-days {
+  margin-left: 0.35rem;
+  opacity: 0.85;
+}

@@ -1,5 +1,13 @@
 const { Op } = require('sequelize');
-const { Keyword, sequelize, Teacher, ThesisProposal, Type } = require('../models');
+const {
+  Keyword,
+  sequelize,
+  Teacher,
+  ThesisProposal,
+  ThesisProposalDegree,
+  Type,
+  ThesisApplication,
+} = require('../models');
 const { getStudentData } = require('./students');
 const { buildWhereConditions } = require('../utils/filters');
 const { getIncludes } = require('../utils/includes');
@@ -11,7 +19,7 @@ const selectKeywordAttributes = require('../utils/selectKeywordAttributes');
 const selectTeacherAttributes = require('../utils/selectTeacherAttributes');
 const teacherOverviewSchema = require('../schemas/TeacherOverview');
 
-const camelToSnakeCase = str => str.replace(/([A-Z])/g, '_$1').toLowerCase();
+const camelToSnakeCase = str => str.replaceAll(/([A-Z])/g, '_$1').toLowerCase();
 
 const fetchThesisProposals = async (where, includes, lang, pagination) => {
   const { limit, offset, orderBy, sortBy } = pagination;
@@ -179,7 +187,7 @@ const getThesisProposalsTeachers = async (req, res) => {
     const teachers = await Teacher.findAll({
       attributes: selectTeacherAttributes(),
       where,
-      order: [[sequelize.fn('concat', sequelize.col('first_name'), ' ', sequelize.col('last_name')), 'ASC']],
+      order: [[sequelize.fn('concat', sequelize.col('last_name'), ' ', sequelize.col('first_name')), 'ASC']],
     });
 
     res.json(teachers.map(teacher => teacherOverviewSchema.parse(teacher)));
@@ -201,8 +209,36 @@ const getThesisProposalById = async (req, res) => {
       return res.status(404).json({ error: 'Thesis proposal not found' });
     }
 
+    const containerIds = await ThesisProposalDegree.findAll({
+      where: { thesis_proposal_id: req.params.thesisProposalId },
+      attributes: ['container_id'],
+    });
+
+    console.log('Container IDs:', containerIds);
+
     const formattedThesisProposal = formatThesisProposals([thesisProposal], true)[0];
     res.json(formattedThesisProposal);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+const getProposalAvailability = async (req, res) => {
+  try {
+    const thesisProposal = await ThesisProposal.findByPk(req.params.thesisProposalId);
+
+    if (!thesisProposal) {
+      return res.status(404).json({ error: 'Thesis proposal not found' });
+    }
+
+    const available = await ThesisApplication.findOne({
+      where: {
+        thesis_proposal_id: req.params.thesisProposalId,
+        status: 'approved',
+      },
+    });
+
+    return res.status(200).json(available ? { available: false } : { available: true });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -215,4 +251,5 @@ module.exports = {
   getThesisProposalsKeywords,
   getThesisProposalsTeachers,
   getThesisProposalById,
+  getProposalAvailability,
 };

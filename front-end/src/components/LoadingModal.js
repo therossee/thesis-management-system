@@ -6,7 +6,7 @@ import PropTypes from 'prop-types';
 
 export default function LoadingModal({ show, onHide }) {
   return (
-    <Modal show={show} onHide={onHide} backdrop="static" keyboard={false} animation={true}>
+    <Modal show={show} onHide={onHide} backdrop="static" keyboard={false} animation={true} centered>
       <Modal.Body>
         <div className="text-center">
           <Spinner animation="border">

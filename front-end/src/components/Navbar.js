@@ -116,6 +116,7 @@ export default function PoliNavbar(props) {
           className={`nav-logo ${desktopToggle ? 'd-none' : 'd-none d-lg-block'}`}
           as={Link}
           target="_blank"
+          rel="noopener noreferrer"
           to="https://www.polito.it/"
           style={{
             width: 'auto',
@@ -130,6 +131,7 @@ export default function PoliNavbar(props) {
           className={`nav-logo-reduced ${desktopToggle ? 'd-none d-sm-block' : 'd-none d-sm-block d-lg-none'}`}
           as={Link}
           target="_blank"
+          rel="noopener noreferrer"
           to="https://didattica.polito.it/"
           style={{
             width: 'auto',
@@ -209,6 +211,7 @@ export default function PoliNavbar(props) {
               as={Link}
               to="https://mail.studenti.polito.it/?_task=mail&_mbox=INBOX"
               target="_blank"
+              rel="noopener noreferrer"
               style={{ display: 'flex', alignItems: 'center' }}
               onMouseEnter={() => setHoveredIcon('envelope')}
               onMouseLeave={() => setHoveredIcon(null)}

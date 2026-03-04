@@ -2,6 +2,7 @@ const { z } = require('zod');
 
 const keywordSchema = require('./Keyword');
 const teacherSchema = require('./Teacher');
+const companySchema = require('./Company');
 const typeSchema = require('./Type');
 
 const thesisProposalOverviewSchema = z
@@ -21,6 +22,7 @@ const thesisProposalOverviewSchema = z
     keywords: z.array(keywordSchema).default([]),
     types: z.array(typeSchema).default([]),
     teachers: z.array(teacherSchema).default([]),
+    company: companySchema.optional().nullable(),
   })
   .transform(proposal => {
     const teachers = proposal.teachers;
@@ -47,6 +49,7 @@ const thesisProposalOverviewSchema = z
       attachmentUrl: proposal.attachment_url,
       keywords: proposal.keywords,
       types: proposal.types,
+      company: proposal.company,
     };
   });
 

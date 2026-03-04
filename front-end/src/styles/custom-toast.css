@@ -1,0 +1,129 @@
+/* Base toast styles */
+.toast-container {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.custom-toast-wrapper {
+  position: fixed;
+  top: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1060;
+}
+
+.custom-toast {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  min-width: 280px;
+  border-radius: 9px;
+  border: 1px solid var(--gray-400);
+  background: #fff;
+  padding: 12px 16px;
+  box-shadow: 0 18px 44px rgba(15, 23, 42, 0.18);
+  font-family: var(--font-family);
+  color: var(--text-800);
+  width: auto;
+}
+
+.custom-toast .toast-header,
+.custom-toast .toast-body {
+  border: 0;
+  background: transparent;
+  padding: 0;
+}
+
+.custom-toast .toast-header {
+  width: 100%;
+}
+
+.custom-toast__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  flex: 0 0 auto;
+  margin-top: 2px;
+}
+
+.custom-toast__content {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+  min-width: 0;
+}
+
+.custom-toast__title {
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 150%;
+}
+
+.custom-toast__message {
+  font-size: 14px;
+  line-height: 150%;
+  color: var(--text);
+}
+
+.custom-toast__close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  background: transparent;
+  color: var(--text-600);
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 999px;
+  transition: background-color 0.2s ease;
+  flex: 0 0 auto;
+  margin-left: auto;
+  margin-top: -4px;
+}
+
+.custom-toast__close:hover {
+  background: #f3f4f6;
+}
+
+/* Success toast */
+.custom-toast--success {
+  border-color: var(--success-700);
+  background: var(--success-100);
+  color: var(--success-700);
+}
+
+.custom-toast--success .custom-toast__icon {
+  background: var(--success-200);
+  color: var(--success-700);
+}
+
+.custom-toast--success .custom-toast__title,
+.custom-toast--success .custom-toast__message,
+.custom-toast--success .toast-header,
+.custom-toast--success .toast-body {
+  color: var(--success-700);
+}
+
+/* Error toast */
+.custom-toast--error {
+  border-color: var(--error-700);
+  background: var(--error-100);
+  color: var(--error-700);
+}
+
+.custom-toast--error .custom-toast__icon {
+  background: var(--error-200);
+  color: var(--error-700);
+}
+
+.custom-toast--error .custom-toast__title,
+.custom-toast--error .custom-toast__message,
+.custom-toast--error .toast-header,
+.custom-toast--error .toast-body {
+  color: var(--error-700);
+}

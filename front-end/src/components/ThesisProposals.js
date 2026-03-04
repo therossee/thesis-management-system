@@ -5,6 +5,8 @@ import Form from 'react-bootstrap/Form';
 import InputGroup from 'react-bootstrap/InputGroup';
 import { useTranslation } from 'react-i18next';
 
+import PropTypes from 'prop-types';
+
 import useThesisProposalsState from '../hooks/useThesisProposalsState';
 import '../styles/searchbar.css';
 import '../styles/thesis-proposals.css';
@@ -17,9 +19,16 @@ import ProposalsNotFound from './ProposalsNotFound';
 import SegmentedControl from './SegmentedControl';
 import SortDropdown from './SortDropdown';
 import { ThesisItem } from './ThesisItem';
+import ThesisRequestModal from './ThesisRequestModal';
 
-export default function ThesisProposals() {
+export default function ThesisProposals({ showRequestModal, setShowRequestModal }) {
   const { t } = useTranslation();
+  const sortI18nKeyByField = {
+    topic: 'topic',
+    description: 'description',
+    creationDate: 'creation_date',
+    expirationDate: 'expiration_date',
+  };
   const {
     count,
     pageProposals,
@@ -82,7 +91,9 @@ export default function ThesisProposals() {
             variant={'sorting-' + state.sorting.orderBy}
             content={{
               content:
-                t('carriera.proposte_di_tesi.sort_by') + ': ' + t('carriera.proposte_di_tesi.' + state.sorting.sortBy),
+                t('carriera.proposte_di_tesi.sort_by') +
+                ': ' +
+                t('carriera.proposte_di_tesi.' + (sortI18nKeyByField[state.sorting.sortBy] || state.sorting.sortBy)),
             }}
             type="reset"
             resetSorting={() => applySorting({ sortBy: 'id', orderBy: 'ASC' })}
@@ -105,8 +116,6 @@ export default function ThesisProposals() {
               segments={segments}
             />
             <div className="d-flex gap-3 flex-wrap">
-              <FiltersDropdown filters={state.filters} applyFilters={applyFilters} resetFilters={resetFilters} />
-              <SortDropdown sorting={state.sorting} applySorting={applySorting} />
               <Form style={{ minWidth: '220px', zIndex: '1' }} onSubmit={e => e.preventDefault()}>
                 <InputGroup className="flex-nowrap w-100">
                   <Form.Control
@@ -128,6 +137,8 @@ export default function ThesisProposals() {
                   <i className="fa-solid fa-magnifying-glass search-icon" />
                 </InputGroup>
               </Form>
+              <FiltersDropdown filters={state.filters} applyFilters={applyFilters} resetFilters={resetFilters} />
+              <SortDropdown sorting={state.sorting} applySorting={applySorting} />
             </div>
           </div>
           {(state.filters.isAbroad != 0 ||
@@ -174,6 +185,12 @@ export default function ThesisProposals() {
           )}
         </>
       )}
+      <ThesisRequestModal show={showRequestModal} setShow={setShowRequestModal} />
     </div>
   );
 }
+
+ThesisProposals.propTypes = {
+  showRequestModal: PropTypes.bool.isRequired,
+  setShowRequestModal: PropTypes.func.isRequired,
+};

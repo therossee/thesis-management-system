@@ -1,5 +1,5 @@
 :root {
-  --sidebar-bg-active: rgba(183, 225, 255, 0.5);
+  --sidebar-bg-active: rgba(187, 212, 230, 0.5);
   --sidebar-link: var(--text-700);
   --sidebar-link-hover: var(--text-700);
   --sidebar-link-active: var(--primary-700);
@@ -22,6 +22,7 @@
   --custom-dropdown-bg: var(--gray-100);
   --custom-dropdown-hover: var(--gray-200);
   --custom-dropdown-color: var(--text-700);
+  --text-muted: var(--text-500);
 
   /* Font Family */
   --font-primary: 'Montserrat', sans-serif;
@@ -88,6 +89,7 @@
   --custom-dropdown-bg: var(--primary-700);
   --custom-dropdown-hover: var(--surface);
   --custom-dropdown-color: var(--white);
+  --text-muted: var(--white);
 
   input[type='search']::-webkit-search-cancel-button {
     filter: invert(1) saturate(0);

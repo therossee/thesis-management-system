@@ -79,6 +79,14 @@ module.exports = (sequelize, DataTypes) => {
           key: 'id',
         },
       },
+      company_id: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+        references: {
+          model: 'company',
+          key: 'id',
+        },
+      },
     },
     {
       tableName: 'thesis_proposal',

@@ -1,12 +1,13 @@
 import React, { useContext, useEffect, useState } from 'react';
 
 import { useTranslation } from 'react-i18next';
-import { useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 
 import API from '../../API';
 import { BodyDataLoadingContext } from '../../App';
 import CustomBadge from '../../components/CustomBadge';
 import CustomBreadcrumb from '../../components/CustomBreadcrumb';
+import CustomHeader from '../../components/CustomHeader';
 import ThesisProposalDetail from '../../components/ThesisProposalDetail';
 
 function PropostaDiTesi() {
@@ -15,7 +16,7 @@ function PropostaDiTesi() {
   const [thesisProposal, setThesisProposal] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const { t, i18n } = useTranslation();
-
+  const navigate = useNavigate();
   useEffect(() => {
     setBodyDataLoading(true);
     setIsLoading(true);
@@ -43,6 +44,7 @@ function PropostaDiTesi() {
   return (
     <>
       <CustomBreadcrumb />
+      <CustomHeader title={t('carriera.proposta_di_tesi.dettagli_proposta_di_tesi')} action={() => navigate(-1)} />
       {renderContent()}
     </>
   );

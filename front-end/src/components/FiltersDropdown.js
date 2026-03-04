@@ -14,6 +14,32 @@ import { getSystemTheme } from '../utils/utils';
 import CustomBadge from './CustomBadge';
 import CustomToggle from './CustomToggle';
 
+const FiltersOptionWithEmail = props => {
+  const { data, innerProps, isFocused } = props;
+  return (
+    <div
+      {...innerProps}
+      style={{
+        backgroundColor: isFocused ? 'var(--dropdown-hover)' : 'inherit',
+        padding: '8px 12px',
+        cursor: 'pointer',
+      }}
+    >
+      <div style={{ fontWeight: 'bold', color: 'var(--text-800)' }}>{data.label}</div>
+      {data.email && <div style={{ fontSize: '0.85em', color: 'var(--text-700)' }}>{data.email}</div>}
+    </div>
+  );
+};
+
+FiltersOptionWithEmail.propTypes = {
+  data: PropTypes.shape({
+    label: PropTypes.string.isRequired,
+    email: PropTypes.string,
+  }).isRequired,
+  innerProps: PropTypes.object.isRequired,
+  isFocused: PropTypes.bool.isRequired,
+};
+
 export default function FiltersDropdown({ filters, applyFilters, resetFilters }) {
   const { theme } = useContext(ThemeContext);
   const appliedTheme = theme === 'auto' ? getSystemTheme() : theme;
@@ -84,6 +110,14 @@ export default function FiltersDropdown({ filters, applyFilters, resetFilters })
   }, [filters]);
 
   function formatFilter(item, variant) {
+    if (variant === 'teacher' || variant === 'supervisor') {
+      return {
+        value: item.id,
+        label: item.type || item.keyword || `${item.lastName} ${item.firstName}`,
+        email: item.email,
+        variant,
+      };
+    }
     return { value: item.id, label: item.type || item.keyword || `${item.lastName} ${item.firstName}`, variant };
   }
 
@@ -142,20 +176,21 @@ export default function FiltersDropdown({ filters, applyFilters, resetFilters })
       <>
         <div className="filters-title">
           <div>{t(`carriera.proposte_di_tesi.${name}`)}</div>
-          <Button
-            className={`link-${appliedTheme}-dropdown p-0`}
-            onClick={() => setSelected(prev => ({ ...prev, [name]: [] }))}
-            variant="link"
-            size="sm"
-          >
-            {t(`carriera.proposte_di_tesi.reset`)}
-          </Button>
         </div>
         {isMulti ? (
           <Select
             isMulti={isMulti}
             isClearable={false}
-            components={{ MultiValue: CustomMultiValue, IndicatorSeparator: () => null }}
+            components={
+              name === 'supervisors'
+                ? {
+                    SingleValue: CustomSingleValue,
+                    MultiValue: CustomMultiValue,
+                    Option: FiltersOptionWithEmail,
+                    IndicatorSeparator: () => null,
+                  }
+                : { MultiValue: CustomMultiValue, IndicatorSeparator: () => null }
+            }
             name={name}
             defaultValue={selected[name]}
             options={options[name]}
@@ -166,6 +201,16 @@ export default function FiltersDropdown({ filters, applyFilters, resetFilters })
             onMenuClose={() => setIsMenuOpen(false)}
             className="multi-select"
             classNamePrefix="select"
+            filterOption={
+              name === 'supervisors'
+                ? (candidate, input) => {
+                    const label = candidate.data.label.toLowerCase();
+                    const email = candidate.data.email ? candidate.data.email.toLowerCase() : '';
+                    const inputLower = input.toLowerCase();
+                    return label.includes(inputLower) || email.includes(inputLower);
+                  }
+                : null
+            }
             styles={{
               option: (basicStyles, state) => ({
                 ...basicStyles,

@@ -11,7 +11,7 @@
 
 .roundCard .card-body {
   color: var(--section-description);
-  font-size: var(--font-size-xs);
+  font-size: var(--font-size-sm);
 }
 
 .roundCard > .card-header {

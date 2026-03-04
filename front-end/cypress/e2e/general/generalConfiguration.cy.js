@@ -53,6 +53,18 @@ describe('Theme switching', () => {
     cy.stub(win, 'matchMedia').callsFake(createFakeMatchMedia);
   }
 
+  function createFakeLightMatchMedia() {
+    return {
+      matches: false,
+      addListener: () => {},
+      removeListener: () => {},
+    };
+  }
+
+  function stubMatchMediaLight(win) {
+    cy.stub(win, 'matchMedia').callsFake(createFakeLightMatchMedia);
+  }
+
   it('should toggle themes and correctly apply the system theme when auto is selected', () => {
     // Step 1: Change theme to dark
     cy.get('#dark').click();
@@ -100,5 +112,14 @@ describe('Theme switching', () => {
 
     // Verify theme is dark through the data-theme attribute
     cy.get('html').should('have.attr', 'data-theme', 'dark');
+  });
+
+  it('should apply light theme in auto mode when system preference is not dark', () => {
+    cy.get('#dark').click();
+    cy.get('html').should('have.attr', 'data-theme', 'dark');
+
+    cy.window().then(stubMatchMediaLight);
+    cy.get('#auto').click();
+    cy.get('html').should('have.attr', 'data-theme', 'light');
   });
 });

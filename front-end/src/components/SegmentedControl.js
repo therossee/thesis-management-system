@@ -31,9 +31,9 @@ export default function SegmentedControl({ name, segments, callback, defaultInde
 
   useEffect(() => {
     updateStyles();
-    window.addEventListener('resize', updateStyles);
+    globalThis.addEventListener('resize', updateStyles);
     return () => {
-      window.removeEventListener('resize', updateStyles);
+      globalThis.removeEventListener('resize', updateStyles);
     };
   }, [activeIndex, callback, controlRef, segments]);
 
