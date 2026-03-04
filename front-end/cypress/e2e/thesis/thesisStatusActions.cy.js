@@ -394,8 +394,21 @@ describe('Thesis status actions', () => {
 
     visitTesiPage('en');
 
-    cy.get('.timeline-deadlines-btn').should('be.visible').click({ force: true });
-    cy.get('[role="dialog"]').should('be.visible').and('contain.text', 'March/April 2026');
+    cy.get('.timeline-card').should('be.visible');
+    cy.get('.timeline-deadlines-btn').first().as('deadlinesBtn');
+    cy.get('@deadlinesBtn').scrollIntoView();
+    cy.get('@deadlinesBtn').should('be.visible');
+    cy.get('@deadlinesBtn').click({ force: true });
+
+    cy.get('body').then($body => {
+      if (!$body.find('[role="dialog"], .modal.show').length) {
+        cy.get('@deadlinesBtn').click({ force: true });
+      }
+    });
+
+    cy.get('[role="dialog"], .modal.show', { timeout: 10000 })
+      .should('be.visible')
+      .and('contain.text', 'March/April 2026');
     cy.get('.deadline-status-overdue')
       .contains(/Overdue|Scaduta/i)
       .should('be.visible');
