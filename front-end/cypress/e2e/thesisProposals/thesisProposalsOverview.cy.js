@@ -241,7 +241,7 @@ describe('Thesis proposals overview page', () => {
     // Step 9: Verify that each proposal contains the "Italy thesis" badge
     cy.get('.proposals-container .card-container .roundCard').each(article => {
       cy.wrap(article)
-        .contains(/tesi in italia|italy thesis/i)
+        .contains(/tesi in italia|thesis in italy/i)
         .should('be.visible');
     });
 
@@ -300,7 +300,7 @@ describe('Thesis proposals overview page', () => {
       if (cards.length > 0) {
         cy.get('.proposals-container .card-container .roundCard').each(article => {
           cy.wrap(article)
-            .contains(/tesi all'estero|abroad thesis/i)
+            .contains(/tesi all'estero|thesis abroad/i)
             .should('be.visible');
         });
       } else {

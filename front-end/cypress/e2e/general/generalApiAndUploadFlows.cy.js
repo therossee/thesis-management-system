@@ -36,10 +36,10 @@ const TEACHERS = [
 const DEADLINES = {
   graduationSession: {
     id: 1,
-    session_name: 'Marzo/Aprile 2026',
-    session_name_en: 'March/April 2026',
+    sessionName: 'Marzo/Aprile 2026',
+    sessionNameEn: 'March/April 2026',
   },
-  deadlines: [{ deadline_type: 'conclusion_request', deadline_date: '2026-06-18T23:59:59' }],
+  deadlines: [{ deadlineType: 'conclusion_request', deadlineDate: '2026-06-18T23:59:59' }],
 };
 
 const BASE_THESIS = {

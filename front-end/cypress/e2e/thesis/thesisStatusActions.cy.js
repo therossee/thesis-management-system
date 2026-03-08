@@ -79,13 +79,14 @@ const BASE_THESIS = {
 const DEADLINES = {
   graduationSession: {
     id: 1,
-    session_name: 'Marzo/Aprile 2026',
-    session_name_en: 'March/April 2026',
+    sessionName: 'Marzo/Aprile 2026',
+    sessionNameEn: 'March/April 2026',
   },
   deadlines: [
     {
-      deadline_type: 'conclusion_request',
-      deadline_date: '2026-06-18T23:59:59',
+      deadlineType: 'conclusion_request',
+      deadlineDate: '2026-06-18T23:59:59',
+      graduationSessionId: 1,
     },
   ],
 };
@@ -375,19 +376,19 @@ describe('Thesis status actions', () => {
     cy.intercept('GET', '**/api/thesis-conclusion/deadlines*', {
       graduationSession: {
         id: 1,
-        session_name: 'Marzo/Aprile 2026',
-        session_name_en: 'March/April 2026',
+        sessionName: 'Marzo/Aprile 2026',
+        sessionNameEn: 'March/April 2026',
       },
       deadlines: [
         {
-          deadline_type: 'conclusion_request',
-          graduation_session_id: 1,
-          deadline_date: isoDateWithOffsetDays(-1),
+          deadlineType: 'conclusion_request',
+          graduationSessionId: 1,
+          deadlineDate: isoDateWithOffsetDays(-1),
         },
         {
-          deadline_type: 'exams',
-          graduation_session_id: 1,
-          deadline_date: isoDateWithOffsetDays(0),
+          deadlineType: 'exams',
+          graduationSessionId: 1,
+          deadlineDate: isoDateWithOffsetDays(0),
         },
       ],
     }).as('getDeadlines');

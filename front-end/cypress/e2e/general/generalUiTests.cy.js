@@ -90,8 +90,8 @@ describe('General UI Tests', () => {
     }).as('getLastApplication');
     cy.intercept('GET', '**/api/thesis-applications/eligibility*', { eligible: true }).as('getEligibility');
     cy.intercept('GET', '**/api/thesis-conclusion/deadlines*', {
-      graduationSession: { id: 1, session_name: 'Marzo/Aprile 2026' },
-      deadlines: [{ deadline_type: 'thesis_request', deadline_date: '2026-03-30T23:59:59' }],
+      graduationSession: { id: 1, sessionName: 'Marzo/Aprile 2026', sessionNameEn: 'March/April 2026' },
+      deadlines: [{ deadlineType: 'thesis_request', deadlineDate: '2026-03-30T23:59:59', graduationSessionId: 1 }],
     }).as('getDeadlines');
     cy.intercept('GET', '**/api/thesis-proposals/targeted*', {
       thesisProposals: [],

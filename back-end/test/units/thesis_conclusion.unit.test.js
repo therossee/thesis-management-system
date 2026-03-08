@@ -25,6 +25,7 @@ const {
   ThesisKeyword,
   ThesisApplication,
   Deadline,
+  GraduationSession,
   ThesisApplicationStatusHistory,
   ThesisSupervisorCoSupervisor,
   ThesisEmbargo,
@@ -67,7 +68,7 @@ jest.mock('../../src/models', () => ({
   LoggedStudent: { findOne: jest.fn() },
   ThesisApplication: { findOne: jest.fn() },
   SustainableDevelopmentGoal: { findAll: jest.fn() },
-  GraduationSession: {},
+  GraduationSession: { findByPk: jest.fn() },
   Deadline: { findAll: jest.fn() },
   ThesisApplicationStatusHistory: { findOne: jest.fn(), create: jest.fn() },
   sequelize: { transaction: jest.fn() },
@@ -861,25 +862,50 @@ describe('Thesis Conclusion Controller', () => {
           id: 1,
           deadline_type: 'thesis_request',
           graduation_session_id: 10,
-          graduation_session: { id: 10, session_name: 'March' },
+          deadline_date: '2026-03-01T23:59:59.000Z',
+          graduation_session: { id: 10, session_name: 'March', session_name_en: 'March' },
         },
       ];
-      const sessionDeadlines = [{ id: 2, graduation_session_id: 10, deadline_type: 'exams' }];
+      const sessionDeadlines = [
+        {
+          id: 2,
+          graduation_session_id: 10,
+          deadline_type: 'exams',
+          deadline_date: '2026-03-15T23:59:59.000Z',
+        },
+      ];
 
       LoggedStudent.findOne.mockResolvedValue({ student_id: '320213' });
       Thesis.findOne.mockResolvedValue(null);
       ThesisApplication.findOne.mockResolvedValue(null);
       Deadline.findAll.mockResolvedValueOnce(upcoming).mockResolvedValueOnce(sessionDeadlines);
+      GraduationSession.findByPk.mockResolvedValue(upcoming[0].graduation_session);
 
       await getSessionDeadlines(req, res);
 
       expect(Deadline.findAll).toHaveBeenCalledTimes(2);
       expect(Deadline.findAll.mock.calls[0][0].where.deadline_type).toBe('thesis_request');
+      expect(Deadline.findAll.mock.calls[0][0].include).toEqual([
+        { model: GraduationSession, as: 'graduation_session' },
+      ]);
       expect(Deadline.findAll.mock.calls[1][0].where.graduation_session_id).toBe(10);
+      expect(Deadline.findAll.mock.calls[1][0].include).toBeUndefined();
+      expect(GraduationSession.findByPk).toHaveBeenCalledWith(10);
       expect(res.status).toHaveBeenCalledWith(200);
       expect(res.json).toHaveBeenCalledWith({
-        graduationSession: upcoming[0].graduation_session,
-        deadlines: sessionDeadlines,
+        graduationSession: {
+          id: 10,
+          sessionName: 'March',
+          sessionNameEn: 'March',
+        },
+        deadlines: [
+          {
+            id: 2,
+            graduationSessionId: 10,
+            deadlineType: 'exams',
+            deadlineDate: new Date('2026-03-15T23:59:59.000Z'),
+          },
+        ],
       });
     });
 
@@ -895,14 +921,24 @@ describe('Thesis Conclusion Controller', () => {
           id: 5,
           deadline_type: 'conclusion_request',
           graduation_session_id: 20,
-          graduation_session: { id: 20, session_name: 'July' },
+          deadline_date: '2026-06-01T23:59:59.000Z',
+          graduation_session: { id: 20, session_name: 'July', session_name_en: 'July' },
         },
       ]);
-      Deadline.findAll.mockResolvedValueOnce([]);
+      Deadline.findAll.mockResolvedValueOnce([
+        {
+          id: 6,
+          graduation_session_id: 20,
+          deadline_type: 'conclusion_request',
+          deadline_date: '2026-06-01T23:59:59.000Z',
+        },
+      ]);
+      GraduationSession.findByPk.mockResolvedValue({ id: 20, session_name: 'July', session_name_en: 'July' });
 
       await getSessionDeadlines(req, res);
 
       expect(Deadline.findAll.mock.calls[0][0].where.deadline_type).toBe('conclusion_request');
+      expect(GraduationSession.findByPk).toHaveBeenCalledWith(20);
     });
 
     test('should use final_exam_registration deadline type when thesis exists', async () => {
@@ -917,14 +953,24 @@ describe('Thesis Conclusion Controller', () => {
           id: 6,
           deadline_type: 'final_exam_registration',
           graduation_session_id: 30,
-          graduation_session: { id: 30, session_name: 'September' },
+          deadline_date: '2026-09-01T23:59:59.000Z',
+          graduation_session: { id: 30, session_name: 'September', session_name_en: 'September' },
         },
       ]);
-      Deadline.findAll.mockResolvedValueOnce([]);
+      Deadline.findAll.mockResolvedValueOnce([
+        {
+          id: 7,
+          graduation_session_id: 30,
+          deadline_type: 'final_exam_registration',
+          deadline_date: '2026-09-01T23:59:59.000Z',
+        },
+      ]);
+      GraduationSession.findByPk.mockResolvedValue({ id: 30, session_name: 'September', session_name_en: 'September' });
 
       await getSessionDeadlines(req, res);
 
       expect(Deadline.findAll.mock.calls[0][0].where.deadline_type).toBe('final_exam_registration');
+      expect(GraduationSession.findByPk).toHaveBeenCalledWith(30);
     });
 
     test('should force next session when final upload was rejected', async () => {
@@ -934,13 +980,15 @@ describe('Thesis Conclusion Controller', () => {
         id: 11,
         deadline_type: 'final_exam_registration',
         graduation_session_id: 100,
-        graduation_session: { id: 100, session_name: 'June' },
+        deadline_date: '2026-06-01T23:59:59.000Z',
+        graduation_session: { id: 100, session_name: 'June', session_name_en: 'June' },
       };
       const secondDeadline = {
         id: 12,
         deadline_type: 'final_exam_registration',
         graduation_session_id: 101,
-        graduation_session: { id: 101, session_name: 'July' },
+        deadline_date: '2026-07-01T23:59:59.000Z',
+        graduation_session: { id: 101, session_name: 'July', session_name_en: 'July' },
       };
 
       LoggedStudent.findOne.mockResolvedValue({ student_id: '320213' });
@@ -951,9 +999,15 @@ describe('Thesis Conclusion Controller', () => {
       });
       ThesisApplication.findOne.mockResolvedValue(null);
       ThesisApplicationStatusHistory.findOne.mockResolvedValue({ id: 1 });
-      Deadline.findAll
-        .mockResolvedValueOnce([firstDeadline, secondDeadline])
-        .mockResolvedValueOnce([{ id: 99, graduation_session_id: 101 }]);
+      Deadline.findAll.mockResolvedValueOnce([firstDeadline, secondDeadline]).mockResolvedValueOnce([
+        {
+          id: 99,
+          graduation_session_id: 101,
+          deadline_type: 'final_exam_registration',
+          deadline_date: '2026-07-01T23:59:59.000Z',
+        },
+      ]);
+      GraduationSession.findByPk.mockResolvedValue(secondDeadline.graduation_session);
 
       await getSessionDeadlines(req, res);
 
@@ -966,8 +1020,13 @@ describe('Thesis Conclusion Controller', () => {
         order: [['change_date', 'DESC']],
       });
       expect(Deadline.findAll.mock.calls[1][0].where.graduation_session_id).toBe(101);
+      expect(GraduationSession.findByPk).toHaveBeenCalledWith(101);
       expect(res.status).toHaveBeenCalledWith(200);
-      expect(res.json.mock.calls[0][0].graduationSession).toEqual(secondDeadline.graduation_session);
+      expect(res.json.mock.calls[0][0].graduationSession).toEqual({
+        id: 101,
+        sessionName: 'July',
+        sessionNameEn: 'July',
+      });
     });
 
     test('should keep first session when forced-next lookup has no different upcoming session', async () => {
@@ -977,7 +1036,8 @@ describe('Thesis Conclusion Controller', () => {
         id: 21,
         deadline_type: 'final_exam_registration',
         graduation_session_id: 200,
-        graduation_session: { id: 200, session_name: 'October' },
+        deadline_date: '2026-10-01T23:59:59.000Z',
+        graduation_session: { id: 200, session_name: 'October', session_name_en: 'October' },
       };
 
       LoggedStudent.findOne.mockResolvedValue({ student_id: '320213' });
@@ -988,15 +1048,26 @@ describe('Thesis Conclusion Controller', () => {
       });
       ThesisApplication.findOne.mockResolvedValue(null);
       ThesisApplicationStatusHistory.findOne.mockResolvedValue({ id: 2 });
-      Deadline.findAll
-        .mockResolvedValueOnce([firstDeadline])
-        .mockResolvedValueOnce([{ id: 201, graduation_session_id: 200 }]);
+      Deadline.findAll.mockResolvedValueOnce([firstDeadline]).mockResolvedValueOnce([
+        {
+          id: 201,
+          graduation_session_id: 200,
+          deadline_type: 'final_exam_registration',
+          deadline_date: '2026-10-01T23:59:59.000Z',
+        },
+      ]);
+      GraduationSession.findByPk.mockResolvedValue(firstDeadline.graduation_session);
 
       await getSessionDeadlines(req, res);
 
       expect(Deadline.findAll.mock.calls[1][0].where.graduation_session_id).toBe(200);
+      expect(GraduationSession.findByPk).toHaveBeenCalledWith(200);
       expect(res.status).toHaveBeenCalledWith(200);
-      expect(res.json.mock.calls[0][0].graduationSession).toEqual(firstDeadline.graduation_session);
+      expect(res.json.mock.calls[0][0].graduationSession).toEqual({
+        id: 200,
+        sessionName: 'October',
+        sessionNameEn: 'October',
+      });
     });
 
     test('should return 404 when no upcoming deadline is found', async () => {

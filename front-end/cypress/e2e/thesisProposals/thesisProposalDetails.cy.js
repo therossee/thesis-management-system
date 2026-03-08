@@ -3,6 +3,7 @@
 const visitWithLightTheme = url => {
   cy.visit(url, {
     onBeforeLoad: win => {
+      win.localStorage.setItem('language', 'it');
       win.localStorage.setItem('theme', 'light');
     },
   });
@@ -49,10 +50,10 @@ describe('Thesis proposal details page', () => {
     cy.get('a[href="/carriera"]').should('be.visible').click();
     cy.visit('/carriera/tesi/proposte_di_tesi');
 
-    // Step 2: Click on the first available thesis proposal
-    cy.get('.proposals-container .card-container .roundCard')
-      .should('have.length.greaterThan', 0)
+    // Step 2: Click on an Italy thesis proposal
+    cy.contains('.proposals-container .card-container .roundCard .badge', /tesi in italia|thesis in italy/i)
       .first()
+      .closest('.roundCard')
       .find('.card-footer .btn')
       .click();
 
@@ -74,7 +75,7 @@ describe('Thesis proposal details page', () => {
     cy.get('h3.thesis-topic').should('be.visible');
     cy.get('.info-detail').should('be.visible');
     cy.get('.badge[class*="teacher_"]').should('be.visible');
-    cy.contains('.badge', /tesi in italia|italy thesis/i).should('be.visible');
+    cy.contains('.badge', /tesi in italia|thesis in italy/i).should('be.visible');
   });
 
   it('should see thesis proposal details page (abroad)', () => {
@@ -91,7 +92,7 @@ describe('Thesis proposal details page', () => {
     cy.get('.info-detail').should('be.visible');
     cy.get('.badge[class*="teacher_"]').should('be.visible');
     cy.get('.fa-earth-americas').should('be.visible');
-    cy.contains('.badge', /tesi all'estero|abroad thesis/i).should('be.visible');
+    cy.contains('.badge', /tesi all'estero|thesis abroad/i).should('be.visible');
   });
 
   it('should see thesis proposal details page with attachment if present', () => {

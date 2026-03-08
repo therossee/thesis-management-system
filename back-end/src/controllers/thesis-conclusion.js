@@ -28,6 +28,7 @@ const selectMotivationAttributes = require('../utils/selectMotivationAttributes'
 const selectTeacherAttributes = require('../utils/selectTeacherAttributes');
 
 const teacherOverviewSchema = require('../schemas/TeacherOverview');
+const sessionDeadlineResponseSchema = require('../schemas/SessionDeadlineResponse');
 
 const {
   ensureDirExists,
@@ -48,6 +49,8 @@ const {
   executeConclusionRequestTransaction,
   buildConclusionResponse,
 } = require('../utils/thesisConclusionSubmit');
+
+const toPlainObject = value => (typeof value?.toJSON === 'function' ? value.toJSON() : value);
 
 const sendThesisConclusionRequest = async (req, res) => {
   try {
@@ -116,6 +119,7 @@ const getEmbargoMotivations = async (req, res) => {
 const getSessionDeadlines = async (req, res) => {
   const now = new Date();
   const getSessionId = deadline => deadline?.graduation_session_id ?? deadline?.graduation_session?.id;
+  const graduationSessionInclude = [{ model: GraduationSession, as: 'graduation_session' }];
   const deadlineTypeByEffectiveType = {
     no_application: 'thesis_request',
     application: 'conclusion_request',
@@ -162,7 +166,7 @@ const getSessionDeadlines = async (req, res) => {
       deadline_date: { [Op.gte]: now },
     },
     order: [['deadline_date', 'ASC']],
-    include: [{ model: GraduationSession, as: 'graduation_session' }],
+    include: graduationSessionInclude,
   });
 
   if (!upcomingDeadlines.length) {
@@ -181,13 +185,20 @@ const getSessionDeadlines = async (req, res) => {
 
   const sessionDeadlines = await Deadline.findAll({
     where: { graduation_session_id: sessionId },
-    include: [{ model: GraduationSession, as: 'graduation_session' }],
     order: [['deadline_date', 'ASC']],
   });
 
+  const graduationSession = await GraduationSession.findByPk(sessionId);
+  if (!graduationSession) return res.status(500).json({ error: 'Graduation session not found for deadline' });
+
+  const responsePayload = sessionDeadlineResponseSchema.parse({
+    graduationSession: toPlainObject(graduationSession),
+    deadlines: sessionDeadlines.map(toPlainObject),
+  });
+
   return res.status(200).json({
-    graduationSession: refDeadline.graduation_session,
-    deadlines: sessionDeadlines,
+    graduationSession: responsePayload.graduationSession,
+    deadlines: responsePayload.deadlines,
   });
 };
 

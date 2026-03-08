@@ -634,11 +634,11 @@ function computeSortedDeadlines(deadlines) {
   if (!Array.isArray(deadlines) || deadlines.length === 0) return [];
   return [...deadlines]
     .map(deadline => {
-      const date = moment.utc(deadline.deadline_date).startOf('day');
+      const date = moment.utc(deadline.deadlineDate).startOf('day');
       const daysLeft = date.diff(moment.utc().startOf('day'), 'days');
       return { ...deadline, daysLeft };
     })
-    .sort((a, b) => moment.utc(a.deadline_date).valueOf() - moment.utc(b.deadline_date).valueOf());
+    .sort((a, b) => moment.utc(a.deadlineDate).valueOf() - moment.utc(b.deadlineDate).valueOf());
 }
 
 function computeNextDeadline(sortedDeadlines, currentStatus) {
@@ -659,7 +659,7 @@ function computeNextDeadline(sortedDeadlines, currentStatus) {
   ]);
 
   if (thesisStatuses.has(currentStatus)) {
-    const relevant = upcoming.find(d => d.deadline_type === 'conclusion_request' || d.deadline_type === 'exams');
+    const relevant = upcoming.find(d => d.deadlineType === 'conclusion_request' || d.deadlineType === 'exams');
     if (relevant) return relevant;
   }
 
@@ -830,14 +830,14 @@ Timeline.propTypes = {
   session: PropTypes.shape({
     graduationSession: PropTypes.shape({
       id: PropTypes.number,
-      session_name: PropTypes.string,
-      session_name_en: PropTypes.string,
+      sessionName: PropTypes.string,
+      sessionNameEn: PropTypes.string,
     }).isRequired,
     deadlines: PropTypes.arrayOf(
       PropTypes.shape({
-        deadline_type: PropTypes.string.isRequired,
-        graduation_session_id: PropTypes.number.isRequired,
-        deadline_date: PropTypes.string.isRequired,
+        deadlineType: PropTypes.string.isRequired,
+        graduationSessionId: PropTypes.number.isRequired,
+        deadlineDate: PropTypes.string.isRequired,
       }),
     ),
   }).isRequired,

@@ -46,13 +46,14 @@ const COMPANIES = [
 const DEADLINES = {
   graduationSession: {
     id: 1,
-    session_name: 'Marzo/Aprile 2026',
-    session_name_en: 'March/April 2026',
+    sessionName: 'Marzo/Aprile 2026',
+    sessionNameEn: 'March/April 2026',
   },
   deadlines: [
     {
-      deadline_type: 'thesis_request',
-      deadline_date: '2026-03-06T23:59:59',
+      deadlineType: 'thesis_request',
+      deadlineDate: '2026-03-06T23:59:59',
+      graduationSessionId: 1,
     },
   ],
 };

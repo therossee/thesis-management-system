@@ -41,9 +41,9 @@ export default function DeadlinesModal({ show, onHide, graduationSession, sorted
   let modalTitle = t('carriera.tesi.no_deadlines_available');
   if (graduationSession) {
     if (i18n.language === 'en') {
-      modalTitle = graduationSession.session_name_en;
+      modalTitle = graduationSession.sessionNameEn;
     } else {
-      modalTitle = graduationSession.session_name;
+      modalTitle = graduationSession.sessionName;
     }
   }
 
@@ -61,9 +61,9 @@ export default function DeadlinesModal({ show, onHide, graduationSession, sorted
             {nextDeadline && (
               <div className="next-deadline-card">
                 <div className="next-deadline-header">{t('carriera.tesi.next_deadline')}</div>
-                <div className="next-deadline-title">{t(`carriera.tesi.deadlines.${nextDeadline.deadline_type}`)}</div>
+                <div className="next-deadline-title">{t(`carriera.tesi.deadlines.${nextDeadline.deadlineType}`)}</div>
                 <div className="next-deadline-meta">
-                  <span>{moment.utc(nextDeadline.deadline_date).format('DD/MM/YYYY')}</span>
+                  <span>{moment.utc(nextDeadline.deadlineDate).format('DD/MM/YYYY')}</span>
                   <span className="next-deadline-separator">•</span>
                   <span>
                     {nextDeadline.daysLeft === 0
@@ -77,10 +77,10 @@ export default function DeadlinesModal({ show, onHide, graduationSession, sorted
             {sortedDeadlines.map(deadline => {
               const severity = getDeadlineSeverity(deadline.daysLeft);
               return (
-                <div key={deadline.deadline_type} className="deadline-row">
+                <div key={deadline.deadlineType} className="deadline-row">
                   <div className="deadline-row-main">
-                    <div className="deadline-row-title">{t(`carriera.tesi.deadlines.${deadline.deadline_type}`)}</div>
-                    <div className="deadline-row-date">{moment.utc(deadline.deadline_date).format('DD/MM/YYYY')}</div>
+                    <div className="deadline-row-title">{t(`carriera.tesi.deadlines.${deadline.deadlineType}`)}</div>
+                    <div className="deadline-row-date">{moment.utc(deadline.deadlineDate).format('DD/MM/YYYY')}</div>
                   </div>
                   <div className={`deadline-status ${severity.className}`}>
                     <i className={`${severity.icon} me-1`} />
@@ -108,19 +108,19 @@ DeadlinesModal.propTypes = {
   onHide: PropTypes.func.isRequired,
   graduationSession: PropTypes.shape({
     id: PropTypes.number,
-    session_name: PropTypes.string,
-    session_name_en: PropTypes.string,
+    sessionName: PropTypes.string,
+    sessionNameEn: PropTypes.string,
   }),
   sortedDeadlines: PropTypes.arrayOf(
     PropTypes.shape({
-      deadline_type: PropTypes.string.isRequired,
-      deadline_date: PropTypes.string.isRequired,
+      deadlineType: PropTypes.string.isRequired,
+      deadlineDate: PropTypes.string.isRequired,
       daysLeft: PropTypes.number.isRequired,
     }),
   ).isRequired,
   nextDeadline: PropTypes.shape({
-    deadline_type: PropTypes.string.isRequired,
-    deadline_date: PropTypes.string.isRequired,
+    deadlineType: PropTypes.string.isRequired,
+    deadlineDate: PropTypes.string.isRequired,
     daysLeft: PropTypes.number.isRequired,
   }),
 };
