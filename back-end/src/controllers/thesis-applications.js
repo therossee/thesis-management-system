@@ -18,6 +18,7 @@ const thesisApplicationResponseSchema = require('../schemas/ThesisApplicationRes
 const selectTeacherAttributes = require('../utils/selectTeacherAttributes');
 const thesisApplicationStatusHistorySchema = require('../schemas/ThesisApplicationStatusHistory');
 const thesisApplicationSchema = require('../schemas/ThesisApplication');
+const eligibilityResponseSchema = require('../schemas/EligibilityResponse');
 const toSnakeCase = require('../utils/snakeCase');
 
 class HttpError extends Error {
@@ -347,7 +348,7 @@ const checkStudentEligibility = async (req, res) => {
       },
     });
     if (pendingCount > 0) {
-      return res.status(200).json({ studentId: logged.student_id, eligible: false });
+      return res.status(200).json(eligibilityResponseSchema.parse({ student_id: logged.student_id, eligible: false }));
     }
     const approvedCount = await ThesisApplication.findAll({
       where: {
@@ -362,11 +363,13 @@ const checkStudentEligibility = async (req, res) => {
         },
       });
       if (thesis?.status !== 'cancel_approved') {
-        return res.status(200).json({ studentId: logged.student_id, eligible: false });
+        return res
+          .status(200)
+          .json(eligibilityResponseSchema.parse({ student_id: logged.student_id, eligible: false }));
       }
     }
 
-    res.status(200).json({ studentId: logged.student_id, eligible: true });
+    res.status(200).json(eligibilityResponseSchema.parse({ student_id: logged.student_id, eligible: true }));
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

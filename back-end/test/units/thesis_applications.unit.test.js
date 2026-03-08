@@ -386,37 +386,37 @@ describe('checkStudentEligibility', () => {
     const req = {};
     const res = mockRes();
 
-    LoggedStudent.findOne.mockResolvedValue({ student_id: 1 });
-    Student.findByPk.mockResolvedValue({ id: 1 });
+    LoggedStudent.findOne.mockResolvedValue({ student_id: '1' });
+    Student.findByPk.mockResolvedValue({ id: '1' });
     ThesisApplication.count.mockResolvedValue(0);
     ThesisApplication.findAll.mockResolvedValue([]);
 
     await checkStudentEligibility(req, res);
 
     expect(res.status).toHaveBeenCalledWith(200);
-    expect(res.json).toHaveBeenCalledWith({ studentId: 1, eligible: true });
+    expect(res.json).toHaveBeenCalledWith({ studentId: '1', eligible: true });
   });
 
   test('eligible false if active application exists', async () => {
     const req = {};
     const res = mockRes();
 
-    LoggedStudent.findOne.mockResolvedValue({ student_id: 1 });
-    Student.findByPk.mockResolvedValue({ id: 1 });
+    LoggedStudent.findOne.mockResolvedValue({ student_id: '1' });
+    Student.findByPk.mockResolvedValue({ id: '1' });
     ThesisApplication.count.mockResolvedValue(1);
 
     await checkStudentEligibility(req, res);
 
     expect(res.status).toHaveBeenCalledWith(200);
-    expect(res.json).toHaveBeenCalledWith({ studentId: 1, eligible: false });
+    expect(res.json).toHaveBeenCalledWith({ studentId: '1', eligible: false });
   });
 
   test('eligible false if approved application has no cancellable thesis', async () => {
     const req = {};
     const res = mockRes();
 
-    LoggedStudent.findOne.mockResolvedValue({ student_id: 1 });
-    Student.findByPk.mockResolvedValue({ id: 1 });
+    LoggedStudent.findOne.mockResolvedValue({ student_id: '1' });
+    Student.findByPk.mockResolvedValue({ id: '1' });
     ThesisApplication.count.mockResolvedValue(0);
     ThesisApplication.findAll.mockResolvedValue([{ id: 11, status: 'approved' }]);
     Thesis.findOne.mockResolvedValue({ id: 20, status: 'ongoing' });
@@ -424,7 +424,7 @@ describe('checkStudentEligibility', () => {
     await checkStudentEligibility(req, res);
 
     expect(res.status).toHaveBeenCalledWith(200);
-    expect(res.json).toHaveBeenCalledWith({ studentId: 1, eligible: false });
+    expect(res.json).toHaveBeenCalledWith({ studentId: '1', eligible: false });
   });
 
   test('returns 500 on unexpected error', async () => {
@@ -458,8 +458,8 @@ describe('getLastStudentApplication', () => {
     const req = {};
     const res = mockRes();
 
-    LoggedStudent.findOne.mockResolvedValue({ student_id: 1 });
-    Student.findByPk.mockResolvedValue({ id: 1 });
+    LoggedStudent.findOne.mockResolvedValue({ student_id: '1' });
+    Student.findByPk.mockResolvedValue({ id: '1' });
     ThesisApplication.findAll.mockResolvedValue([]);
 
     await getLastStudentApplication(req, res);
@@ -471,8 +471,8 @@ describe('getLastStudentApplication', () => {
     const req = {};
     const res = mockRes();
 
-    LoggedStudent.findOne.mockResolvedValue({ student_id: 1 });
-    Student.findByPk.mockResolvedValue({ id: 1 });
+    LoggedStudent.findOne.mockResolvedValue({ student_id: '1' });
+    Student.findByPk.mockResolvedValue({ id: '1' });
     ThesisApplication.findAll.mockResolvedValue([
       {
         id: 1,
