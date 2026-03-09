@@ -4,7 +4,6 @@ import { Badge, Button, Dropdown } from 'react-bootstrap';
 import { useTranslation } from 'react-i18next';
 import Select from 'react-select';
 
-import { t } from 'i18next';
 import PropTypes from 'prop-types';
 
 import API from '../API';
@@ -41,21 +40,41 @@ FiltersOptionWithEmail.propTypes = {
 };
 
 const formatFilter = (item, variant) => {
+  const label =
+    item?.content ||
+    item?.label ||
+    item?.type ||
+    item?.keyword ||
+    [item?.lastName, item?.firstName].filter(Boolean).join(' ').trim();
+
   if (variant === 'teacher' || variant === 'supervisor') {
     return {
-      value: item.id,
-      label: item.type || item.keyword || `${item.lastName} ${item.firstName}`,
+      value: item.id ?? item.value,
+      label,
       email: item.email,
       variant,
     };
   }
-  return { value: item.id, label: item.type || item.keyword || `${item.lastName} ${item.firstName}`, variant };
+  return { value: item.id ?? item.value, label, variant };
 };
+
+const buildStaticOptions = t => ({
+  location: [
+    { value: 1, label: t('carriera.proposte_di_tesi.italy_thesis'), variant: 'italy', type: 'location' },
+    { value: 2, label: t('carriera.proposte_di_tesi.abroad_thesis'), variant: 'abroad', type: 'location' },
+  ],
+  environment: [
+    { value: 1, label: t('carriera.proposte_di_tesi.internal_thesis'), variant: 'internal', type: 'environment' },
+    { value: 2, label: t('carriera.proposte_di_tesi.external_thesis'), variant: 'external', type: 'environment' },
+  ],
+});
+
+const mapFiltersToSelected = (items, variant) => items.map(item => formatFilter(item, variant));
 
 export default function FiltersDropdown({ filters, applyFilters, resetFilters }) {
   const { theme } = useContext(ThemeContext);
   const appliedTheme = theme === 'auto' ? getSystemTheme() : theme;
-  const { i18n } = useTranslation();
+  const { i18n, t } = useTranslation();
 
   const [isOpen, setIsOpen] = useState(false);
 
@@ -73,20 +92,13 @@ export default function FiltersDropdown({ filters, applyFilters, resetFilters })
     keywords: [],
     supervisors: [],
     types: [],
-    location: [
-      { value: 1, label: t('carriera.proposte_di_tesi.italy_thesis'), variant: 'italy', type: 'location' },
-      { value: 2, label: t('carriera.proposte_di_tesi.abroad_thesis'), variant: 'abroad', type: 'location' },
-    ],
-    environment: [
-      { value: 1, label: t('carriera.proposte_di_tesi.internal_thesis'), variant: 'internal', type: 'environment' },
-      { value: 2, label: t('carriera.proposte_di_tesi.external_thesis'), variant: 'external', type: 'environment' },
-    ],
+    ...buildStaticOptions(t),
   });
 
   const [selected, setSelected] = useState({
-    keywords: filters.keyword.map(k => formatFilter(k, 'keyword')),
-    supervisors: filters.teacher.map(t => formatFilter(t, 'teacher')),
-    types: filters.type.map(t => formatFilter(t, 'type')),
+    keywords: mapFiltersToSelected(filters.keyword, 'keyword'),
+    supervisors: mapFiltersToSelected(filters.teacher, 'teacher'),
+    types: mapFiltersToSelected(filters.type, 'type'),
     location: getStaticOption('location', filters.isAbroad),
     environment: getStaticOption('environment', filters.isInternal),
   });
@@ -103,26 +115,30 @@ export default function FiltersDropdown({ filters, applyFilters, resetFilters })
   };
 
   useEffect(() => {
+    setOptions(prev => ({
+      ...prev,
+      ...buildStaticOptions(t),
+    }));
+
     Object.entries(filterOptions).forEach(([key, { api, label }]) => {
       api(key !== 'supervisors' ? i18n.language : null).then(data => {
         loadOptions(key, data, label);
       });
     });
-  }, [i18n.language]);
+  }, [i18n.language, t]);
 
   useEffect(() => {
     setSelected({
-      ...selected,
-      keywords: filters.keyword.map(k => ({ value: k.id, label: k.content, variant: 'keyword' })),
-      supervisors: filters.teacher.map(t => ({ value: t.id, label: t.content, variant: 'teacher' })),
-      types: filters.type.map(t => ({ value: t.id, label: t.content, variant: 'type' })),
+      keywords: mapFiltersToSelected(filters.keyword, 'keyword'),
+      supervisors: mapFiltersToSelected(filters.teacher, 'teacher'),
+      types: mapFiltersToSelected(filters.type, 'type'),
       location: getStaticOption('location', filters.isAbroad),
       environment: getStaticOption('environment', filters.isInternal),
     });
-  }, [filters]);
+  }, [filters, options]);
 
   function getStaticOption(type, value) {
-    return options[type][value - 1];
+    return options[type]?.[value - 1] || null;
   }
 
   function handleApplyFilters() {
@@ -251,7 +267,7 @@ export default function FiltersDropdown({ filters, applyFilters, resetFilters })
   }
 
   return (
-    <Dropdown onToggle={handleToggle} show={isOpen} autoClose="outside" id={`dropdown-filters`}>
+    <Dropdown onToggle={handleToggle} show={isOpen} autoClose={false} id={`dropdown-filters`}>
       <Dropdown.Toggle as={CustomToggle} className={`btn-${appliedTheme} custom-dropdown-toggle`}>
         <i className="fa-regular fa-filter" />
         {t('carriera.proposte_di_tesi.filtri')}
@@ -297,7 +313,7 @@ const CustomSingleValue = ({ data, setSelected }) => {
   const handleRemove = () => {
     setSelected(prev => ({
       ...prev,
-      [data.type === 'location' ? 'location' : 'environment']: 0,
+      [data.type === 'location' ? 'location' : 'environment']: null,
     }));
   };
 

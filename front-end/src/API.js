@@ -377,6 +377,11 @@ const requestThesisCancelation = async () => {
 // ------------------------------------
 
 const buildParams = (lang, page, limit, filters, search, sorting) => {
+  const getFilterId = item => {
+    const id = Number(item?.id ?? item?.value);
+    return Number.isFinite(id) ? id : null;
+  };
+
   const params = {
     lang,
     page,
@@ -399,17 +404,23 @@ const buildParams = (lang, page, limit, filters, search, sorting) => {
   }
   if (filters.keyword.length > 0) {
     filters.keyword.forEach(keyword => {
-      params[`keywordId`] = params[`keywordId`] ? [...params[`keywordId`], keyword.id] : [keyword.id];
+      const keywordId = getFilterId(keyword);
+      if (keywordId === null) return;
+      params[`keywordId`] = params[`keywordId`] ? [...params[`keywordId`], keywordId] : [keywordId];
     });
   }
   if (filters.teacher.length > 0) {
     filters.teacher.forEach(teacher => {
-      params[`teacherId`] = params[`teacherId`] ? [...params[`teacherId`], teacher.id] : [teacher.id];
+      const teacherId = getFilterId(teacher);
+      if (teacherId === null) return;
+      params[`teacherId`] = params[`teacherId`] ? [...params[`teacherId`], teacherId] : [teacherId];
     });
   }
   if (filters.type.length > 0) {
     filters.type.forEach(type => {
-      params[`typeId`] = params[`typeId`] ? [...params[`typeId`], type.id] : [type.id];
+      const typeId = getFilterId(type);
+      if (typeId === null) return;
+      params[`typeId`] = params[`typeId`] ? [...params[`typeId`], typeId] : [typeId];
     });
   }
   if (search) {

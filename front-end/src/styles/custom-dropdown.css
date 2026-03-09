@@ -10,6 +10,17 @@
   font-size: var(--font-size-sm);
 }
 
+.sort-order-icon {
+  cursor: pointer;
+  border-radius: 999px;
+  color: var(--text-700);
+  transition: color 0.15s ease;
+}
+
+.sort-order-icon:hover {
+  color: var(--gray-800);
+}
+
 .btn-dropdown {
   background-color: var(--white) !important;
 }

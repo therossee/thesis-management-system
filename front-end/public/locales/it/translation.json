@@ -83,6 +83,9 @@
             "reset": "Resetta",
             "reset_filters": "Resetta i filtri",
             "sort_by": "Ordina per",
+            "sort_order_label": "Ordinamento",
+            "sort_order_ascending": "crescente",
+            "sort_order_descending": "decrescente",
             "description": "Descrizione"
         },
         "proposta_di_tesi": {

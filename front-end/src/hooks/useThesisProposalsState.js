@@ -7,6 +7,76 @@ import useDebounce from './useDebounce';
 
 const STORAGE_KEY = 'thesisProposalsState';
 const LOADING_MIN_MS = 500;
+const DEFAULT_FILTERS = { isAbroad: 0, isInternal: 0, keyword: [], teacher: [], type: [] };
+const DEFAULT_STATE = {
+  currentPage: 1,
+  filters: DEFAULT_FILTERS,
+  proposalsPerPage: 10,
+  searchQuery: '',
+  sorting: { sortBy: 'id', orderBy: 'ASC' },
+  tab: 'course',
+};
+
+const getNormalizedFilterLabel = item =>
+  item?.content ||
+  item?.label ||
+  item?.type ||
+  item?.keyword ||
+  [item?.lastName, item?.firstName].filter(Boolean).join(' ').trim();
+
+const normalizeFilterItems = items => {
+  if (!Array.isArray(items)) return [];
+
+  return items
+    .map(item => {
+      const id = Number(item?.id ?? item?.value);
+      const content = getNormalizedFilterLabel(item);
+
+      if (!Number.isFinite(id) || id <= 0 || !content) return null;
+
+      return { id, content };
+    })
+    .filter(Boolean);
+};
+
+const normalizePersistedState = savedState => {
+  if (!savedState || typeof savedState !== 'object') return DEFAULT_STATE;
+
+  const currentPage =
+    Number.isInteger(savedState.currentPage) && savedState.currentPage > 0 ? savedState.currentPage : 1;
+  const proposalsPerPage =
+    Number.isInteger(savedState.proposalsPerPage) && savedState.proposalsPerPage > 0 ? savedState.proposalsPerPage : 10;
+  const searchQuery = typeof savedState.searchQuery === 'string' ? savedState.searchQuery : '';
+  const tab = savedState.tab === 'all' ? 'all' : 'course';
+  const filters = savedState.filters && typeof savedState.filters === 'object' ? savedState.filters : DEFAULT_FILTERS;
+  const sorting =
+    savedState.sorting === null
+      ? null
+      : savedState.sorting && typeof savedState.sorting === 'object'
+        ? savedState.sorting
+        : DEFAULT_STATE.sorting;
+
+  return {
+    currentPage,
+    proposalsPerPage,
+    searchQuery,
+    tab,
+    filters: {
+      isAbroad: filters.isAbroad === 1 || filters.isAbroad === 2 ? filters.isAbroad : 0,
+      isInternal: filters.isInternal === 1 || filters.isInternal === 2 ? filters.isInternal : 0,
+      keyword: normalizeFilterItems(filters.keyword),
+      teacher: normalizeFilterItems(filters.teacher),
+      type: normalizeFilterItems(filters.type),
+    },
+    sorting:
+      sorting === null
+        ? null
+        : {
+            sortBy: typeof sorting.sortBy === 'string' ? sorting.sortBy : 'id',
+            orderBy: sorting.orderBy === 'DESC' ? 'DESC' : 'ASC',
+          },
+  };
+};
 
 const getProposalApiMethod = tab => {
   return tab === 'course' ? API.getTargetedThesisProposals : API.getThesisProposals;
@@ -48,14 +118,7 @@ export default function useThesisProposalsState() {
   const [pageProposals, setPageProposals] = useState([]);
   const [totalPages, setTotalPages] = useState(0);
 
-  const [state, setState] = useState({
-    currentPage: 1,
-    filters: { isAbroad: 0, isInternal: 0, keyword: [], teacher: [], type: [] },
-    proposalsPerPage: 10,
-    searchQuery: '',
-    sorting: { sortBy: 'id', orderBy: 'ASC' },
-    tab: 'course',
-  });
+  const [state, setState] = useState(DEFAULT_STATE);
 
   const [isLoaded, setIsLoaded] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -64,9 +127,13 @@ export default function useThesisProposalsState() {
   const debouncedSearchQuery = useDebounce(state.searchQuery, 500);
 
   useEffect(() => {
-    const savedFilters = localStorage.getItem(STORAGE_KEY);
-    if (savedFilters) {
-      setState(JSON.parse(savedFilters));
+    const savedState = localStorage.getItem(STORAGE_KEY);
+    if (savedState) {
+      try {
+        setState(normalizePersistedState(JSON.parse(savedState)));
+      } catch {
+        localStorage.removeItem(STORAGE_KEY);
+      }
     }
     setIsLoaded(true);
   }, []);
@@ -138,7 +205,7 @@ export default function useThesisProposalsState() {
     setState(prevState => ({
       ...prevState,
       currentPage: 1,
-      filters: { isAbroad: 0, isInternal: 0, keyword: [], teacher: [], type: [] },
+      filters: DEFAULT_FILTERS,
       searchQuery: '',
     }));
     setTimeout(() => {

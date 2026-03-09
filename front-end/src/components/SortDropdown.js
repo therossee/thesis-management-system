@@ -1,6 +1,6 @@
 import React, { useContext, useEffect, useState } from 'react';
 
-import { Badge, Dropdown } from 'react-bootstrap';
+import { Badge, Dropdown, OverlayTrigger, Tooltip } from 'react-bootstrap';
 import { useTranslation } from 'react-i18next';
 
 import {
@@ -62,26 +62,36 @@ export default function SortDropdown({ sorting, applySorting }) {
     }
   };
 
+  const sortOrderTooltip = `${t('carriera.proposte_di_tesi.sort_order_label')}: ${t(
+    selectedSorting.orderBy === 'ASC'
+      ? 'carriera.proposte_di_tesi.sort_order_ascending'
+      : 'carriera.proposte_di_tesi.sort_order_descending',
+  )}`;
+
   return (
     <Dropdown onToggle={handleToggle} show={isOpen} autoClose="outside" id="dropdown-sort">
       <Dropdown.Toggle as={CustomToggle} className={`btn-${appliedTheme}  custom-dropdown-toggle`}>
-        {selectedSorting.orderBy === 'ASC' ? (
-          <FontAwesomeIcon
-            icon={faArrowUpShortWide}
-            onClick={e => {
-              e.stopPropagation();
-              handleChangeOrderExternal('DESC');
-            }}
-          />
-        ) : (
-          <FontAwesomeIcon
-            icon={faArrowDownShortWide}
-            onClick={e => {
-              e.stopPropagation();
-              handleChangeOrderExternal('ASC');
-            }}
-          />
-        )}
+        <OverlayTrigger placement="top" overlay={<Tooltip id="sort-order-tooltip">{sortOrderTooltip}</Tooltip>}>
+          {selectedSorting.orderBy === 'ASC' ? (
+            <FontAwesomeIcon
+              icon={faArrowUpShortWide}
+              className="sort-order-icon"
+              onClick={e => {
+                e.stopPropagation();
+                handleChangeOrderExternal('DESC');
+              }}
+            />
+          ) : (
+            <FontAwesomeIcon
+              icon={faArrowDownShortWide}
+              className="sort-order-icon"
+              onClick={e => {
+                e.stopPropagation();
+                handleChangeOrderExternal('ASC');
+              }}
+            />
+          )}
+        </OverlayTrigger>
         {t('carriera.proposte_di_tesi.order')}
         {/* Display the count of applied sorting */}
         {sorting.sortBy !== 'id' && <Badge className={`top-0 squared-badge-${appliedTheme}`}>1</Badge>}
