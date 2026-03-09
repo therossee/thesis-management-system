@@ -28,6 +28,7 @@ const selectMotivationAttributes = require('../utils/selectMotivationAttributes'
 const selectTeacherAttributes = require('../utils/selectTeacherAttributes');
 
 const teacherOverviewSchema = require('../schemas/TeacherOverview');
+const finalThesisUploadRequestSchema = require('../schemas/FinalThesisUploadRequest');
 const sessionDeadlineResponseSchema = require('../schemas/SessionDeadlineResponse');
 
 const {
@@ -203,12 +204,14 @@ const getSessionDeadlines = async (req, res) => {
 };
 
 const uploadFinalThesis = async (req, res) => {
-  try {
-    const thesisFile = req.files?.thesisFile?.[0] || null;
-    const thesisSummary = req.files?.thesisSummary?.[0] || null;
-    const additionalZip = req.files?.additionalZip?.[0] || null;
+  const uploadedFiles = {
+    thesisFile: req.files?.thesisFile?.[0] || null,
+    thesisSummary: req.files?.thesisSummary?.[0] || null,
+    additionalZip: req.files?.additionalZip?.[0] || null,
+  };
 
-    if (!thesisFile) return res.status(400).json({ error: 'Missing thesis file' });
+  try {
+    const { thesisFile, thesisSummary, additionalZip } = finalThesisUploadRequestSchema.parse(uploadedFiles);
 
     const logged = await LoggedStudent.findOne();
     if (!logged) {
@@ -296,6 +299,10 @@ const uploadFinalThesis = async (req, res) => {
 
     return res.status(result.status).json(result.payload);
   } catch (error) {
+    await cleanupUploads(uploadedFiles.thesisFile, uploadedFiles.thesisSummary, uploadedFiles.additionalZip);
+    if (error instanceof ZodError) {
+      return res.status(400).json({ error: error.issues.map(issue => issue.message).join(', ') });
+    }
     return res.status(error.status || 500).json({ error: error.message });
   }
 };

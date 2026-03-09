@@ -125,6 +125,19 @@ describe('POST /api/thesis-conclusion/*', () => {
     expect(response.body.error).toContain('File must be a PDF file');
   });
 
+  test('Should reject non-PDF final thesis upload', async () => {
+    const response = await request(server)
+      .post('/api/thesis-conclusion/upload-final-thesis')
+      .attach('thesisFile', Buffer.from('plain-text'), {
+        filename: 'final file?.txt',
+        contentType: 'text/plain',
+      });
+
+    expect(response.status).toBe(400);
+    expect(response.body).toHaveProperty('error');
+    expect(response.body.error).toContain('File must be a PDF file');
+  });
+
   test('Should reject final thesis upload when file is not PDF/A', async () => {
     const response = await request(server)
       .post('/api/thesis-conclusion/upload-final-thesis')

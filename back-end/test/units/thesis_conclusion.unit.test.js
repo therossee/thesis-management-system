@@ -1112,6 +1112,30 @@ describe('Thesis Conclusion Controller', () => {
       expect(res.json).toHaveBeenCalledWith({ error: 'Missing thesis file' });
     });
 
+    test('should return 400 and cleanup uploads when thesis file is not a PDF', async () => {
+      const req = {
+        files: {
+          thesisFile: [
+            createUploadedFile({ path: '/tmp/thesis.txt', mimetype: 'text/plain', originalname: 'thesis.txt' }),
+          ],
+          thesisSummary: [createUploadedFile({ path: '/tmp/summary.pdf' })],
+          additionalZip: [createUploadedFile({ path: '/tmp/additional.zip', mimetype: 'application/zip' })],
+        },
+      };
+      const res = createRes();
+
+      await uploadFinalThesis(req, res);
+
+      expect(cleanupUploads).toHaveBeenCalledWith(
+        req.files.thesisFile[0],
+        req.files.thesisSummary[0],
+        req.files.additionalZip[0],
+      );
+      expect(LoggedStudent.findOne).not.toHaveBeenCalled();
+      expect(res.status).toHaveBeenCalledWith(400);
+      expect(res.json).toHaveBeenCalledWith({ error: 'File must be a PDF file' });
+    });
+
     test('should return 401 and cleanup uploads when no logged student is found', async () => {
       const req = {
         files: {
