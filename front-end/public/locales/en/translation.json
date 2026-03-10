@@ -211,9 +211,13 @@
             "success_thesis_started_content": "You have successfully started your thesis. You can now proceed with the next steps as indicated by your supervisor.",
             "error_thesis_started": "Error starting thesis.",
             "error_thesis_started_content": "An error occurred while starting the thesis. Please try again later.",
+            "not_found": "There is nothing here...",
+            "message_not_found": "No active application or thesis found",
             "cancel_application": "Cancel application",
+            "cancel_application_content": "Are you sure you want to withdraw your application? This action cannot be undone.",
             "success_application_cancelled": "Application cancelled successfully!",
             "error_application_cancelled": "Error canceling application.",
+            "confirm_cancel": "Yes, withdraw",
             "success_application_cancelled_content": "You can now apply for other thesis proposals.",
             "error_application_cancelled_content": "An error occurred while canceling the application. Please try again later.",
             "success_cancel_request": "Thesis cancellation request sent successfully!",
@@ -297,6 +301,9 @@
         "richiesta_tesi": {
             "title": "Thesis Request",
             "description": "Submit your custom thesis request.",
+            "confirm_title": "Confirm thesis request",
+            "confirm_body": "Are you sure you want to submit your thesis request?",
+            "confirm": "Yes, submit the request",
             "topic_placeholder": "Enter the thesis topic...",
             "select_supervisor": "Choose the supervisor",
             "select_supervisor_placeholder": "Supervisor...",
@@ -377,6 +384,7 @@
             "license_recommended": "Recommended choice",
             "authorization_deny": "Do not authorize (requires motivation and embargo period)",
             "motivations": "Embargo reasons (select all that apply)",
+            "other_motivation_placeholder": "Specify the reason...",
             "embargo_period": {
                 "title": "Embargo period: ",
                 "12_months": "After 12 months from deposit",
@@ -404,7 +412,8 @@
                 "declaration_3": "you understand that Compilatio.net is a support tool for your Supervisor but it does not replace the work carried out by the Graduation Examining Committee for the evaluation of your thesis's quality and originality.",
                 "declaration_4": "the thesis that you uploaded is an \"original product\" and does not infringe the legislation on Intellectual Property Rights.",
                 "declaration_5": "you waive and release Politecnico of any liability which could ever derive from claims by third parties concerning the contents and/or structure of your thesis, including possible infringement of Intellectual Property Rights.",
-                "declaration_6": "you understand that your personal data will be transferred to the Compilatio.net service provider in order to get access to its basic service and to \"Studium\", in compliance with Legislative Decree no. 196 of 30th June 2003, with the sole purpose of consenting service operations. Any other possible use of your personal data is strictly prohibited."
+                "declaration_6": "you understand that your personal data will be transferred to the Compilatio.net service provider in order to get access to its basic service and to \"Studium\", in compliance with Legislative Decree no. 196 of 30th June 2003, with the sole purpose of consenting service operations. Any other possible use of your personal data is strictly prohibited.",
+                "declarations_required": "You must accept all declarations to proceed."
             },  
             "declarations_required": "You must accept all declarations to proceed.",
             "languages": {
@@ -445,6 +454,7 @@
             "request_submitted_content": "The supervisor will receive the request to confirm the conclusion of the thesis.",
             "request_submission_failed_title": "Error submitting the request.",
             "request_submission_failed_content": "An error occurred while submitting the request. Please try again later.",
+            "title_thesis": "Title",
             "submit_labels": {
                 "supervisor": "Supervisor",
                 "language": "Language",
@@ -464,7 +474,8 @@
                 "title": "Upload final thesis",
                 "body": "Are you sure you want to upload the final thesis? Once uploaded, you will no longer be able to modify the thesis details.",
                 "confirm_button": "Yes, upload the thesis",
-                "cancel_button": "Cancel"
+                "cancel_button": "Cancel",
+                "instructions": "Select the final thesis file to upload. Make sure the document meets the required criteria."
             },
             "final_thesis_upload": "Upload document",
             "final_thesis_uploaded_title": "Final thesis uploaded successfully!",

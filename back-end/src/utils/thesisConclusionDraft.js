@@ -313,7 +313,11 @@ const saveDraftTransaction = async ({
   draftUploadDir,
   transaction,
 }) => {
-  const thesis = await Thesis.findOne({ where: { student_id: loggedStudent.id }, transaction });
+  const thesis = await Thesis.findOne({
+    where: { student_id: loggedStudent.id },
+    order: [['id', 'DESC']],
+    transaction,
+  });
   if (!thesis) throw httpError(404, 'Thesis not found');
   if (thesis.status !== 'ongoing') {
     throw httpError(400, 'No draft can be saved for current thesis status');

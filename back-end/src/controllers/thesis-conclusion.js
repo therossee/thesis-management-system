@@ -261,6 +261,7 @@ const uploadFinalThesis = async (req, res) => {
     const result = await sequelize.transaction(async transaction => {
       const thesis = await Thesis.findOne({
         where: { student_id: loggedStudent.id },
+        order: [['id', 'DESC']],
         transaction,
       });
       if (!thesis) return { status: 404, payload: { error: 'Thesis not found' } };
@@ -349,7 +350,7 @@ const getThesisConclusionRequestDraft = async (req, res) => {
     const loggedStudent = await Student.findByPk(logged.student_id);
     if (!loggedStudent) return res.status(404).json({ error: 'Student not found' });
 
-    const thesis = await Thesis.findOne({ where: { student_id: loggedStudent.id } });
+    const thesis = await Thesis.findOne({ where: { student_id: loggedStudent.id }, order: [['id', 'DESC']] });
     if (!thesis) return res.status(404).json({ error: 'Thesis not found' });
 
     const draftCoSupervisors = await ThesisSupervisorCoSupervisor.findAll({

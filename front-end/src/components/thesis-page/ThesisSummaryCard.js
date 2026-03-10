@@ -51,7 +51,7 @@ export default function ThesisSummaryCard({
       </Card.Header>
 
       <Card.Body className="pt-2 pb-0">
-        <CustomBlock icon="text-size" title="Titolo" ignoreMoreLines>
+        <CustomBlock icon="text-size" title={t('carriera.conclusione_tesi.title_thesis')} ignoreMoreLines>
           {thesis.title}
         </CustomBlock>
 

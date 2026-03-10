@@ -605,6 +605,7 @@ describe('Thesis Conclusion Controller', () => {
 
       expect(Thesis.findOne).toHaveBeenCalledWith({
         where: { student_id: '320213' },
+        order: [['id', 'DESC']],
         transaction: 'tx',
       });
       expect(ensureDirExists).toHaveBeenCalled();
@@ -1375,6 +1376,11 @@ describe('Thesis Conclusion Controller', () => {
 
       await uploadFinalThesis(req, res);
 
+      expect(Thesis.findOne).toHaveBeenCalledWith({
+        where: { student_id: '320213' },
+        order: [['id', 'DESC']],
+        transaction: 'tx',
+      });
       expect(writeValidatedPdf).toHaveBeenCalledTimes(2);
       expect(moveFile).toHaveBeenCalledWith(
         '/tmp/additional.zip',
@@ -1537,6 +1543,10 @@ describe('Thesis Conclusion Controller', () => {
 
       await getThesisConclusionRequestDraft(req, res);
 
+      expect(Thesis.findOne).toHaveBeenCalledWith({
+        where: { student_id: '320213' },
+        order: [['id', 'DESC']],
+      });
       const teacherFindArgs = Teacher.findAll.mock.calls[0][0];
       expect(teacherFindArgs.attributes).toEqual(['id', 'first_name', 'last_name']);
       const idFilterValues = Reflect.ownKeys(teacherFindArgs.where.id).map(key => teacherFindArgs.where.id[key]);

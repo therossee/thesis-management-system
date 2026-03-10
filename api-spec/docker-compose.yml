@@ -1,0 +1,21 @@
+version: '3.7'
+services:
+  prism:
+    image: stoplight/prism:4
+    container_name: polito_tm_api_prism
+    command: mock --host 0.0.0.0 --port 4010 --cors /tmp/openapi.yaml
+    ports:
+      - '4010:4010'
+    volumes:
+      - ./openapi.yaml:/tmp/openapi.yaml:ro
+  swagger:
+    image: swaggerapi/swagger-ui
+    container_name: polito_tm_api_swagger
+    depends_on:
+      - prism
+    ports:
+      - '8080:8080'
+    environment:
+      SWAGGER_JSON: /openapi.yaml
+    volumes:
+      - ./openapi.yaml:/openapi.yaml

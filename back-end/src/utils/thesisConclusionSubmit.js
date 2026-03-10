@@ -195,7 +195,11 @@ const executeConclusionRequestTransaction = async ({ requestData, files, transac
   const loggedStudent = await Student.findByPk(logged.student_id, { transaction });
   if (!loggedStudent) throw httpError(404, 'Student not found');
 
-  const thesis = await Thesis.findOne({ where: { student_id: loggedStudent.id }, transaction });
+  const thesis = await Thesis.findOne({
+    where: { student_id: loggedStudent.id },
+    order: [['id', 'DESC']],
+    transaction,
+  });
   if (!thesis) throw httpError(404, 'Thesis not found');
   if (thesis.status !== 'ongoing') throw httpError(400, 'Thesis is not in a valid state for conclusion request');
 

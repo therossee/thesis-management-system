@@ -1,0 +1,2270 @@
+openapi: 3.0.3
+info:
+  title: Thesis Management System - API Documentation
+  version: 1.0.0
+servers:
+  - url: http://localhost:4010
+    description: Prism mock server (development/testing only, not for production use)
+  - url: http://localhost:3001
+    description: Local backend (development only, use HTTPS server in production)
+  - url: https://api.example.com
+    description: Production backend (HTTPS)
+tags:
+  - name: Students
+  - name: Companies
+  - name: Thesis Proposals
+  - name: Thesis Applications
+  - name: Thesis
+  - name: Thesis Conclusion
+paths:
+  '/api/students':
+    get:
+      tags:
+        - Students
+      summary: Get all students
+      responses:
+        '200':
+          description: Students list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  '$ref': '#/components/schemas/Student'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+  '/api/students/logged-student':
+    get:
+      tags:
+        - Students
+      summary: Get logged student
+      responses:
+        '200':
+          description: Logged student
+          content:
+            application/json:
+              schema:
+                '$ref': '#/components/schemas/Student'
+        '404':
+          description: Logged student not found
+          content:
+            application/json:
+              schema:
+                type: object
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+    put:
+      tags:
+        - Students
+      summary: Update logged student
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              '$ref': '#/components/schemas/StudentUpdateRequest'
+      responses:
+        '200':
+          description: Logged student updated
+          content:
+            application/json:
+              schema:
+                type: object
+        '400':
+          description: Missing student id
+          content:
+            application/json:
+              schema:
+                type: object
+        '404':
+          description: Student not found
+          content:
+            application/json:
+              schema:
+                type: object
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+  '/api/students/required-summary':
+    get:
+      tags:
+        - Students
+      summary: Check if summary upload is required for logged student
+      responses:
+        '200':
+          description: Summary requirement
+          content:
+            application/json:
+              schema:
+                '$ref': '#/components/schemas/RequiredSummaryResponse'
+        '404':
+          description: Logged student, student or degree programme not found
+          content:
+            application/json:
+              schema:
+                type: object
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+  '/api/companies':
+    get:
+      tags:
+        - Companies
+      summary: Get all companies
+      responses:
+        '200':
+          description: Companies list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  '$ref': '#/components/schemas/Company'
+        '400':
+          description: Request failed
+          content:
+            application/json:
+              schema:
+                type: object
+  '/api/thesis-proposals':
+    get:
+      tags:
+        - Thesis Proposals
+      summary: Get thesis proposals
+      parameters:
+        - '$ref': '#/components/parameters/LangParam'
+        - '$ref': '#/components/parameters/PageParam'
+        - '$ref': '#/components/parameters/LimitParam'
+        - '$ref': '#/components/parameters/SearchParam'
+        - '$ref': '#/components/parameters/IsInternalParam'
+        - '$ref': '#/components/parameters/IsAbroadParam'
+        - '$ref': '#/components/parameters/TeacherIdParam'
+        - '$ref': '#/components/parameters/KeywordIdParam'
+        - '$ref': '#/components/parameters/TypeIdParam'
+        - '$ref': '#/components/parameters/SortByParam'
+        - '$ref': '#/components/parameters/OrderByParam'
+      responses:
+        '200':
+          description: Paginated thesis proposals
+          content:
+            application/json:
+              schema:
+                '$ref': '#/components/schemas/ThesisProposalListResponse'
+        '500':
+          description: Invalid query or server error
+          content:
+            application/json:
+              schema:
+                type: object
+  '/api/thesis-proposals/targeted':
+    get:
+      tags:
+        - Thesis Proposals
+      summary: Get targeted thesis proposals for logged student
+      parameters:
+        - '$ref': '#/components/parameters/LangParam'
+        - '$ref': '#/components/parameters/PageParam'
+        - '$ref': '#/components/parameters/LimitParam'
+        - '$ref': '#/components/parameters/SearchParam'
+        - '$ref': '#/components/parameters/IsInternalParam'
+        - '$ref': '#/components/parameters/IsAbroadParam'
+        - '$ref': '#/components/parameters/TeacherIdParam'
+        - '$ref': '#/components/parameters/KeywordIdParam'
+        - '$ref': '#/components/parameters/TypeIdParam'
+        - '$ref': '#/components/parameters/SortByParam'
+        - '$ref': '#/components/parameters/OrderByParam'
+      responses:
+        '200':
+          description: Paginated targeted thesis proposals
+          content:
+            application/json:
+              schema:
+                '$ref': '#/components/schemas/ThesisProposalListResponse'
+        '500':
+          description: Invalid query or server error
+          content:
+            application/json:
+              schema:
+                type: object
+  '/api/thesis-proposals/types':
+    get:
+      tags:
+        - Thesis Proposals
+      summary: Get thesis proposal types
+      parameters:
+        - '$ref': '#/components/parameters/LangParam'
+        - '$ref': '#/components/parameters/SearchParam'
+      responses:
+        '200':
+          description: Proposal types
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  '$ref': '#/components/schemas/Type'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+  '/api/thesis-proposals/keywords':
+    get:
+      tags:
+        - Thesis Proposals
+      summary: Get thesis proposal keywords
+      parameters:
+        - '$ref': '#/components/parameters/LangParam'
+        - '$ref': '#/components/parameters/SearchParam'
+      responses:
+        '200':
+          description: Proposal keywords
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  '$ref': '#/components/schemas/Keyword'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+  '/api/thesis-proposals/teachers':
+    get:
+      tags:
+        - Thesis Proposals
+      summary: Get teachers for thesis proposal filters
+      parameters:
+        - '$ref': '#/components/parameters/SearchParam'
+      responses:
+        '200':
+          description: Teachers list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  '$ref': '#/components/schemas/TeacherOverview'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+  '/api/thesis-proposals/{thesisProposalId}':
+    get:
+      tags:
+        - Thesis Proposals
+      summary: Get thesis proposal details by id
+      parameters:
+        - '$ref': '#/components/parameters/ThesisProposalIdParam'
+        - '$ref': '#/components/parameters/LangParam'
+      responses:
+        '200':
+          description: Thesis proposal details
+          content:
+            application/json:
+              schema:
+                '$ref': '#/components/schemas/ThesisProposal'
+        '404':
+          description: Thesis proposal not found
+          content:
+            application/json:
+              schema:
+                type: object
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+  '/api/thesis-proposals/{thesisProposalId}/availability':
+    get:
+      tags:
+        - Thesis Proposals
+      summary: Check if a thesis proposal is available
+      parameters:
+        - '$ref': '#/components/parameters/ThesisProposalIdParam'
+      responses:
+        '200':
+          description: Availability status
+          content:
+            application/json:
+              schema:
+                '$ref': '#/components/schemas/AvailabilityResponse'
+        '404':
+          description: Thesis proposal not found
+          content:
+            application/json:
+              schema:
+                type: object
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+  '/api/thesis-applications/eligibility':
+    get:
+      tags:
+        - Thesis Applications
+      summary: Check logged student eligibility for thesis application
+      responses:
+        '200':
+          description: Eligibility response
+          content:
+            application/json:
+              schema:
+                '$ref': '#/components/schemas/EligibilityResponse'
+        '401':
+          description: No logged-in student
+          content:
+            application/json:
+              schema:
+                type: object
+        '404':
+          description: Student not found
+          content:
+            application/json:
+              schema:
+                type: object
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+  '/api/thesis-applications':
+    get:
+      tags:
+        - Thesis Applications
+      summary: Get latest thesis application for logged student
+      responses:
+        '200':
+          description: Latest thesis application
+          content:
+            application/json:
+              schema:
+                '$ref': '#/components/schemas/ThesisApplicationResponse'
+        '401':
+          description: No logged-in student
+          content:
+            application/json:
+              schema:
+                type: object
+        '404':
+          description: Student or application not found
+          content:
+            application/json:
+              schema:
+                type: object
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+    post:
+      tags:
+        - Thesis Applications
+      summary: Create thesis application
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              '$ref': '#/components/schemas/ThesisApplicationRequest'
+      responses:
+        '201':
+          description: Thesis application created
+          content:
+            application/json:
+              schema:
+                '$ref': '#/components/schemas/ThesisApplicationResponse'
+        '400':
+          description: Validation or domain error
+          content:
+            application/json:
+              schema:
+                type: object
+        '401':
+          description: No logged-in student
+          content:
+            application/json:
+              schema:
+                type: object
+        '404':
+          description: Student not found
+          content:
+            application/json:
+              schema:
+                type: object
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+  '/api/thesis-applications/all':
+    get:
+      tags:
+        - Thesis Applications
+      summary: Get all thesis applications
+      responses:
+        '200':
+          description: Thesis applications list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  '$ref': '#/components/schemas/ThesisApplication'
+        '400':
+          description: Broken relational references detected
+          content:
+            application/json:
+              schema:
+                type: object
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+  '/api/thesis-applications/status-history':
+    get:
+      tags:
+        - Thesis Applications
+      summary: Get thesis application status history
+      parameters:
+        - '$ref': '#/components/parameters/ApplicationIdParam'
+      responses:
+        '200':
+          description: Status history
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  '$ref': '#/components/schemas/ThesisApplicationStatusHistory'
+        '400':
+          description: Missing applicationId
+          content:
+            application/json:
+              schema:
+                type: object
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+  '/api/thesis-applications/cancel':
+    post:
+      tags:
+        - Thesis Applications
+      summary: Cancel pending thesis application
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              '$ref': '#/components/schemas/ThesisApplicationCancelRequest'
+      responses:
+        '200':
+          description: Updated application
+          content:
+            application/json:
+              schema:
+                '$ref': '#/components/schemas/ThesisApplicationRecord'
+        '400':
+          description: Only pending applications can be cancelled
+          content:
+            application/json:
+              schema:
+                type: object
+        '404':
+          description: Thesis application not found
+          content:
+            application/json:
+              schema:
+                type: object
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+  '/api/thesis':
+    get:
+      tags:
+        - Thesis
+      summary: Get logged student thesis
+      responses:
+        '200':
+          description: Thesis details
+          content:
+            application/json:
+              schema:
+                '$ref': '#/components/schemas/Thesis'
+        '401':
+          description: No logged-in student
+          content:
+            application/json:
+              schema:
+                type: object
+        '404':
+          description: Thesis not found for logged student
+          content:
+            application/json:
+              schema:
+                type: object
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+    post:
+      tags:
+        - Thesis
+      summary: Create thesis from application
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              '$ref': '#/components/schemas/ThesisCreateRequest'
+      responses:
+        '201':
+          description: Thesis created
+          content:
+            application/json:
+              schema:
+                '$ref': '#/components/schemas/Thesis'
+        '401':
+          description: No logged-in student
+          content:
+            application/json:
+              schema:
+                type: object
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+  '/api/thesis/all':
+    get:
+      tags:
+        - Thesis
+      summary: Get all theses
+      description: Debug endpoint that returns raw thesis records as stored by the backend.
+      responses:
+        '200':
+          description: Raw thesis records
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  '$ref': '#/components/schemas/ThesisRecord'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+  '/api/thesis/{id}/{fileType}':
+    get:
+      tags:
+        - Thesis
+      summary: Download thesis file
+      parameters:
+        - '$ref': '#/components/parameters/ThesisIdPathParam'
+        - '$ref': '#/components/parameters/ThesisFileTypeParam'
+      responses:
+        '200':
+          description: File stream
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+        '400':
+          description: Invalid file type
+          content:
+            application/json:
+              schema:
+                type: object
+        '404':
+          description: Thesis not found or requested file missing
+          content:
+            application/json:
+              schema:
+                type: object
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+  '/api/thesis/cancel':
+    post:
+      tags:
+        - Thesis
+      summary: Request thesis cancellation
+      responses:
+        '200':
+          description: Cancellation requested
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - message
+                properties:
+                  message:
+                    type: string
+        '400':
+          description: Invalid thesis state for cancellation
+          content:
+            application/json:
+              schema:
+                type: object
+        '401':
+          description: No logged-in student
+          content:
+            application/json:
+              schema:
+                type: object
+        '404':
+          description: Student or thesis not found
+          content:
+            application/json:
+              schema:
+                type: object
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+  '/api/thesis-conclusion':
+    post:
+      tags:
+        - Thesis Conclusion
+      summary: Send thesis conclusion request
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              '$ref': '#/components/schemas/ThesisConclusionRequest'
+            encoding:
+              coSupervisors:
+                contentType: application/json
+              keywords:
+                contentType: application/json
+              sdgs:
+                contentType: application/json
+              embargo:
+                contentType: application/json
+      responses:
+        '200':
+          description: Thesis updated after conclusion request
+          content:
+            application/json:
+              schema:
+                '$ref': '#/components/schemas/ThesisConclusionResponse'
+        '400':
+          description: Validation error or invalid thesis state
+          content:
+            application/json:
+              schema:
+                type: object
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+        '404':
+          description: Student or thesis not found
+          content:
+            application/json:
+              schema:
+                type: object
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+  '/api/thesis-conclusion/draft':
+    get:
+      tags:
+        - Thesis Conclusion
+      summary: Get thesis conclusion draft
+      responses:
+        '200':
+          description: Draft data
+          content:
+            application/json:
+              schema:
+                '$ref': '#/components/schemas/ThesisConclusionDraftResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+        '404':
+          description: Student or thesis not found
+          content:
+            application/json:
+              schema:
+                type: object
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+    post:
+      tags:
+        - Thesis Conclusion
+      summary: Save thesis conclusion draft
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              '$ref': '#/components/schemas/ThesisConclusionDraft'
+            encoding:
+              coSupervisors:
+                contentType: application/json
+              keywords:
+                contentType: application/json
+              sdgs:
+                contentType: application/json
+              embargo:
+                contentType: application/json
+      responses:
+        '200':
+          description: Draft saved
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - message
+                properties:
+                  message:
+                    type: string
+        '400':
+          description: Validation or state error
+          content:
+            application/json:
+              schema:
+                type: object
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+        '404':
+          description: Student or thesis not found
+          content:
+            application/json:
+              schema:
+                type: object
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+  '/api/thesis-conclusion/sdgs':
+    get:
+      tags:
+        - Thesis Conclusion
+      summary: Get sustainable development goals
+      responses:
+        '200':
+          description: SDGs list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  '$ref': '#/components/schemas/SustainableDevelopmentGoal'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+  '/api/thesis-conclusion/licenses':
+    get:
+      tags:
+        - Thesis Conclusion
+      summary: Get available licenses
+      parameters:
+        - '$ref': '#/components/parameters/LangParam'
+      responses:
+        '200':
+          description: Licenses list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  '$ref': '#/components/schemas/License'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+  '/api/thesis-conclusion/embargo-motivations':
+    get:
+      tags:
+        - Thesis Conclusion
+      summary: Get embargo motivations
+      parameters:
+        - '$ref': '#/components/parameters/LangParam'
+      responses:
+        '200':
+          description: Embargo motivations list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  '$ref': '#/components/schemas/EmbargoMotivation'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+  '/api/thesis-conclusion/deadlines':
+    get:
+      tags:
+        - Thesis Conclusion
+      summary: Get graduation session deadlines for current workflow step
+      responses:
+        '200':
+          description: Session deadlines
+          content:
+            application/json:
+              schema:
+                '$ref': '#/components/schemas/SessionDeadlineResponse'
+        '401':
+          description: No logged-in student
+          content:
+            application/json:
+              schema:
+                type: object
+        '404':
+          description: No upcoming deadline found
+          content:
+            application/json:
+              schema:
+                type: object
+        '500':
+          description: Graduation session/deadline data error
+          content:
+            application/json:
+              schema:
+                type: object
+  '/api/thesis-conclusion/upload-final-thesis':
+    post:
+      tags:
+        - Thesis Conclusion
+      summary: Upload final thesis files
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              '$ref': '#/components/schemas/FinalThesisUploadRequest'
+      responses:
+        '200':
+          description: Final thesis uploaded
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - message
+                properties:
+                  message:
+                    type: string
+        '400':
+          description: Validation or thesis state error
+          content:
+            application/json:
+              schema:
+                type: object
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+        '404':
+          description: Student or thesis not found
+          content:
+            application/json:
+              schema:
+                type: object
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+components:
+  parameters:
+    LangParam:
+      name: lang
+      in: query
+      required: false
+      description: Language for multilingual fields
+      schema:
+        type: string
+        enum:
+          - it
+          - en
+        default: it
+    SearchParam:
+      name: search
+      in: query
+      required: false
+      schema:
+        type: string
+    PageParam:
+      name: page
+      in: query
+      required: false
+      schema:
+        type: integer
+        minimum: 1
+        default: 1
+    LimitParam:
+      name: limit
+      in: query
+      required: false
+      schema:
+        type: integer
+        minimum: 1
+        default: 10
+    IsInternalParam:
+      name: isInternal
+      in: query
+      required: false
+      schema:
+        type: boolean
+    IsAbroadParam:
+      name: isAbroad
+      in: query
+      required: false
+      schema:
+        type: boolean
+    TeacherIdParam:
+      name: teacherId
+      in: query
+      required: false
+      description: Teacher id (single value or repeated query parameter)
+      schema:
+        oneOf:
+          - type: integer
+          - type: array
+            items:
+              type: integer
+      style: form
+      explode: true
+    KeywordIdParam:
+      name: keywordId
+      in: query
+      required: false
+      description: Keyword id (single value or repeated query parameter)
+      schema:
+        oneOf:
+          - type: integer
+          - type: array
+            items:
+              type: integer
+      style: form
+      explode: true
+    TypeIdParam:
+      name: typeId
+      in: query
+      required: false
+      description: Type id (single value or repeated query parameter)
+      schema:
+        oneOf:
+          - type: integer
+          - type: array
+            items:
+              type: integer
+      style: form
+      explode: true
+    SortByParam:
+      name: sortBy
+      in: query
+      required: false
+      schema:
+        type: string
+        enum:
+          - creationDate
+          - expirationDate
+          - topic
+          - description
+          - id
+        default: id
+    OrderByParam:
+      name: orderBy
+      in: query
+      required: false
+      schema:
+        type: string
+        enum:
+          - ASC
+          - DESC
+        default: ASC
+    ThesisProposalIdParam:
+      name: thesisProposalId
+      in: path
+      required: true
+      schema:
+        type: integer
+    ApplicationIdParam:
+      name: applicationId
+      in: query
+      required: true
+      schema:
+        type: integer
+    ThesisIdPathParam:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: integer
+    ThesisFileTypeParam:
+      name: fileType
+      in: path
+      required: true
+      schema:
+        type: string
+        enum:
+          - thesis
+          - summary
+          - additional
+  schemas:
+    AvailabilityResponse:
+      type: object
+      required:
+        - available
+      properties:
+        available:
+          type: boolean
+    RequiredSummaryResponse:
+      type: object
+      required:
+        - requiredSummary
+      properties:
+        requiredSummary:
+          type: boolean
+    EligibilityResponse:
+      type: object
+      required:
+        - studentId
+        - eligible
+      properties:
+        studentId:
+          type: string
+        eligible:
+          type: boolean
+    StudentUpdateRequest:
+      type: object
+      required:
+        - student_id
+      properties:
+        student_id:
+          type: string
+    Student:
+      type: object
+      required:
+        - id
+        - firstName
+        - lastName
+        - degreeId
+      properties:
+        id:
+          type: string
+        firstName:
+          type: string
+        lastName:
+          type: string
+        profilePictureUrl:
+          type: string
+          nullable: true
+        degreeId:
+          type: string
+        isLogged:
+          type: boolean
+    TeacherOverview:
+      type: object
+      required:
+        - id
+        - firstName
+        - lastName
+      properties:
+        id:
+          type: integer
+        firstName:
+          type: string
+        lastName:
+          type: string
+        email:
+          type: string
+          nullable: true
+        isSupervisor:
+          type: boolean
+        isApplicationSupervisor:
+          type: boolean
+        isThesisSupervisor:
+          type: boolean
+    Teacher:
+      type: object
+      required:
+        - id
+        - firstName
+        - lastName
+      properties:
+        id:
+          type: integer
+        firstName:
+          type: string
+        lastName:
+          type: string
+        role:
+          type: string
+          nullable: true
+        email:
+          type: string
+          nullable: true
+        profileUrl:
+          type: string
+          nullable: true
+        profilePictureUrl:
+          type: string
+          nullable: true
+        facilityShortName:
+          type: string
+          nullable: true
+        isSupervisor:
+          type: boolean
+          nullable: true
+    Company:
+      type: object
+      required:
+        - id
+        - corporateName
+      properties:
+        id:
+          type: integer
+        corporateName:
+          type: string
+    Keyword:
+      type: object
+      required:
+        - id
+        - keyword
+      properties:
+        id:
+          type: integer
+        keyword:
+          type: string
+    Type:
+      type: object
+      required:
+        - id
+        - type
+      properties:
+        id:
+          type: integer
+        type:
+          type: string
+    ThesisProposalMinimal:
+      type: object
+      required:
+        - id
+        - topic
+      properties:
+        id:
+          type: integer
+        topic:
+          type: string
+    ThesisProposalOverview:
+      type: object
+      required:
+        - id
+        - topic
+        - description
+        - supervisor
+        - internalCoSupervisors
+        - creationDate
+        - expirationDate
+        - isInternal
+        - isAbroad
+        - keywords
+        - types
+        - company
+      properties:
+        id:
+          type: integer
+        topic:
+          type: string
+        description:
+          type: string
+        supervisor:
+          allOf:
+            - '$ref': '#/components/schemas/TeacherOverview'
+          nullable: true
+        internalCoSupervisors:
+          type: array
+          items:
+            '$ref': '#/components/schemas/TeacherOverview'
+        creationDate:
+          type: string
+          format: date-time
+        expirationDate:
+          type: string
+          format: date-time
+        isInternal:
+          type: boolean
+        isAbroad:
+          type: boolean
+        keywords:
+          type: array
+          items:
+            '$ref': '#/components/schemas/Keyword'
+        types:
+          type: array
+          items:
+            '$ref': '#/components/schemas/Type'
+        company:
+          allOf:
+            - '$ref': '#/components/schemas/Company'
+          nullable: true
+    ThesisProposal:
+      type: object
+      required:
+        - id
+        - topic
+        - description
+        - link
+        - requiredSkills
+        - additionalNotes
+        - supervisor
+        - internalCoSupervisors
+        - externalCoSupervisors
+        - creationDate
+        - expirationDate
+        - isInternal
+        - isAbroad
+        - attachmentUrl
+        - keywords
+        - types
+        - company
+      properties:
+        id:
+          type: integer
+        topic:
+          type: string
+        description:
+          type: string
+        link:
+          type: string
+          nullable: true
+        requiredSkills:
+          type: string
+          nullable: true
+        additionalNotes:
+          type: string
+          nullable: true
+        supervisor:
+          '$ref': '#/components/schemas/Teacher'
+        internalCoSupervisors:
+          type: array
+          items:
+            '$ref': '#/components/schemas/Teacher'
+        externalCoSupervisors:
+          type: string
+          nullable: true
+        creationDate:
+          type: string
+          format: date-time
+        expirationDate:
+          type: string
+          format: date-time
+        isInternal:
+          type: boolean
+        isAbroad:
+          type: boolean
+        attachmentUrl:
+          type: string
+          nullable: true
+        keywords:
+          type: array
+          items:
+            '$ref': '#/components/schemas/Keyword'
+        types:
+          type: array
+          items:
+            '$ref': '#/components/schemas/Type'
+        company:
+          allOf:
+            - '$ref': '#/components/schemas/Company'
+          nullable: true
+    ThesisProposalListResponse:
+      type: object
+      required:
+        - count
+        - thesisProposals
+        - currentPage
+        - totalPages
+      properties:
+        count:
+          type: integer
+        thesisProposals:
+          type: array
+          items:
+            '$ref': '#/components/schemas/ThesisProposalOverview'
+        currentPage:
+          type: integer
+        totalPages:
+          type: integer
+    ThesisApplicationStatus:
+      type: string
+      enum:
+        - pending
+        - rejected
+        - approved
+        - cancelled
+    ThesisStatus:
+      type: string
+      enum:
+        - ongoing
+        - cancel_requested
+        - cancel_approved
+        - conclusion_requested
+        - conclusion_approved
+        - almalaurea
+        - compiled_questionnaire
+        - final_exam
+        - final_thesis
+        - done
+    ThesisApplicationStatusHistory:
+      type: object
+      required:
+        - id
+        - oldStatus
+        - newStatus
+        - changeDate
+      properties:
+        id:
+          type: integer
+        oldStatus:
+          type: string
+          enum:
+            - pending
+            - rejected
+            - approved
+            - cancelled
+            - ongoing
+            - cancel_requested
+            - cancel_approved
+            - conclusion_requested
+            - conclusion_approved
+            - almalaurea
+            - compiled_questionnaire
+            - final_exam
+            - final_thesis
+            - done
+          nullable: true
+        newStatus:
+          type: string
+          enum:
+            - pending
+            - rejected
+            - approved
+            - cancelled
+            - ongoing
+            - cancel_requested
+            - cancel_approved
+            - conclusion_requested
+            - conclusion_approved
+            - almalaurea
+            - compiled_questionnaire
+            - final_exam
+            - final_thesis
+            - done
+        changeDate:
+          type: string
+          format: date-time
+    ThesisApplicationRequest:
+      type: object
+      required:
+        - topic
+        - supervisor
+      properties:
+        topic:
+          type: string
+        supervisor:
+          '$ref': '#/components/schemas/TeacherOverview'
+        coSupervisors:
+          type: array
+          items:
+            '$ref': '#/components/schemas/TeacherOverview'
+          nullable: true
+        company:
+          allOf:
+            - '$ref': '#/components/schemas/Company'
+          nullable: true
+        thesisProposal:
+          allOf:
+            - '$ref': '#/components/schemas/ThesisProposalMinimal'
+          nullable: true
+    ThesisApplicationResponse:
+      type: object
+      required:
+        - id
+        - topic
+        - supervisor
+        - coSupervisors
+        - company
+        - thesisProposal
+        - submissionDate
+        - status
+      properties:
+        id:
+          type: integer
+        topic:
+          type: string
+        supervisor:
+          '$ref': '#/components/schemas/Teacher'
+        coSupervisors:
+          type: array
+          nullable: true
+          items:
+            '$ref': '#/components/schemas/Teacher'
+        company:
+          allOf:
+            - '$ref': '#/components/schemas/Company'
+          nullable: true
+        thesisProposal:
+          allOf:
+            - '$ref': '#/components/schemas/ThesisProposalMinimal'
+          nullable: true
+        submissionDate:
+          type: string
+          format: date-time
+        status:
+          '$ref': '#/components/schemas/ThesisApplicationStatus'
+    ThesisApplication:
+      type: object
+      required:
+        - id
+        - topic
+        - student
+        - supervisor
+        - coSupervisors
+        - company
+        - thesisProposal
+        - submissionDate
+        - status
+      properties:
+        id:
+          type: integer
+        topic:
+          type: string
+        student:
+          '$ref': '#/components/schemas/Student'
+        supervisor:
+          '$ref': '#/components/schemas/Teacher'
+        coSupervisors:
+          type: array
+          nullable: true
+          items:
+            '$ref': '#/components/schemas/Teacher'
+        company:
+          allOf:
+            - '$ref': '#/components/schemas/Company'
+          nullable: true
+        thesisProposal:
+          allOf:
+            - '$ref': '#/components/schemas/ThesisProposalOverview'
+          nullable: true
+        submissionDate:
+          type: string
+          format: date-time
+        status:
+          '$ref': '#/components/schemas/ThesisApplicationStatus'
+    ThesisApplicationCancelRequest:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          type: integer
+    ThesisApplicationRecord:
+      type: object
+      required:
+        - id
+        - topic
+        - submission_date
+        - student_id
+        - status
+      properties:
+        id:
+          type: integer
+        topic:
+          type: string
+        submission_date:
+          type: string
+          format: date-time
+        student_id:
+          type: string
+        thesis_proposal_id:
+          type: integer
+          nullable: true
+        company_id:
+          type: integer
+          nullable: true
+        status:
+          '$ref': '#/components/schemas/ThesisApplicationStatus'
+    TeacherIdReference:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          type: integer
+    ThesisCreateRequest:
+      type: object
+      required:
+        - topic
+        - thesisApplicationId
+        - supervisor
+      properties:
+        topic:
+          type: string
+        thesisApplicationId:
+          type: integer
+        supervisor:
+          '$ref': '#/components/schemas/TeacherIdReference'
+        coSupervisors:
+          type: array
+          items:
+            '$ref': '#/components/schemas/TeacherIdReference'
+    Thesis:
+      type: object
+      required:
+        - id
+        - topic
+        - student
+        - supervisor
+        - coSupervisors
+        - company
+        - status
+        - thesisStartDate
+      properties:
+        id:
+          type: integer
+        topic:
+          type: string
+        title:
+          type: string
+          nullable: true
+        titleEng:
+          type: string
+          nullable: true
+        language:
+          type: string
+          enum:
+            - it
+            - en
+          nullable: true
+        abstract:
+          type: string
+          nullable: true
+        abstractEng:
+          type: string
+          nullable: true
+        thesisFilePath:
+          type: string
+          nullable: true
+        thesisSummaryPath:
+          type: string
+          nullable: true
+        additionalZipPath:
+          type: string
+          nullable: true
+        licenseId:
+          type: integer
+          nullable: true
+        student:
+          '$ref': '#/components/schemas/Student'
+        supervisor:
+          '$ref': '#/components/schemas/Teacher'
+        coSupervisors:
+          type: array
+          nullable: true
+          items:
+            '$ref': '#/components/schemas/Teacher'
+        company:
+          allOf:
+            - '$ref': '#/components/schemas/Company'
+          nullable: true
+        applicationStatusHistory:
+          type: array
+          items:
+            '$ref': '#/components/schemas/ThesisApplicationStatusHistory'
+        status:
+          '$ref': '#/components/schemas/ThesisStatus'
+        thesisStartDate:
+          type: string
+          format: date-time
+        thesisConclusionRequestDate:
+          type: string
+          format: date-time
+          nullable: true
+        thesisConclusionConfirmationDate:
+          type: string
+          format: date-time
+          nullable: true
+        thesisDraftDate:
+          type: string
+          format: date-time
+          nullable: true
+    ThesisRecord:
+      type: object
+      required:
+        - id
+        - topic
+        - student_id
+        - thesis_application_id
+        - status
+        - thesis_start_date
+      properties:
+        id:
+          type: integer
+        topic:
+          type: string
+        title:
+          type: string
+          nullable: true
+        title_eng:
+          type: string
+          nullable: true
+        language:
+          type: string
+          enum:
+            - it
+            - en
+          nullable: true
+        abstract:
+          type: string
+          nullable: true
+        abstract_eng:
+          type: string
+          nullable: true
+        thesis_file_path:
+          type: string
+          nullable: true
+        thesis_summary_path:
+          type: string
+          nullable: true
+        additional_zip_path:
+          type: string
+          nullable: true
+        license_id:
+          type: integer
+          nullable: true
+        company_id:
+          type: integer
+          nullable: true
+        student_id:
+          type: string
+        thesis_application_id:
+          type: integer
+        status:
+          '$ref': '#/components/schemas/ThesisStatus'
+        thesis_start_date:
+          type: string
+          format: date-time
+        thesis_conclusion_request_date:
+          type: string
+          format: date-time
+          nullable: true
+        thesis_conclusion_confirmation_date:
+          type: string
+          format: date-time
+          nullable: true
+        thesis_draft_date:
+          type: string
+          format: date-time
+          nullable: true
+    SustainableDevelopmentGoal:
+      type: object
+      required:
+        - id
+        - goal
+      properties:
+        id:
+          type: integer
+        goal:
+          type: string
+    License:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        description:
+          type: string
+          nullable: true
+        name_en:
+          type: string
+        description_en:
+          type: string
+          nullable: true
+    EmbargoMotivation:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          type: integer
+        motivation:
+          type: string
+        motivation_en:
+          type: string
+    SustainableDevelopmentGoals:
+      type: object
+      required:
+        - goalId
+      properties:
+        goalId:
+          type: integer
+        level:
+          type: string
+          enum:
+            - primary
+            - secondary
+          nullable: true
+    ThesisEmbargoMotivation:
+      type: object
+      required:
+        - motivationId
+      properties:
+        motivationId:
+          type: integer
+        otherMotivation:
+          type: string
+          nullable: true
+    ThesisKeywordInput:
+      oneOf:
+        - type: object
+          required:
+            - id
+            - keyword
+          properties:
+            id:
+              type: integer
+            keyword:
+              type: string
+        - type: string
+          minLength: 1
+    ThesisConclusionRequest:
+      type: object
+      required:
+        - title
+        - abstract
+        - thesisFile
+      properties:
+        title:
+          type: string
+          maxLength: 255
+        titleEng:
+          type: string
+          maxLength: 255
+          nullable: true
+        abstract:
+          type: string
+          maxLength: 3550
+        abstractEng:
+          type: string
+          maxLength: 3550
+          nullable: true
+        language:
+          type: string
+          enum:
+            - it
+            - en
+          default: it
+        coSupervisors:
+          type: array
+          nullable: true
+          items:
+            '$ref': '#/components/schemas/TeacherOverview'
+        keywords:
+          type: array
+          nullable: true
+          items:
+            '$ref': '#/components/schemas/ThesisKeywordInput'
+        licenseId:
+          type: integer
+          nullable: true
+        sdgs:
+          type: array
+          nullable: true
+          items:
+            '$ref': '#/components/schemas/SustainableDevelopmentGoals'
+        embargo:
+          type: object
+          nullable: true
+          required:
+            - duration
+            - motivations
+          properties:
+            duration:
+              type: string
+              enum:
+                - 12_months
+                - 18_months
+                - 36_months
+                - after_explicit_consent
+            motivations:
+              type: array
+              minItems: 1
+              items:
+                '$ref': '#/components/schemas/ThesisEmbargoMotivation'
+        thesisSummary:
+          type: string
+          format: binary
+          description: PDF file
+        thesisFile:
+          type: string
+          format: binary
+          description: PDF/A file
+        additionalZip:
+          type: string
+          format: binary
+          description: ZIP file
+    ThesisConclusionDraft:
+      type: object
+      properties:
+        title:
+          type: string
+          maxLength: 255
+          nullable: true
+        titleEng:
+          type: string
+          maxLength: 255
+          nullable: true
+        abstract:
+          type: string
+          maxLength: 3550
+          nullable: true
+        abstractEng:
+          type: string
+          maxLength: 3550
+          nullable: true
+        language:
+          type: string
+          enum:
+            - it
+            - en
+          nullable: true
+        coSupervisors:
+          type: array
+          nullable: true
+          items:
+            '$ref': '#/components/schemas/TeacherOverview'
+        keywords:
+          type: array
+          nullable: true
+          items:
+            '$ref': '#/components/schemas/ThesisKeywordInput'
+        licenseId:
+          type: integer
+          nullable: true
+        sdgs:
+          type: array
+          nullable: true
+          items:
+            '$ref': '#/components/schemas/SustainableDevelopmentGoals'
+        embargo:
+          type: object
+          nullable: true
+          properties:
+            duration:
+              type: string
+              enum:
+                - 12_months
+                - 18_months
+                - 36_months
+                - after_explicit_consent
+            motivations:
+              type: array
+              items:
+                '$ref': '#/components/schemas/ThesisEmbargoMotivation'
+        thesisSummary:
+          type: string
+          format: binary
+          description: PDF file
+        thesisFile:
+          type: string
+          format: binary
+          description: PDF file
+        additionalZip:
+          type: string
+          format: binary
+          description: ZIP file
+        removeThesisSummary:
+          type: boolean
+        removeThesisFile:
+          type: boolean
+        removeAdditionalZip:
+          type: boolean
+    ThesisDraftKeyword:
+      type: object
+      required:
+        - id
+        - keyword
+      properties:
+        id:
+          type: integer
+          nullable: true
+        keyword:
+          type: string
+    ThesisConclusionDraftResponse:
+      type: object
+      required:
+        - title
+        - titleEng
+        - abstract
+        - abstractEng
+        - language
+        - licenseId
+        - thesisFilePath
+        - thesisSummaryPath
+        - additionalZipPath
+        - thesisDraftDate
+        - coSupervisors
+        - embargo
+        - sdgs
+        - keywords
+      properties:
+        title:
+          type: string
+          nullable: true
+        titleEng:
+          type: string
+          nullable: true
+        abstract:
+          type: string
+          nullable: true
+        abstractEng:
+          type: string
+          nullable: true
+        language:
+          type: string
+          enum:
+            - it
+            - en
+          nullable: true
+        licenseId:
+          type: integer
+          nullable: true
+        thesisFilePath:
+          type: string
+          nullable: true
+        thesisSummaryPath:
+          type: string
+          nullable: true
+        additionalZipPath:
+          type: string
+          nullable: true
+        thesisDraftDate:
+          type: string
+          format: date-time
+          nullable: true
+        coSupervisors:
+          type: array
+          items:
+            '$ref': '#/components/schemas/TeacherOverview'
+        embargo:
+          type: object
+          nullable: true
+          required:
+            - duration
+            - motivations
+          properties:
+            duration:
+              type: string
+              enum:
+                - 12_months
+                - 18_months
+                - 36_months
+                - after_explicit_consent
+            motivations:
+              type: array
+              items:
+                '$ref': '#/components/schemas/ThesisEmbargoMotivation'
+        sdgs:
+          type: array
+          items:
+            '$ref': '#/components/schemas/SustainableDevelopmentGoals'
+        keywords:
+          type: array
+          items:
+            '$ref': '#/components/schemas/ThesisDraftKeyword'
+    ThesisConclusionResponse:
+      type: object
+      required:
+        - id
+        - topic
+        - title
+        - titleEng
+        - abstract
+        - abstractEng
+        - thesisFilePath
+        - thesisSummaryPath
+        - additionalZipPath
+        - licenseId
+        - companyId
+        - studentId
+        - thesisApplicationId
+        - status
+        - thesisStartDate
+        - thesisConclusionRequestDate
+        - thesisConclusionConfirmationDate
+        - supervisorsAndCoSupervisors
+        - sustainableDevelopmentGoals
+        - keywords
+        - embargo
+      properties:
+        id:
+          type: integer
+        topic:
+          type: string
+        title:
+          type: string
+          nullable: true
+        titleEng:
+          type: string
+          nullable: true
+        abstract:
+          type: string
+          nullable: true
+        abstractEng:
+          type: string
+          nullable: true
+        thesisFilePath:
+          type: string
+          nullable: true
+        thesisSummaryPath:
+          type: string
+          nullable: true
+        additionalZipPath:
+          type: string
+          nullable: true
+        licenseId:
+          type: integer
+          nullable: true
+        companyId:
+          type: integer
+          nullable: true
+        studentId:
+          type: string
+        thesisApplicationId:
+          type: integer
+        status:
+          '$ref': '#/components/schemas/ThesisStatus'
+        thesisStartDate:
+          type: string
+          format: date-time
+        thesisConclusionRequestDate:
+          type: string
+          format: date-time
+          nullable: true
+        thesisConclusionConfirmationDate:
+          type: string
+          format: date-time
+          nullable: true
+        supervisorsAndCoSupervisors:
+          type: array
+          items:
+            type: object
+            required:
+              - teacherId
+              - isSupervisor
+            properties:
+              teacherId:
+                type: integer
+              isSupervisor:
+                type: boolean
+        sustainableDevelopmentGoals:
+          type: array
+          items:
+            type: object
+            required:
+              - goalId
+              - sdgLevel
+            properties:
+              goalId:
+                type: integer
+              sdgLevel:
+                type: string
+                enum:
+                  - primary
+                  - secondary
+                nullable: true
+        keywords:
+          type: array
+          items:
+            type: object
+            required:
+              - keywordId
+              - keywordOther
+            properties:
+              keywordId:
+                type: integer
+                nullable: true
+              keywordOther:
+                type: string
+                nullable: true
+        embargo:
+          type: object
+          nullable: true
+          required:
+            - id
+            - duration
+            - motivations
+          properties:
+            id:
+              type: integer
+            duration:
+              type: string
+              enum:
+                - 12_months
+                - 18_months
+                - 36_months
+                - after_explicit_consent
+            motivations:
+              type: array
+              items:
+                type: object
+                required:
+                  - motivationId
+                  - otherMotivation
+                properties:
+                  motivationId:
+                    type: integer
+                  otherMotivation:
+                    type: string
+                    nullable: true
+    FinalThesisUploadRequest:
+      type: object
+      required:
+        - thesisFile
+      properties:
+        thesisFile:
+          type: string
+          format: binary
+          description: PDF/A file
+        thesisSummary:
+          type: string
+          format: binary
+          description: PDF file
+        additionalZip:
+          type: string
+          format: binary
+          description: ZIP file
+    GraduationSession:
+      type: object
+      required:
+        - id
+        - sessionName
+        - sessionNameEn
+      properties:
+        id:
+          type: integer
+        sessionName:
+          type: string
+        sessionNameEn:
+          type: string
+    Deadline:
+      type: object
+      required:
+        - id
+        - deadlineType
+        - graduationSessionId
+        - deadlineDate
+      properties:
+        id:
+          type: integer
+        deadlineType:
+          type: string
+          enum:
+            - thesis_request
+            - exams
+            - internship_report
+            - conclusion_request
+            - final_exam_registration
+            - ielts
+        graduationSessionId:
+          type: integer
+        deadlineDate:
+          type: string
+          format: date-time
+    SessionDeadlineResponse:
+      type: object
+      required:
+        - graduationSession
+        - deadlines
+      properties:
+        graduationSession:
+          '$ref': '#/components/schemas/GraduationSession'
+        deadlines:
+          type: array
+          items:
+            '$ref': '#/components/schemas/Deadline'
