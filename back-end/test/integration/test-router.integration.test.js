@@ -10,10 +10,13 @@ const ORIGINAL_ENV = { ...process.env };
 
 const TEMP_APPROVED_APPLICATION_ID = 9001;
 const TEMP_REJECTED_APPLICATION_ID = 9002;
+const TEMP_BROKEN_APPROVAL_APPLICATION_ID = 9003;
 const TEMP_THESIS_APPLICATION_ID = 9010;
 const TEMP_THESIS_APPROVAL_APPLICATION_ID = 9011;
+const TEMP_THESIS_TRANSITION_APPLICATION_ID = 9012;
 const TEMP_THESIS_ID = 9100;
 const TEMP_THESIS_APPROVAL_ID = 9101;
+const TEMP_THESIS_TRANSITION_ID = 9102;
 
 const cleanupTempData = async () => {
   await sequelize.query(`
@@ -25,19 +28,23 @@ const cleanupTempData = async () => {
          WHERE thesis_application_id IN (
            ${TEMP_APPROVED_APPLICATION_ID},
            ${TEMP_REJECTED_APPLICATION_ID},
+           ${TEMP_BROKEN_APPROVAL_APPLICATION_ID},
            ${TEMP_THESIS_APPLICATION_ID},
-           ${TEMP_THESIS_APPROVAL_APPLICATION_ID}
+           ${TEMP_THESIS_APPROVAL_APPLICATION_ID},
+           ${TEMP_THESIS_TRANSITION_APPLICATION_ID}
          )
        )
   `);
   await sequelize.query(`
     DELETE FROM thesis
-    WHERE id IN (${TEMP_THESIS_ID}, ${TEMP_THESIS_APPROVAL_ID})
+    WHERE id IN (${TEMP_THESIS_ID}, ${TEMP_THESIS_APPROVAL_ID}, ${TEMP_THESIS_TRANSITION_ID})
        OR thesis_application_id IN (
          ${TEMP_APPROVED_APPLICATION_ID},
          ${TEMP_REJECTED_APPLICATION_ID},
+         ${TEMP_BROKEN_APPROVAL_APPLICATION_ID},
          ${TEMP_THESIS_APPLICATION_ID},
-         ${TEMP_THESIS_APPROVAL_APPLICATION_ID}
+         ${TEMP_THESIS_APPROVAL_APPLICATION_ID},
+         ${TEMP_THESIS_TRANSITION_APPLICATION_ID}
        )
   `);
   await sequelize.query(`
@@ -45,8 +52,10 @@ const cleanupTempData = async () => {
     WHERE thesis_application_id IN (
       ${TEMP_APPROVED_APPLICATION_ID},
       ${TEMP_REJECTED_APPLICATION_ID},
+      ${TEMP_BROKEN_APPROVAL_APPLICATION_ID},
       ${TEMP_THESIS_APPLICATION_ID},
-      ${TEMP_THESIS_APPROVAL_APPLICATION_ID}
+      ${TEMP_THESIS_APPROVAL_APPLICATION_ID},
+      ${TEMP_THESIS_TRANSITION_APPLICATION_ID}
     )
   `);
   await sequelize.query(`
@@ -54,8 +63,10 @@ const cleanupTempData = async () => {
     WHERE thesis_application_id IN (
       ${TEMP_APPROVED_APPLICATION_ID},
       ${TEMP_REJECTED_APPLICATION_ID},
+      ${TEMP_BROKEN_APPROVAL_APPLICATION_ID},
       ${TEMP_THESIS_APPLICATION_ID},
-      ${TEMP_THESIS_APPROVAL_APPLICATION_ID}
+      ${TEMP_THESIS_APPROVAL_APPLICATION_ID},
+      ${TEMP_THESIS_TRANSITION_APPLICATION_ID}
     )
   `);
   await sequelize.query(`
@@ -63,8 +74,10 @@ const cleanupTempData = async () => {
     WHERE id IN (
       ${TEMP_APPROVED_APPLICATION_ID},
       ${TEMP_REJECTED_APPLICATION_ID},
+      ${TEMP_BROKEN_APPROVAL_APPLICATION_ID},
       ${TEMP_THESIS_APPLICATION_ID},
-      ${TEMP_THESIS_APPROVAL_APPLICATION_ID}
+      ${TEMP_THESIS_APPROVAL_APPLICATION_ID},
+      ${TEMP_THESIS_TRANSITION_APPLICATION_ID}
     )
   `);
 };
@@ -271,6 +284,33 @@ describe('PUT /api/test/thesis-application', () => {
     );
     expect(createdThesisRows).toHaveLength(0);
   });
+
+  test('Should rollback and return 500 when approving an application without a supervisor link', async () => {
+    await insertTempApplication({ id: TEMP_BROKEN_APPROVAL_APPLICATION_ID });
+
+    const response = await request(server).put('/api/test/thesis-application').send({
+      id: TEMP_BROKEN_APPROVAL_APPLICATION_ID,
+      new_status: 'approved',
+    });
+
+    expect(response.status).toBe(500);
+    expect(response.body).toEqual({ error: 'Internal server error' });
+
+    const [applicationRows] = await sequelize.query(
+      `SELECT status FROM thesis_application WHERE id = ${TEMP_BROKEN_APPROVAL_APPLICATION_ID}`,
+    );
+    expect(applicationRows).toEqual([{ status: 'pending' }]);
+
+    const [historyRows] = await sequelize.query(
+      `SELECT id FROM thesis_application_status_history WHERE thesis_application_id = ${TEMP_BROKEN_APPROVAL_APPLICATION_ID}`,
+    );
+    expect(historyRows).toHaveLength(0);
+
+    const [createdThesisRows] = await sequelize.query(
+      `SELECT id FROM thesis WHERE thesis_application_id = ${TEMP_BROKEN_APPROVAL_APPLICATION_ID}`,
+    );
+    expect(createdThesisRows).toHaveLength(0);
+  });
 });
 
 describe('PUT /api/test/thesis-conclusion', () => {
@@ -357,6 +397,93 @@ describe('PUT /api/test/thesis-conclusion', () => {
     expect(updatedThesisRows).toHaveLength(1);
     expect(updatedThesisRows[0].thesis_conclusion_confirmation_date).not.toBeNull();
   });
+
+  test('Should return 400 when new conclusion status matches the current status', async () => {
+    await insertTempApplication({ id: TEMP_THESIS_APPLICATION_ID });
+    await insertTempThesis({
+      id: TEMP_THESIS_ID,
+      applicationId: TEMP_THESIS_APPLICATION_ID,
+      status: 'conclusion_requested',
+    });
+
+    const response = await request(server).put('/api/test/thesis-conclusion').send({
+      thesisId: TEMP_THESIS_ID,
+      conclusionStatus: 'conclusion_requested',
+    });
+
+    expect(response.status).toBe(400);
+    expect(response.body).toEqual({ error: 'New status must be different from the current status' });
+  });
+
+  test('Should return 400 when thesis has an invalid current status for conclusion updates', async () => {
+    await insertTempApplication({ id: TEMP_THESIS_APPLICATION_ID });
+    await insertTempThesis({
+      id: TEMP_THESIS_ID,
+      applicationId: TEMP_THESIS_APPLICATION_ID,
+      status: 'done',
+    });
+
+    const response = await request(server).put('/api/test/thesis-conclusion').send({
+      thesisId: TEMP_THESIS_ID,
+      conclusionStatus: 'ongoing',
+    });
+
+    expect(response.status).toBe(400);
+    expect(response.body).toEqual({ error: 'Invalid current thesis status for conclusion update' });
+  });
+
+  test.each([
+    ['conclusion_requested', 'ongoing', false],
+    ['conclusion_approved', 'almalaurea', false],
+    ['almalaurea', 'compiled_questionnaire', false],
+    ['compiled_questionnaire', 'final_exam', false],
+    ['final_exam', 'final_thesis', false],
+    ['final_thesis', 'done', false],
+    ['final_thesis', 'ongoing', false],
+    ['cancel_requested', 'cancel_approved', false],
+    ['cancel_requested', 'ongoing', false],
+    ['ongoing', 'cancel_requested', false],
+  ])(
+    'Should update thesis status for valid transition %s -> %s',
+    async (currentStatus, nextStatus, expectsConfirmationDate) => {
+      await insertTempApplication({ id: TEMP_THESIS_TRANSITION_APPLICATION_ID });
+      await insertTempThesis({
+        id: TEMP_THESIS_TRANSITION_ID,
+        applicationId: TEMP_THESIS_TRANSITION_APPLICATION_ID,
+        status: currentStatus,
+      });
+
+      const response = await request(server).put('/api/test/thesis-conclusion').send({
+        thesisId: TEMP_THESIS_TRANSITION_ID,
+        conclusionStatus: nextStatus,
+      });
+
+      expect(response.status).toBe(200);
+      expect(response.body).toHaveProperty('status', nextStatus);
+
+      const [updatedThesisRows] = await sequelize.query(
+        `
+        SELECT status, thesis_conclusion_confirmation_date
+        FROM thesis
+        WHERE id = ${TEMP_THESIS_TRANSITION_ID}
+        `,
+      );
+      expect(updatedThesisRows).toHaveLength(1);
+      expect(updatedThesisRows[0].status).toBe(nextStatus);
+      expect(updatedThesisRows[0].thesis_conclusion_confirmation_date !== null).toBe(expectsConfirmationDate);
+
+      const [historyRows] = await sequelize.query(
+        `
+        SELECT old_status, new_status
+        FROM thesis_application_status_history
+        WHERE thesis_application_id = ${TEMP_THESIS_TRANSITION_APPLICATION_ID}
+        ORDER BY id DESC
+        LIMIT 1
+        `,
+      );
+      expect(historyRows).toEqual([{ old_status: currentStatus, new_status: nextStatus }]);
+    },
+  );
 });
 
 describe('App and database config coverage through integration suite', () => {

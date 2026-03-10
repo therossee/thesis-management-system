@@ -31,11 +31,46 @@ jest.mock('../../src/models', () => ({
 }));
 
 jest.mock('../../src/utils/snakeCase', () => jest.fn(x => x));
-jest.mock('../../src/utils/selectTeacherAttributes', () => jest.fn(() => ['id', 'name']));
+jest.mock('../../src/utils/selectTeacherAttributes', () => jest.fn(() => ['id', 'first_name', 'last_name']));
 
-jest.mock('../../src/schemas/Thesis', () => ({
-  parse: jest.fn(d => d),
-}));
+const createTeacherRow = id => ({
+  id,
+  first_name: id === 100 ? 'Paolo' : 'Sara',
+  last_name: id === 100 ? 'Rossi' : 'Bianchi',
+  role: 'Professor',
+  email: `teacher${id}@polito.it`,
+  profile_url: null,
+  profile_picture_url: null,
+  facility_short_name: 'DAUIN',
+});
+
+const createTeacherModel = id => {
+  const row = createTeacherRow(id);
+  return {
+    ...row,
+    toJSON: jest.fn(() => row),
+  };
+};
+
+const createStudentRow = id => {
+  const row = {
+    id: String(id),
+    first_name: 'Test',
+    last_name: 'Student',
+    profile_picture_url: null,
+    degree_id: 'LM-18',
+  };
+
+  return {
+    ...row,
+    toJSON: jest.fn(() => row),
+  };
+};
+
+const createCompanyRow = id => ({
+  id,
+  corporate_name: 'Test Company',
+});
 
 describe('Student Thesis Controllers', () => {
   let req;
@@ -52,30 +87,9 @@ describe('Student Thesis Controllers', () => {
     });
     jest.clearAllMocks();
 
-    // Mock che restituiscono oggetti con toJSON
-    Teacher.findByPk.mockImplementation(id => ({
-      id,
-      name: id === 100 ? 'Prof. X' : 'Prof. Y',
-      toJSON: function () {
-        return { id: this.id, name: this.name };
-      },
-    }));
-
-    Student.findByPk.mockResolvedValue({
-      id: 1,
-      name: 'Test Student',
-      toJSON: function () {
-        return { id: this.id, name: this.name };
-      },
-    });
-
-    Company.findByPk.mockResolvedValue({
-      id: 1,
-      name: 'Test Company',
-      toJSON: function () {
-        return { id: this.id, name: this.name };
-      },
-    });
+    Teacher.findByPk.mockImplementation(id => createTeacherModel(id));
+    Student.findByPk.mockResolvedValue(createStudentRow(1));
+    Company.findByPk.mockResolvedValue(createCompanyRow(1));
   });
 
   describe('getLoggedStudentThesis', () => {
@@ -105,10 +119,7 @@ describe('Student Thesis Controllers', () => {
       const confirmationDate = new Date('2025-01-05T12:00:00.000Z');
 
       LoggedStudent.findOne.mockResolvedValue({ student_id: 1 });
-      Student.findByPk.mockResolvedValue({
-        id: 1,
-        toJSON: () => ({ id: 1, name: 'Test Student' }),
-      });
+      Student.findByPk.mockResolvedValue(createStudentRow(1));
 
       Thesis.findOne.mockResolvedValue({
         id: 10,
@@ -131,12 +142,10 @@ describe('Student Thesis Controllers', () => {
       ]);
 
       Teacher.findByPk.mockImplementation(id => ({
-        toJSON: () => ({ id, name: id === 100 ? 'Prof. X' : 'Prof. Y' }),
+        toJSON: () => createTeacherRow(id),
       }));
 
-      Company.findByPk.mockResolvedValue({
-        toJSON: () => ({ id: 1, name: 'Test Company' }),
-      });
+      Company.findByPk.mockResolvedValue(createCompanyRow(1));
 
       ThesisApplicationStatusHistory.findAll.mockResolvedValue([]);
 
@@ -144,23 +153,48 @@ describe('Student Thesis Controllers', () => {
 
       expect(res.status).toHaveBeenCalledWith(200);
       const payload = res.json.mock.calls[0][0];
-      expect(payload.student).toMatchObject({ id: 1 });
-      expect(payload.supervisor).toEqual({ id: 100, name: 'Prof. X' });
-      expect(payload.co_supervisors).toEqual([{ id: 101, name: 'Prof. Y' }]);
-      const companyPayload = payload.company?.toJSON ? payload.company.toJSON() : payload.company;
-      expect(companyPayload).toEqual({ id: 1, name: 'Test Company' });
-      expect(payload.thesis_conclusion_request_date).toBe(requestDate.toISOString());
-      expect(payload.thesis_conclusion_confirmation_date).toBe(confirmationDate.toISOString());
+      expect(payload.student).toEqual({
+        id: '1',
+        firstName: 'Test',
+        lastName: 'Student',
+        profilePictureUrl: null,
+        degreeId: 'LM-18',
+        isLogged: undefined,
+      });
+      expect(payload.supervisor).toEqual({
+        id: 100,
+        firstName: 'Paolo',
+        lastName: 'Rossi',
+        role: 'Professor',
+        email: 'teacher100@polito.it',
+        profileUrl: null,
+        profilePictureUrl: null,
+        facilityShortName: 'DAUIN',
+        isSupervisor: null,
+      });
+      expect(payload.coSupervisors).toEqual([
+        {
+          id: 101,
+          firstName: 'Sara',
+          lastName: 'Bianchi',
+          role: 'Professor',
+          email: 'teacher101@polito.it',
+          profileUrl: null,
+          profilePictureUrl: null,
+          facilityShortName: 'DAUIN',
+          isSupervisor: null,
+        },
+      ]);
+      expect(payload.company).toEqual({ id: 1, corporateName: 'Test Company' });
+      expect(payload.thesisConclusionRequestDate).toBe(requestDate.toISOString());
+      expect(payload.thesisConclusionConfirmationDate).toBe(confirmationDate.toISOString());
     });
 
-    test('should return 200 with null student/company and skip missing teachers', async () => {
+    test('should return 200 with null company and skip missing co-supervisors', async () => {
       const mockDate = new Date();
 
       LoggedStudent.findOne.mockResolvedValue({ student_id: 1 });
-      Student.findByPk.mockResolvedValueOnce({
-        id: 1,
-        toJSON: () => ({ id: 1, name: 'Test Student' }),
-      });
+      Student.findByPk.mockResolvedValue(createStudentRow(1));
 
       Thesis.findOne.mockResolvedValue({
         id: 11,
@@ -182,21 +216,34 @@ describe('Student Thesis Controllers', () => {
         { teacher_id: 101, is_supervisor: false },
       ]);
 
-      Teacher.findByPk
-        .mockResolvedValueOnce(null)
-        .mockResolvedValueOnce({ toJSON: () => ({ id: 101, name: 'Prof. Y' }) });
+      Teacher.findByPk.mockResolvedValueOnce(createTeacherModel(100)).mockResolvedValueOnce(null);
       Company.findByPk.mockResolvedValue(null);
       ThesisApplicationStatusHistory.findAll.mockResolvedValue([]);
-
-      Student.findByPk.mockResolvedValueOnce(null);
 
       await getLoggedStudentThesis(req, res);
 
       expect(res.status).toHaveBeenCalledWith(200);
       const payload = res.json.mock.calls[0][0];
-      expect(payload.student).toBeNull();
-      expect(payload.supervisor).toBeNull();
-      expect(payload.co_supervisors).toEqual([{ id: 101, name: 'Prof. Y' }]);
+      expect(payload.student).toEqual({
+        id: '1',
+        firstName: 'Test',
+        lastName: 'Student',
+        profilePictureUrl: null,
+        degreeId: 'LM-18',
+        isLogged: undefined,
+      });
+      expect(payload.supervisor).toEqual({
+        id: 100,
+        firstName: 'Paolo',
+        lastName: 'Rossi',
+        role: 'Professor',
+        email: 'teacher100@polito.it',
+        profileUrl: null,
+        profilePictureUrl: null,
+        facilityShortName: 'DAUIN',
+        isSupervisor: null,
+      });
+      expect(payload.coSupervisors).toEqual([]);
       expect(payload.company).toBeNull();
     });
 
@@ -227,23 +274,25 @@ describe('Student Thesis Controllers', () => {
       const mockDate = new Date();
 
       LoggedStudent.findOne.mockResolvedValue({ student_id: 1 });
-      Student.findByPk.mockResolvedValue({
-        id: 1,
-        toJSON: () => ({ id: 1, name: 'Test Student' }),
-      });
+      Student.findByPk.mockResolvedValue(createStudentRow(1));
 
       req.body = {
         topic: 'AI Thesis',
         thesis_application_id: 5,
         supervisor: { id: 100 },
         co_supervisors: [{ id: 101 }],
-        company: { id: 1, toJSON: () => ({ id: 1, name: 'Test Company' }) },
+        company: {
+          id: 1,
+          corporate_name: 'Test Company',
+          toJSON: () => createCompanyRow(1),
+        },
       };
 
       Thesis.create.mockResolvedValue({
         id: 10,
         student_id: 1,
         topic: 'AI Thesis',
+        status: 'ongoing',
         thesis_start_date: mockDate,
         thesis_conclusion_request_date: null,
         thesis_conclusion_confirmation_date: null,
@@ -261,6 +310,7 @@ describe('Student Thesis Controllers', () => {
         id: 10,
         student_id: 1,
         topic: 'AI Thesis',
+        status: 'ongoing',
         thesis_start_date: mockDate,
         thesis_conclusion_request_date: null,
         thesis_conclusion_confirmation_date: null,
@@ -270,7 +320,7 @@ describe('Student Thesis Controllers', () => {
       });
 
       Teacher.findByPk.mockImplementation(id => ({
-        toJSON: () => ({ id, name: id === 100 ? 'Prof. X' : 'Prof. Y' }),
+        toJSON: () => createTeacherRow(id),
       }));
 
       await createStudentThesis(req, res);
@@ -280,20 +330,46 @@ describe('Student Thesis Controllers', () => {
       expect(res.status).toHaveBeenCalledWith(201);
       const payload = res.json.mock.calls[0][0];
       expect(payload.topic).toBe('AI Thesis');
-      expect(payload.student).toEqual({ id: 1, name: 'Test Student' });
-      expect(payload.supervisor).toEqual({ id: 100, name: 'Prof. X' });
-      expect(payload.co_supervisors).toEqual([{ id: 101, name: 'Prof. Y' }]);
-      expect(payload.company).toEqual({ id: 1, name: 'Test Company' });
+      expect(payload.student).toEqual({
+        id: '1',
+        firstName: 'Test',
+        lastName: 'Student',
+        profilePictureUrl: null,
+        degreeId: 'LM-18',
+        isLogged: undefined,
+      });
+      expect(payload.supervisor).toEqual({
+        id: 100,
+        firstName: 'Paolo',
+        lastName: 'Rossi',
+        role: 'Professor',
+        email: 'teacher100@polito.it',
+        profileUrl: null,
+        profilePictureUrl: null,
+        facilityShortName: 'DAUIN',
+        isSupervisor: null,
+      });
+      expect(payload.coSupervisors).toEqual([
+        {
+          id: 101,
+          firstName: 'Sara',
+          lastName: 'Bianchi',
+          role: 'Professor',
+          email: 'teacher101@polito.it',
+          profileUrl: null,
+          profilePictureUrl: null,
+          facilityShortName: 'DAUIN',
+          isSupervisor: null,
+        },
+      ]);
+      expect(payload.company).toEqual({ id: 1, corporateName: 'Test Company' });
     });
 
     test('should create thesis without co-supervisors and company', async () => {
       const mockDate = new Date();
 
       LoggedStudent.findOne.mockResolvedValue({ student_id: 1 });
-      Student.findByPk.mockResolvedValue({
-        id: 1,
-        toJSON: () => ({ id: 1, name: 'Test Student' }),
-      });
+      Student.findByPk.mockResolvedValue(createStudentRow(1));
 
       req.body = {
         topic: 'Solo Supervisor',
@@ -306,6 +382,7 @@ describe('Student Thesis Controllers', () => {
         id: 20,
         student_id: 1,
         topic: 'Solo Supervisor',
+        status: 'ongoing',
         thesis_start_date: mockDate,
         thesis_conclusion_request_date: null,
         thesis_conclusion_confirmation_date: null,
@@ -319,6 +396,7 @@ describe('Student Thesis Controllers', () => {
         id: 20,
         student_id: 1,
         topic: 'Solo Supervisor',
+        status: 'ongoing',
         thesis_start_date: mockDate,
         thesis_conclusion_request_date: null,
         thesis_conclusion_confirmation_date: null,
@@ -328,10 +406,7 @@ describe('Student Thesis Controllers', () => {
       });
 
       ThesisSupervisorCoSupervisor.findAll.mockResolvedValue([{ teacher_id: 100, is_supervisor: true }]);
-      Teacher.findByPk.mockResolvedValue(null);
-      Student.findByPk
-        .mockResolvedValueOnce({ id: 1, toJSON: () => ({ id: 1, name: 'Test Student' }) })
-        .mockResolvedValueOnce(null);
+      Teacher.findByPk.mockResolvedValue(createTeacherModel(100));
 
       await createStudentThesis(req, res);
 
@@ -342,9 +417,26 @@ describe('Student Thesis Controllers', () => {
       expect(ThesisSupervisorCoSupervisor.create).toHaveBeenCalledTimes(1);
       expect(res.status).toHaveBeenCalledWith(201);
       const payload = res.json.mock.calls[0][0];
-      expect(payload.student).toBeNull();
-      expect(payload.supervisor).toBeNull();
-      expect(payload.co_supervisors).toEqual([]);
+      expect(payload.student).toEqual({
+        id: '1',
+        firstName: 'Test',
+        lastName: 'Student',
+        profilePictureUrl: null,
+        degreeId: 'LM-18',
+        isLogged: undefined,
+      });
+      expect(payload.supervisor).toEqual({
+        id: 100,
+        firstName: 'Paolo',
+        lastName: 'Rossi',
+        role: 'Professor',
+        email: 'teacher100@polito.it',
+        profileUrl: null,
+        profilePictureUrl: null,
+        facilityShortName: 'DAUIN',
+        isSupervisor: null,
+      });
+      expect(payload.coSupervisors).toEqual([]);
       expect(payload.company).toBeNull();
     });
 

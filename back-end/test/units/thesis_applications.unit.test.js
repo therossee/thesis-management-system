@@ -1,24 +1,6 @@
 require('jest');
-const { z } = require('zod');
 
-jest.mock('../../src/schemas/ThesisApplicationRequest', () => ({
-  parseAsync: jest.fn(d => Promise.resolve(d)),
-}));
-
-jest.mock('../../src/schemas/ThesisApplicationResponse', () => ({
-  parseAsync: jest.fn(d => Promise.resolve(d)),
-  parse: jest.fn(d => d),
-}));
-
-jest.mock('../../src/schemas/ThesisApplicationStatusHistory', () => ({
-  parse: jest.fn(d => d),
-}));
-
-jest.mock('../../src/schemas/ThesisApplication', () => ({
-  parse: jest.fn(d => d),
-}));
-
-jest.mock('../../src/utils/snakeCase', () => jest.fn(d => d));
+jest.mock('../../src/utils/snakeCase', () => jest.requireActual('../../src/utils/snakeCase'));
 jest.mock('../../src/utils/selectTeacherAttributes', () => jest.fn(() => ['id', 'first_name', 'last_name']));
 
 jest.mock('../../src/models', () => ({
@@ -96,11 +78,52 @@ const mockRes = () => ({
   json: jest.fn(),
 });
 
-const mockTeacher = id => ({
+const buildTeacherOverview = id => ({
   id,
-  first_name: 'Mock',
-  last_name: 'Teacher',
-  get: jest.fn().mockReturnValue({ id, first_name: 'Mock', last_name: 'Teacher' }),
+  first_name: `Teacher${id}`,
+  last_name: 'Test',
+  email: `teacher${id}@polito.it`,
+});
+
+const buildTeacherRow = id => ({
+  id,
+  first_name: `Teacher${id}`,
+  last_name: 'Test',
+  role: 'Professor',
+  email: `teacher${id}@polito.it`,
+  profile_url: null,
+  profile_picture_url: null,
+  facility_short_name: 'DAUIN',
+});
+
+const mockTeacher = id => {
+  const row = buildTeacherRow(id);
+  return {
+    ...row,
+    get: jest.fn().mockReturnValue(row),
+  };
+};
+
+const buildStudentRow = id => ({
+  id: String(id),
+  first_name: 'Ada',
+  last_name: 'Lovelace',
+  profile_picture_url: null,
+  degree_id: 'LM-18',
+});
+
+const buildCompanyRow = id => ({
+  id,
+  corporate_name: `Company ${id}`,
+});
+
+const buildApplicationBody = overrides => ({
+  topic: 'AI Thesis',
+  supervisor: buildTeacherOverview(1),
+  co_supervisors: [buildTeacherOverview(2)],
+  thesis_proposal: { id: 10, topic: 'Proposal topic' },
+  company: buildCompanyRow(99),
+  ...overrides,
 });
 
 // ======================================================
@@ -109,18 +132,14 @@ const mockTeacher = id => ({
 describe('createThesisApplication', () => {
   test('creates full thesis application with proposal, company and co-supervisors', async () => {
     const req = {
-      body: {
-        topic: 'AI Thesis',
-        supervisor: { id: 1 },
-        co_supervisors: [{ id: 2 }, { id: 3 }],
-        thesis_proposal: { id: 10 },
-        company: { id: 99 },
-      },
+      body: buildApplicationBody({
+        co_supervisors: [buildTeacherOverview(2), buildTeacherOverview(3)],
+      }),
     };
     const res = mockRes();
 
-    LoggedStudent.findOne.mockResolvedValue({ student_id: 100 });
-    Student.findByPk.mockResolvedValue({ id: 100 });
+    LoggedStudent.findOne.mockResolvedValue({ student_id: '100' });
+    Student.findByPk.mockResolvedValue({ id: '100' });
     Teacher.findByPk.mockImplementation(id => Promise.resolve(mockTeacher(id)));
     ThesisProposal.findByPk.mockResolvedValue({ id: 10 });
     Company.findByPk.mockResolvedValue({ id: 99 });
@@ -135,6 +154,15 @@ describe('createThesisApplication', () => {
     expect(res.status).toHaveBeenCalledWith(201);
     expect(ThesisApplicationSupervisorCoSupervisor.bulkCreate).toHaveBeenCalled();
     expect(ThesisApplicationStatusHistory.create).toHaveBeenCalled();
+    expect(res.json).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: 500,
+        topic: 'AI Thesis',
+        thesisProposal: { id: 10, topic: 'Proposal topic' },
+        company: { id: 99, corporateName: 'Company 99' },
+        status: 'pending',
+      }),
+    );
   });
 
   test('returns 401 if no logged student', async () => {
@@ -161,11 +189,8 @@ describe('createThesisApplication', () => {
   });
 
   test('returns 400 on zod validation error', async () => {
-    const req = { body: {} };
+    const req = { body: { topic: 'Invalid', supervisor: { id: 1 } } };
     const res = mockRes();
-
-    const { parseAsync } = require('../../src/schemas/ThesisApplicationRequest');
-    parseAsync.mockRejectedValueOnce(new z.ZodError([]));
 
     LoggedStudent.findOne.mockResolvedValue({ student_id: 1 });
     Student.findByPk.mockResolvedValue({ id: 1 });
@@ -176,7 +201,7 @@ describe('createThesisApplication', () => {
   });
 
   test('returns 400 if supervisor not found', async () => {
-    const req = { body: { topic: 'Test', supervisor: { id: 1 } } };
+    const req = { body: buildApplicationBody({ co_supervisors: [], thesis_proposal: undefined, company: undefined }) };
     const res = mockRes();
 
     LoggedStudent.findOne.mockResolvedValue({ student_id: 1 });
@@ -189,7 +214,14 @@ describe('createThesisApplication', () => {
   });
 
   test('returns 400 if co-supervisor not found', async () => {
-    const req = { body: { topic: 'Test', supervisor: { id: 1 }, co_supervisors: [{ id: 2 }] } };
+    const req = {
+      body: buildApplicationBody({
+        topic: 'Test',
+        co_supervisors: [buildTeacherOverview(2)],
+        thesis_proposal: undefined,
+        company: undefined,
+      }),
+    };
     const res = mockRes();
 
     LoggedStudent.findOne.mockResolvedValue({ student_id: 1 });
@@ -202,7 +234,14 @@ describe('createThesisApplication', () => {
   });
 
   test('returns 400 if thesis proposal not found', async () => {
-    const req = { body: { topic: 'Test', supervisor: { id: 1 }, thesis_proposal: { id: 10 } } };
+    const req = {
+      body: buildApplicationBody({
+        topic: 'Test',
+        co_supervisors: [],
+        thesis_proposal: { id: 10, topic: 'Proposal topic' },
+        company: undefined,
+      }),
+    };
     const res = mockRes();
 
     LoggedStudent.findOne.mockResolvedValue({ student_id: 1 });
@@ -216,7 +255,14 @@ describe('createThesisApplication', () => {
   });
 
   test('returns 400 if company not found', async () => {
-    const req = { body: { topic: 'Test', supervisor: { id: 1 }, company: { id: 5 } } };
+    const req = {
+      body: buildApplicationBody({
+        topic: 'Test',
+        co_supervisors: [],
+        thesis_proposal: undefined,
+        company: buildCompanyRow(5),
+      }),
+    };
     const res = mockRes();
 
     LoggedStudent.findOne.mockResolvedValue({ student_id: 1 });
@@ -230,7 +276,9 @@ describe('createThesisApplication', () => {
   });
 
   test('returns 400 if student already has active application', async () => {
-    const req = { body: { topic: 'Test', supervisor: { id: 1 } } };
+    const req = {
+      body: buildApplicationBody({ topic: 'Test', co_supervisors: [], thesis_proposal: undefined, company: undefined }),
+    };
     const res = mockRes();
 
     LoggedStudent.findOne.mockResolvedValue({ student_id: 1 });
@@ -244,7 +292,9 @@ describe('createThesisApplication', () => {
   });
 
   test('returns 400 if student has approved application linked to thesis not cancel_approved', async () => {
-    const req = { body: { topic: 'Test', supervisor: { id: 1 } } };
+    const req = {
+      body: buildApplicationBody({ topic: 'Test', co_supervisors: [], thesis_proposal: undefined, company: undefined }),
+    };
     const res = mockRes();
 
     LoggedStudent.findOne.mockResolvedValue({ student_id: 1 });
@@ -261,7 +311,9 @@ describe('createThesisApplication', () => {
   });
 
   test('creates application when approved one is linked to cancel_approved thesis', async () => {
-    const req = { body: { topic: 'Test', supervisor: { id: 1 } } };
+    const req = {
+      body: buildApplicationBody({ topic: 'Test', co_supervisors: [], thesis_proposal: undefined, company: undefined }),
+    };
     const res = mockRes();
 
     LoggedStudent.findOne.mockResolvedValue({ student_id: 1 });
@@ -274,10 +326,19 @@ describe('createThesisApplication', () => {
     await createThesisApplication(req, res);
 
     expect(res.status).toHaveBeenCalledWith(201);
+    expect(res.json).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: 500,
+        topic: 'Test',
+        company: null,
+        thesisProposal: null,
+        status: 'pending',
+      }),
+    );
   });
 
   test('returns 500 on unexpected error', async () => {
-    const req = { body: { topic: 'Test', supervisor: { id: 1 } } };
+    const req = { body: buildApplicationBody({ topic: 'Test' }) };
     const res = mockRes();
 
     LoggedStudent.findOne.mockRejectedValue(new Error('DB crash'));
@@ -289,41 +350,47 @@ describe('createThesisApplication', () => {
 
   test('createThesisApplication covers no co-supervisors, no proposal, no company branches', async () => {
     const req = {
-      body: {
+      body: buildApplicationBody({
         topic: 'Minimal thesis',
-        supervisor: { id: 1 },
         co_supervisors: undefined,
         thesis_proposal: undefined,
         company: undefined,
-      },
+      }),
     };
     const res = mockRes();
 
     LoggedStudent.findOne.mockResolvedValue({ student_id: 1 });
     Student.findByPk.mockResolvedValue({ id: 1 });
-    Teacher.findByPk.mockResolvedValue({ get: () => ({ id: 1 }) });
+    Teacher.findByPk.mockResolvedValue(mockTeacher(1));
     ThesisApplication.findAll.mockResolvedValue([]);
     ThesisApplication.create.mockResolvedValue({ id: 10, topic: 'Minimal thesis' });
 
     await createThesisApplication(req, res);
 
     expect(res.status).toHaveBeenCalledWith(201);
+    expect(res.json).toHaveBeenCalledWith(
+      expect.objectContaining({
+        company: null,
+        thesisProposal: null,
+        coSupervisors: [],
+      }),
+    );
   });
 
   test('createThesisApplication returns 400 if thesis proposal does not exist (branch 141)', async () => {
     const req = {
-      body: {
+      body: buildApplicationBody({
         topic: 'Test',
-        supervisor: { id: 1 },
         co_supervisors: [],
-        thesis_proposal: { id: 99 },
-      },
+        thesis_proposal: { id: 99, topic: 'Unknown proposal' },
+        company: undefined,
+      }),
     };
     const res = mockRes();
 
     LoggedStudent.findOne.mockResolvedValue({ student_id: 1 });
     Student.findByPk.mockResolvedValue({ id: 1 });
-    Teacher.findByPk.mockResolvedValue({ get: () => ({ id: 1 }) });
+    Teacher.findByPk.mockResolvedValue(mockTeacher(1));
     ThesisProposal.findByPk.mockResolvedValue(null);
 
     await createThesisApplication(req, res);
@@ -333,18 +400,18 @@ describe('createThesisApplication', () => {
 
   test('createThesisApplication returns 400 if company does not exist (branch 172)', async () => {
     const req = {
-      body: {
+      body: buildApplicationBody({
         topic: 'Test',
-        supervisor: { id: 1 },
         co_supervisors: [],
-        company: { id: 99 },
-      },
+        thesis_proposal: undefined,
+        company: buildCompanyRow(99),
+      }),
     };
     const res = mockRes();
 
     LoggedStudent.findOne.mockResolvedValue({ student_id: 1 });
     Student.findByPk.mockResolvedValue({ id: 1 });
-    Teacher.findByPk.mockResolvedValue({ get: () => ({ id: 1 }) });
+    Teacher.findByPk.mockResolvedValue(mockTeacher(1));
     ThesisApplication.findAll.mockResolvedValue([]);
 
     Company.findByPk.mockResolvedValue(null);
@@ -467,7 +534,7 @@ describe('getLastStudentApplication', () => {
     expect(res.status).toHaveBeenCalledWith(404);
   });
 
-  test('handles missing proposal and missing teachers', async () => {
+  test('handles missing proposal and skips a missing co-supervisor', async () => {
     const req = {};
     const res = mockRes();
 
@@ -476,18 +543,29 @@ describe('getLastStudentApplication', () => {
     ThesisApplication.findAll.mockResolvedValue([
       {
         id: 1,
+        topic: 'Test',
+        company: null,
         thesis_proposal_id: 99,
         submission_date: new Date(),
         status: 'pending',
       },
     ]);
     ThesisProposal.findByPk.mockResolvedValue(null);
-    ThesisApplicationSupervisorCoSupervisor.findAll.mockResolvedValue([{ teacher_id: 1, is_supervisor: true }]);
-    Teacher.findByPk.mockResolvedValue(null);
+    ThesisApplicationSupervisorCoSupervisor.findAll.mockResolvedValue([
+      { teacher_id: 1, is_supervisor: true },
+      { teacher_id: 2, is_supervisor: false },
+    ]);
+    Teacher.findByPk.mockImplementation(id => Promise.resolve(id === 1 ? buildTeacherRow(1) : null));
 
     await getLastStudentApplication(req, res);
 
     expect(res.status).toHaveBeenCalledWith(200);
+    expect(res.json).toHaveBeenCalledWith(
+      expect.objectContaining({
+        thesisProposal: null,
+        coSupervisors: [],
+      }),
+    );
   });
 
   test('builds response with supervisor and co-supervisors', async () => {
@@ -499,6 +577,8 @@ describe('getLastStudentApplication', () => {
     ThesisApplication.findAll.mockResolvedValue([
       {
         id: 1,
+        topic: 'Test',
+        company: buildCompanyRow(99),
         thesis_proposal_id: null,
         submission_date: new Date(),
         status: 'pending',
@@ -508,11 +588,18 @@ describe('getLastStudentApplication', () => {
       { teacher_id: 1, is_supervisor: true },
       { teacher_id: 2, is_supervisor: false },
     ]);
-    Teacher.findByPk.mockImplementation(id => Promise.resolve({ id }));
+    Teacher.findByPk.mockImplementation(id => Promise.resolve(buildTeacherRow(id)));
 
     await getLastStudentApplication(req, res);
 
     expect(res.status).toHaveBeenCalledWith(200);
+    expect(res.json).toHaveBeenCalledWith(
+      expect.objectContaining({
+        supervisor: expect.objectContaining({ firstName: 'Teacher1' }),
+        coSupervisors: [expect.objectContaining({ firstName: 'Teacher2' })],
+        company: { id: 99, corporateName: 'Company 99' },
+      }),
+    );
   });
 
   test('returns 500 if proposal.toJSON throws', async () => {
@@ -574,17 +661,19 @@ describe('getLastStudentApplication', () => {
       {
         id: 1,
         topic: 'Test',
+        company: null,
         thesis_proposal_id: null,
         submission_date: new Date(),
         status: 'pending',
       },
     ]);
-    ThesisApplicationSupervisorCoSupervisor.findAll.mockResolvedValue([]);
-    Teacher.findByPk.mockResolvedValue(null);
+    ThesisApplicationSupervisorCoSupervisor.findAll.mockResolvedValue([{ teacher_id: 1, is_supervisor: true }]);
+    Teacher.findByPk.mockResolvedValue(buildTeacherRow(1));
 
     await getLastStudentApplication(req, res);
 
     expect(res.status).toHaveBeenCalledWith(200);
+    expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ thesisProposal: null }));
   });
 
   test('getLastStudentApplication handles app with no thesis_proposal_id (branch 246)', async () => {
@@ -600,15 +689,21 @@ describe('getLastStudentApplication', () => {
         submission_date: new Date(),
         status: 'pending',
         topic: 'Test',
-        company: null,
+        company: buildCompanyRow(5),
       },
     ]);
-    ThesisApplicationSupervisorCoSupervisor.findAll.mockResolvedValue([]);
-    Teacher.findByPk.mockResolvedValue(null);
+    ThesisApplicationSupervisorCoSupervisor.findAll.mockResolvedValue([{ teacher_id: 1, is_supervisor: true }]);
+    Teacher.findByPk.mockResolvedValue(buildTeacherRow(1));
 
     await getLastStudentApplication(req, res);
 
     expect(res.status).toHaveBeenCalledWith(200);
+    expect(res.json).toHaveBeenCalledWith(
+      expect.objectContaining({
+        thesisProposal: null,
+        company: { id: 5, corporateName: 'Company 5' },
+      }),
+    );
   });
 });
 
@@ -629,12 +724,22 @@ describe('getStatusHistoryApplication', () => {
     const req = { query: { applicationId: 1 } };
     const res = mockRes();
 
-    ThesisApplicationStatusHistory.findAll.mockResolvedValue([{ toJSON: () => ({ id: 1 }) }]);
+    const changeDate = new Date('2026-01-10T10:00:00.000Z');
+    ThesisApplicationStatusHistory.findAll.mockResolvedValue([
+      {
+        toJSON: () => ({
+          id: 1,
+          old_status: 'pending',
+          new_status: 'approved',
+          change_date: changeDate,
+        }),
+      },
+    ]);
 
     await getStatusHistoryApplication(req, res);
 
     expect(res.status).toHaveBeenCalledWith(200);
-    expect(res.json).toHaveBeenCalledWith([{ id: 1 }]);
+    expect(res.json).toHaveBeenCalledWith([{ id: 1, oldStatus: 'pending', newStatus: 'approved', changeDate }]);
   });
 
   test('returns 500 when await inside try throws', async () => {
@@ -657,29 +762,39 @@ describe('getAllThesisApplications', () => {
     const req = {};
     const res = mockRes();
 
-    Student.findAll.mockResolvedValue([{ id: 1 }]);
+    Student.findAll.mockResolvedValue([buildStudentRow(1)]);
     ThesisApplication.findAll.mockResolvedValue([
       {
         id: 1,
-        student_id: 1,
-        thesis_proposal_id: 10,
-        company_id: 99,
+        topic: 'Test',
+        student_id: '1',
+        thesis_proposal_id: null,
+        company_id: null,
         submission_date: new Date(),
         status: 'pending',
       },
     ]);
-    ThesisProposal.findAll.mockResolvedValue([{ id: 10, toJSON: () => ({ id: 10 }) }]);
     ThesisApplicationSupervisorCoSupervisor.findAll.mockResolvedValue([
       { thesis_application_id: 1, teacher_id: 1, is_supervisor: true },
       { thesis_application_id: 1, teacher_id: 2, is_supervisor: false },
     ]);
-    Teacher.findAll.mockResolvedValue([{ id: 1 }, { id: 2 }]);
-    Company.findAll.mockResolvedValue([{ id: 99 }]);
+    Teacher.findAll.mockResolvedValue([buildTeacherRow(1), buildTeacherRow(2)]);
 
     await getAllThesisApplications(req, res);
 
     expect(res.status).toHaveBeenCalledWith(200);
-    expect(Array.isArray(res.json.mock.calls[0][0])).toBe(true);
+    expect(res.json).toHaveBeenCalledWith([
+      expect.objectContaining({
+        id: 1,
+        topic: 'Test',
+        student: expect.objectContaining({ firstName: 'Ada' }),
+        supervisor: expect.objectContaining({ firstName: 'Teacher1' }),
+        coSupervisors: [expect.objectContaining({ firstName: 'Teacher2' })],
+        company: null,
+        thesisProposal: null,
+        status: 'pending',
+      }),
+    ]);
   });
 
   test('returns 400 if thesis proposal not found (covers 291-295)', async () => {
@@ -792,11 +907,11 @@ describe('getAllThesisApplications', () => {
     const req = {};
     const res = mockRes();
 
-    Student.findAll.mockResolvedValue([{ id: 1 }]);
+    Student.findAll.mockResolvedValue([buildStudentRow(1)]);
     ThesisApplication.findAll.mockResolvedValue([
       {
         id: 1,
-        student_id: 1,
+        student_id: '1',
         thesis_proposal_id: null,
         company_id: null,
         topic: 'Test',
@@ -804,7 +919,10 @@ describe('getAllThesisApplications', () => {
         status: 'pending',
       },
     ]);
-    ThesisApplicationSupervisorCoSupervisor.findAll.mockResolvedValue([]);
+    ThesisApplicationSupervisorCoSupervisor.findAll.mockResolvedValue([
+      { thesis_application_id: 1, teacher_id: 1, is_supervisor: true },
+    ]);
+    Teacher.findAll.mockResolvedValue([buildTeacherRow(1)]);
 
     await getAllThesisApplications(req, res);
 
@@ -815,34 +933,37 @@ describe('getAllThesisApplications', () => {
     const req = {};
     const res = mockRes();
 
-    Student.findAll.mockResolvedValue([]); // nessuno studente
+    Student.findAll.mockResolvedValue([]);
     ThesisApplication.findAll.mockResolvedValue([
       {
         id: 1,
+        topic: 'Test',
         student_id: 999,
         thesis_proposal_id: null,
         company_id: null,
-        topic: 'Test',
         submission_date: new Date(),
         status: 'pending',
       },
     ]);
-    ThesisApplicationSupervisorCoSupervisor.findAll.mockResolvedValue([]);
+    ThesisApplicationSupervisorCoSupervisor.findAll.mockResolvedValue([
+      { thesis_application_id: 1, teacher_id: 1, is_supervisor: true },
+    ]);
+    Teacher.findAll.mockResolvedValue([buildTeacherRow(1)]);
 
     await getAllThesisApplications(req, res);
 
-    expect(res.status).toHaveBeenCalledWith(200);
+    expect(res.status).toHaveBeenCalledWith(500);
   });
 
   test('getAllThesisApplications covers status fallback branch', async () => {
     const req = {};
     const res = mockRes();
 
-    Student.findAll.mockResolvedValue([{ id: 1 }]);
+    Student.findAll.mockResolvedValue([buildStudentRow(1)]);
     ThesisApplication.findAll.mockResolvedValue([
       {
         id: 1,
-        student_id: 1,
+        student_id: '1',
         thesis_proposal_id: null,
         company_id: null,
         topic: 'Test',
@@ -850,11 +971,19 @@ describe('getAllThesisApplications', () => {
         status: undefined,
       },
     ]);
-    ThesisApplicationSupervisorCoSupervisor.findAll.mockResolvedValue([]);
+    ThesisApplicationSupervisorCoSupervisor.findAll.mockResolvedValue([
+      { thesis_application_id: 1, teacher_id: 1, is_supervisor: true },
+    ]);
+    Teacher.findAll.mockResolvedValue([buildTeacherRow(1)]);
 
     await getAllThesisApplications(req, res);
 
     expect(res.status).toHaveBeenCalledWith(200);
+    expect(res.json).toHaveBeenCalledWith([
+      expect.objectContaining({
+        status: 'pending',
+      }),
+    ]);
   });
 });
 

@@ -9,10 +9,22 @@ let server;
 const DEFAULT_STUDENT_ID = '320213';
 const TEMP_STUDENT_ID = '399999';
 
+const resetLoggedStudent = async (studentId = DEFAULT_STUDENT_ID) => {
+  await sequelize.query('DELETE FROM logged_student');
+  await sequelize.query('INSERT INTO logged_student (student_id) VALUES (:studentId)', {
+    replacements: { studentId },
+  });
+};
+
 beforeAll(async () => {
   server = app.listen(0, () => {
     console.log(`Test server running on port ${server.address().port}`);
   });
+  await resetLoggedStudent();
+});
+
+afterEach(async () => {
+  await resetLoggedStudent();
 });
 
 afterAll(async () => {
@@ -98,6 +110,15 @@ describe('GET /api/students/logged-student', () => {
       degreeId: '37-18',
     });
   });
+
+  test('Should return 404 when there is no logged student row', async () => {
+    await sequelize.query('DELETE FROM logged_student');
+
+    const response = await request(server).get('/api/students/logged-student');
+
+    expect(response.status).toBe(404);
+    expect(response.body).toEqual({ error: 'Logged student not found' });
+  });
 });
 
 describe('PUT /api/students/logged-student', () => {
@@ -164,5 +185,14 @@ describe('GET /api/students/required-summary', () => {
     const response = await request(server).get('/api/students/required-summary');
     expect(response.status).toBe(200);
     expect(response.body).toEqual({ requiredSummary: false });
+  });
+
+  test('Should return 404 when no logged student is configured', async () => {
+    await sequelize.query('DELETE FROM logged_student');
+
+    const response = await request(server).get('/api/students/required-summary');
+
+    expect(response.status).toBe(404);
+    expect(response.body).toEqual({ error: 'Logged student not found' });
   });
 });

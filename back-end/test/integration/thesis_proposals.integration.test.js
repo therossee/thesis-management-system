@@ -6,14 +6,79 @@ const { sequelize } = require('../../src/models');
 const request = require('supertest');
 
 let server;
+const DEFAULT_STUDENT_ID = '320213';
+const TEMP_TARGETED_STUDENT_ID = '399993';
+const TEMP_TARGETED_DEGREE_ID = '99-1';
+const TEMP_TARGETED_CONTAINER_ID = 'TMP99';
+
+const resetLoggedStudent = async (studentId = DEFAULT_STUDENT_ID) => {
+  await sequelize.query('DELETE FROM logged_student');
+  await sequelize.query('INSERT INTO logged_student (student_id) VALUES (:studentId)', {
+    replacements: { studentId },
+  });
+};
+
+const cleanupTargetedTempRows = async () => {
+  await sequelize.query('DELETE FROM logged_student WHERE student_id = :studentId', {
+    replacements: { studentId: TEMP_TARGETED_STUDENT_ID },
+  });
+  await sequelize.query('DELETE FROM student WHERE id = :studentId', {
+    replacements: { studentId: TEMP_TARGETED_STUDENT_ID },
+  });
+  await sequelize.query('DELETE FROM degree_programme WHERE id = :degreeId', {
+    replacements: { degreeId: TEMP_TARGETED_DEGREE_ID },
+  });
+  await sequelize.query('DELETE FROM degree_programme_container WHERE id = :containerId', {
+    replacements: { containerId: TEMP_TARGETED_CONTAINER_ID },
+  });
+};
 
 beforeAll(async () => {
   server = app.listen(0, () => {
     console.log(`Test server running on port ${server.address().port}`);
   });
+  await cleanupTargetedTempRows();
+  await sequelize.query(
+    `
+    INSERT INTO degree_programme_container (id, name, name_en)
+    VALUES (:id, 'Temporary targeted container', 'Temporary targeted container')
+    `,
+    { replacements: { id: TEMP_TARGETED_CONTAINER_ID } },
+  );
+  await sequelize.query(
+    `
+    INSERT INTO degree_programme (id, description, description_en, level, id_collegio, container_id)
+    VALUES (:id, 'Temporary targeted degree', 'Temporary targeted degree', '2', 'CL003', :containerId)
+    `,
+    {
+      replacements: {
+        id: TEMP_TARGETED_DEGREE_ID,
+        containerId: TEMP_TARGETED_CONTAINER_ID,
+      },
+    },
+  );
+  await sequelize.query(
+    `
+    INSERT INTO student (id, first_name, last_name, profile_picture_url, degree_id)
+    VALUES (:id, 'Temp', 'Targeted', NULL, :degreeId)
+    `,
+    {
+      replacements: {
+        id: TEMP_TARGETED_STUDENT_ID,
+        degreeId: TEMP_TARGETED_DEGREE_ID,
+      },
+    },
+  );
+  await resetLoggedStudent();
+});
+
+afterEach(async () => {
+  await resetLoggedStudent();
 });
 
 afterAll(async () => {
+  await cleanupTargetedTempRows();
+  await resetLoggedStudent();
   await server.close(() => {
     sequelize.close();
   });
@@ -169,6 +234,31 @@ describe('GET /api/thesis-proposals/targeted', () => {
     expect(response.body.thesisProposals.length).toEqual(5);
     expect(response.body.currentPage).toEqual(1);
     expect(response.body.totalPages).toEqual(1);
+  });
+
+  test('Should return targeted proposals when the student degree has no proposal mappings', async () => {
+    await resetLoggedStudent(TEMP_TARGETED_STUDENT_ID);
+
+    const response = await request(server).get('/api/thesis-proposals/targeted');
+
+    expect(response.status).toBe(200);
+    expect(response.body).toEqual(
+      expect.objectContaining({
+        count: expect.any(Number),
+        thesisProposals: expect.any(Array),
+        currentPage: 1,
+        totalPages: expect.any(Number),
+      }),
+    );
+  });
+
+  test('Should return 500 when targeted proposals are requested without a logged student', async () => {
+    await sequelize.query('DELETE FROM logged_student');
+
+    const response = await request(server).get('/api/thesis-proposals/targeted');
+
+    expect(response.status).toBe(500);
+    expect(response.body).toEqual({ error: 'Student data not found' });
   });
 
   test('Should filter targeted thesis proposals by search (in english)', async () => {

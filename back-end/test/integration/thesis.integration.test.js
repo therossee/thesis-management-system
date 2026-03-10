@@ -17,7 +17,9 @@ const TEMP_NO_THESIS_STUDENT_ID = '399996';
 const TEMP_CREATE_APPLICATION_ID = 9020;
 const TEMP_CANCEL_APPLICATION_ID = 9030;
 const TEMP_DOWNLOAD_APPLICATION_ID = 9040;
+const TEMP_MINIMAL_GET_APPLICATION_ID = 9060;
 const TEMP_DOWNLOAD_THESIS_ID = 9200;
+const TEMP_MINIMAL_GET_THESIS_ID = 9210;
 const TEMP_CANCEL_THESIS_ID = 9300;
 
 const DOWNLOADS_DIR = path.join(__dirname, '..', '..', 'uploads', 'test_downloads');
@@ -25,7 +27,15 @@ const TEMP_APPLICATION_IDS = [
   TEMP_CREATE_APPLICATION_ID,
   TEMP_CANCEL_APPLICATION_ID,
   TEMP_DOWNLOAD_APPLICATION_ID,
+  TEMP_MINIMAL_GET_APPLICATION_ID,
 ].join(', ');
+
+const setLoggedStudent = async studentId => {
+  await sequelize.query('DELETE FROM logged_student');
+  await sequelize.query('INSERT INTO logged_student (student_id) VALUES (:studentId)', {
+    replacements: { studentId },
+  });
+};
 
 const cleanupTempRows = async () => {
   await sequelize.query(`
@@ -79,11 +89,11 @@ beforeAll(async () => {
 
 beforeEach(async () => {
   await cleanupTempRows();
-  await request(server).put('/api/students/logged-student').send({ student_id: DEFAULT_STUDENT_ID });
+  await setLoggedStudent(DEFAULT_STUDENT_ID);
 });
 
 afterAll(async () => {
-  await request(server).put('/api/students/logged-student').send({ student_id: DEFAULT_STUDENT_ID });
+  await setLoggedStudent(DEFAULT_STUDENT_ID);
   await cleanupTempRows();
   await sequelize.query(`
     DELETE FROM student
@@ -108,16 +118,89 @@ describe('GET /api/thesis', () => {
     expect(response.body.thesisStartDate).toContain('2025-02-01');
   });
 
+  test('Should return 401 when there is no logged student', async () => {
+    await sequelize.query('DELETE FROM logged_student');
+
+    const response = await request(server).get('/api/thesis');
+
+    expect(response.status).toBe(401);
+    expect(response.body).toEqual({ error: 'No logged-in student found' });
+  });
+
   test('Should return 404 when logged student has no thesis', async () => {
-    await request(server).put('/api/students/logged-student').send({ student_id: TEMP_NO_THESIS_STUDENT_ID });
+    await setLoggedStudent(TEMP_NO_THESIS_STUDENT_ID);
 
     const response = await request(server).get('/api/thesis');
     expect(response.status).toBe(404);
     expect(response.body).toHaveProperty('message', 'Thesis not found for the logged-in student.');
   });
+
+  test('Should return a minimal thesis with null company and no co-supervisors', async () => {
+    await sequelize.query(`
+      INSERT INTO thesis_application (
+        id, topic, student_id, thesis_proposal_id, company_id, submission_date, status
+      ) VALUES (
+        ${TEMP_MINIMAL_GET_APPLICATION_ID}, 'Integration minimal thesis', '${TEMP_CREATE_STUDENT_ID}', NULL, NULL, NOW(), 'approved'
+      )
+    `);
+    await sequelize.query(`
+      INSERT INTO thesis (
+        id,
+        topic,
+        thesis_application_id,
+        student_id,
+        company_id,
+        thesis_start_date,
+        status
+      ) VALUES (
+        ${TEMP_MINIMAL_GET_THESIS_ID},
+        'Minimal thesis topic',
+        ${TEMP_MINIMAL_GET_APPLICATION_ID},
+        '${TEMP_CREATE_STUDENT_ID}',
+        NULL,
+        NOW(),
+        'ongoing'
+      )
+    `);
+    await sequelize.query(`
+      INSERT INTO thesis_supervisor_cosupervisor (thesis_id, teacher_id, scope, is_supervisor)
+      VALUES (${TEMP_MINIMAL_GET_THESIS_ID}, 3019, 'live', 1)
+    `);
+    await setLoggedStudent(TEMP_CREATE_STUDENT_ID);
+
+    const response = await request(server).get('/api/thesis');
+
+    expect(response.status).toBe(200);
+    expect(response.body).toMatchObject({
+      id: TEMP_MINIMAL_GET_THESIS_ID,
+      topic: 'Minimal thesis topic',
+      company: null,
+      status: 'ongoing',
+      thesisConclusionRequestDate: null,
+      thesisConclusionConfirmationDate: null,
+      thesisDraftDate: null,
+    });
+    expect(response.body.coSupervisors).toEqual([]);
+    expect(response.body.supervisor).toMatchObject({ id: 3019, firstName: 'Marco', lastName: 'Torchiano' });
+  });
 });
 
 describe('POST /api/thesis', () => {
+  test('Should return 401 when creating a thesis without a logged student', async () => {
+    await sequelize.query('DELETE FROM logged_student');
+
+    const response = await request(server)
+      .post('/api/thesis')
+      .send({
+        topic: 'Unauthorized thesis creation',
+        thesisApplicationId: TEMP_CREATE_APPLICATION_ID,
+        supervisor: { id: 3019 },
+      });
+
+    expect(response.status).toBe(401);
+    expect(response.body).toEqual({ error: 'No logged-in student found' });
+  });
+
   test('Should create a thesis for a logged student without an existing thesis', async () => {
     await sequelize.query(`
       INSERT INTO thesis_application (
@@ -126,7 +209,7 @@ describe('POST /api/thesis', () => {
         ${TEMP_CREATE_APPLICATION_ID}, 'Integration create thesis', '${TEMP_CREATE_STUDENT_ID}', NULL, NULL, NOW(), 'pending'
       )
     `);
-    await request(server).put('/api/students/logged-student').send({ student_id: TEMP_CREATE_STUDENT_ID });
+    await setLoggedStudent(TEMP_CREATE_STUDENT_ID);
 
     const response = await request(server)
       .post('/api/thesis')
@@ -147,6 +230,45 @@ describe('POST /api/thesis', () => {
       WHERE thesis_application_id = ${TEMP_CREATE_APPLICATION_ID}
     `);
     expect(createdRows).toHaveLength(1);
+  });
+
+  test('Should create a minimal thesis without company or co-supervisors', async () => {
+    await sequelize.query(`
+      INSERT INTO thesis_application (
+        id, topic, student_id, thesis_proposal_id, company_id, submission_date, status
+      ) VALUES (
+        ${TEMP_CREATE_APPLICATION_ID}, 'Integration create minimal thesis', '${TEMP_CREATE_STUDENT_ID}', NULL, NULL, NOW(), 'pending'
+      )
+    `);
+    await setLoggedStudent(TEMP_CREATE_STUDENT_ID);
+
+    const response = await request(server)
+      .post('/api/thesis')
+      .send({
+        topic: 'Integration minimal thesis topic',
+        thesisApplicationId: TEMP_CREATE_APPLICATION_ID,
+        supervisor: { id: 3019 },
+      });
+
+    expect(response.status).toBe(201);
+    expect(response.body).toMatchObject({
+      topic: 'Integration minimal thesis topic',
+      status: 'ongoing',
+      company: null,
+    });
+    expect(response.body.coSupervisors).toEqual([]);
+
+    const [links] = await sequelize.query(`
+      SELECT teacher_id, is_supervisor
+      FROM thesis_supervisor_cosupervisor
+      WHERE thesis_id = (
+        SELECT id
+        FROM thesis
+        WHERE thesis_application_id = ${TEMP_CREATE_APPLICATION_ID}
+      )
+      ORDER BY is_supervisor DESC, teacher_id ASC
+    `);
+    expect(links).toEqual([{ teacher_id: 3019, is_supervisor: 1 }]);
   });
 });
 
@@ -248,7 +370,7 @@ describe('POST /api/thesis/cancel', () => {
         'ongoing'
       )
     `);
-    await request(server).put('/api/students/logged-student').send({ student_id: TEMP_CANCEL_STUDENT_ID });
+    await setLoggedStudent(TEMP_CANCEL_STUDENT_ID);
   });
 
   test('Should accept cancellation request for an ongoing thesis', async () => {
@@ -259,6 +381,24 @@ describe('POST /api/thesis/cancel', () => {
     const [rows] = await sequelize.query(`SELECT status FROM thesis WHERE id = ${TEMP_CANCEL_THESIS_ID}`);
     expect(rows).toHaveLength(1);
     expect(rows[0].status).toBe('cancel_requested');
+  });
+
+  test('Should return 401 when requesting thesis cancellation without a logged student', async () => {
+    await sequelize.query('DELETE FROM logged_student');
+
+    const response = await request(server).post('/api/thesis/cancel');
+
+    expect(response.status).toBe(401);
+    expect(response.body).toEqual({ error: 'No logged-in student found' });
+  });
+
+  test('Should return 404 when the logged student has no thesis to cancel', async () => {
+    await setLoggedStudent(TEMP_NO_THESIS_STUDENT_ID);
+
+    const response = await request(server).post('/api/thesis/cancel');
+
+    expect(response.status).toBe(404);
+    expect(response.body).toEqual({ error: 'Thesis not found for the logged-in student.' });
   });
 
   test('Should reject cancellation request when thesis is not ongoing', async () => {
